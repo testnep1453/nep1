@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react';
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  base: '/nep/', // BURA ÇOK ÖNEMLİ! GitHub Pages bu klasör adını arar.
+  base: '/nep1/', // İŞTE KRİTİK NOKTA BURASI! Reponun adıyla TAM AYNI olmalı.
   optimizeDeps: {
     exclude: ['lucide-react'],
   },
