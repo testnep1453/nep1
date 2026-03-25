@@ -7,4 +7,10 @@ export default defineConfig({
   optimizeDeps: {
     exclude: ['lucide-react'],
   },
+  server: {
+    hmr: {
+      overlay: false // HMR error overlay'i kapat
+    }
+  },
+  clearScreen: false // Terminal ekranını temizlemeyi kapat
 });
