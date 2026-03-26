@@ -3,6 +3,7 @@
 @tailwind utilities;
 
 @layer utilities {
+  /* === MEVCUT ANİMASYONLAR === */
   @keyframes pulse-glow {
     0%, 100% {
       filter: drop-shadow(0 0 10px rgba(99, 88, 204, 0.5));
@@ -43,6 +44,32 @@
     }
   }
 
+  /* === YENİ: ÖĞRENCİ NO KUTUSU İÇİN RGB DÖNGÜSÜ === */
+  @keyframes rgb-border {
+    0% { border-color: red; }
+    17% { border-color: yellow; }
+    33% { border-color: green; }
+    50% { border-color: cyan; }
+    66% { border-color: blue; }
+    83% { border-color: magenta; }
+    100% { border-color: red; }
+  }
+
+  /* === YENİ: ROKET FIRLATMA ANİMASYONU (DİKEY YUKARI) === */
+  @keyframes rocket-launch {
+    0% { transform: translateY(0) scale(1); opacity: 1; }
+    70% { transform: translateY(-300px) scale(0.8); opacity: 1; }
+    100% { transform: translateY(-800px) scale(0); opacity: 0; }
+  }
+
+  /* === YENİ: GÖZ KAPAMA EFEKTİ === */
+  @keyframes eyes-closing {
+    0% { clip-path: polygon(0 0, 100% 0, 100% 100%, 0% 100%); }
+    10% { clip-path: polygon(0 10%, 100% 10%, 100% 90%, 0% 90%); }
+    100% { clip-path: polygon(0 50%, 100% 50%, 100% 50%, 0% 50%); }
+  }
+
+  /* === ANİMASYON SINIFLARI (TAILWIND İÇİN) === */
   .animate-pulse-glow {
     animation: pulse-glow 2s ease-in-out infinite;
   }
@@ -57,6 +84,18 @@
 
   .animate-float-up {
     animation: float-up 3s ease-out forwards;
+  }
+
+  .animate-rgb-border {
+    animation: rgb-border 3s linear infinite;
+  }
+
+  .animate-rocket-launch {
+    animation: rocket-launch 1.5s ease-in forwards;
+  }
+
+  .animate-eyes-closing {
+    animation: eyes-closing 1.5s ease-out forwards;
   }
 }
 
