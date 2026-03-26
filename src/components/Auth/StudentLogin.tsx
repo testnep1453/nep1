@@ -28,16 +28,13 @@ export const StudentLogin = ({ onLogin }: StudentLoginProps) => {
     <div className="min-h-screen bg-gradient-to-br from-[#1a1d2e] via-[#25293c] to-[#1a1d2e] flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md flex flex-col items-center">
         
-        {/* LOGO VE BAŞLIK BÖLÜMÜ (Oyun Kolu Yerine Fütüristik Metin Logo) */}
+        {/* LOGO VE BAŞLIK BÖLÜMÜ (Yazı Animasyonu ve Karanlık Mod Logosu Eklendi) */}
         <div className="flex flex-col items-center justify-center mb-8 w-full animate-pulse-glow">
-          
-          {/* FÜTÜRİSTİK METİN LOGO (Beyazımsı ve Efektli) */}
-          <div className="mb-6 flex items-center justify-center">
-            <h1 className="text-8xl font-black text-white/90 tracking-tighter drop-shadow-[0_0_15px_rgba(255,255,255,0.4)] transition-all">
-              <span className="text-[#00cfe8]">N</span>EP
-            </h1>
-          </div>
-
+          <img 
+            src="https://cdn.prod.website-files.com/68b41d250349c9a385b11ecc/68b42031492c916cc2c20789_nep_logo%201.png" 
+            alt="NEP Logo" 
+            className="h-24 md:h-28 object-contain mb-6 brightness-0 invert drop-shadow-[0_0_15px_rgba(255,255,255,0.4)] transition-transform hover:scale-105"
+          />
           <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-widest uppercase text-center drop-shadow-md">
             SİSTEM GİRİŞİ
           </h1>
