@@ -16,7 +16,7 @@ export const PresenceCounter = ({ count }: PresenceCounterProps) => {
             {count}
           </div>
           <div className="text-white/90 text-sm font-semibold uppercase tracking-wide">
-            OYUNCU ONLİNE
+            ÇEVRİMİÇİ ARKADAŞLARIM
           </div>
         </div>
         <div className="ml-auto">
