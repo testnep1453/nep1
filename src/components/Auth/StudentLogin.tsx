@@ -22,10 +22,12 @@ export const StudentLogin = ({ onLogin }: StudentLoginProps) => {
       setError('SİSTEMDE BU NUMARA BULUNAMADI!');
       setLoading(false);
     }
+    // Başarılı giriş durumunu parent (App.tsx) handles transition.
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#1a1d2e] via-[#25293c] to-[#1a1d2e] flex flex-col items-center justify-center p-4">
+    // DEĞİŞTİ: items-centerpt-24 ile ortalamayı sağladık. justify-center kaldırıldı.
+    <div className="min-h-screen bg-gradient-to-br from-[#1a1d2e] via-[#25293c] to-[#1a1d2e] flex flex-col items-center pt-24 p-4">
       <div className="w-full max-w-md flex flex-col items-center">
         
         {/* LOGO VE BAŞLIK BÖLÜMÜ (Yazı Animasyonu ve Karanlık Mod Logosu Eklendi) */}
@@ -52,7 +54,8 @@ export const StudentLogin = ({ onLogin }: StudentLoginProps) => {
               onChange={(e) => setStudentId(e.target.value.replace(/\D/g, ''))}
               maxLength={4}
               placeholder="1234"
-              className="w-full px-4 py-5 bg-[#1a1d2e] border-2 border-[#6358cc]/50 rounded-2xl text-white text-3xl font-black tracking-widest text-center placeholder:text-white/20 focus:outline-none focus:border-[#00cfe8] focus:shadow-[0_0_20px_rgba(0,207,232,0.3)] transition-all"
+              // DEĞİŞTİ: animate-rgb-border eklendi
+              className="w-full px-4 py-5 bg-[#1a1d2e] border-2 border-[#6358cc]/50 animate-rgb-border rounded-2xl text-white text-3xl font-black tracking-widest text-center placeholder:text-white/20 focus:outline-none focus:border-[#00cfe8] focus:shadow-[0_0_20px_rgba(0,207,232,0.3)] transition-all"
               disabled={loading}
             />
           </div>
@@ -68,7 +71,8 @@ export const StudentLogin = ({ onLogin }: StudentLoginProps) => {
             disabled={loading || !studentId}
             className="w-full bg-gradient-to-r from-[#6358cc] to-[#8b7fd8] text-white font-black py-5 rounded-2xl uppercase tracking-widest text-lg hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(99,88,204,0.4)]"
           >
-            {loading ? 'BAĞLANILIYOR...' : 'SİSTEME GİR'}
+            {/* DEĞİŞTİ: Sadece roket emojisi */}
+            {loading ? 'BAĞLANILIYOR...' : '🚀'}
           </button>
         </form>
 
