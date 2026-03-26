@@ -20,7 +20,7 @@ export const StudentLogin = ({ onLogin }: StudentLoginProps) => {
     const success = await onLogin(studentId);
 
     if (!success) {
-      setError('OYUNCU BULUNAMADI! ID\'NİZİ KONTROL EDİN');
+      setError('OYUNCU BULUNAMADI! ID NUMARANIZI KONTROL EDİN');
       setLoading(false);
     }
   };
@@ -33,7 +33,7 @@ export const StudentLogin = ({ onLogin }: StudentLoginProps) => {
           <h1 className="text-5xl font-bold text-white mb-2 tracking-wider uppercase">
             NEP GAMING
           </h1>
-          <p className="text-[#00cfe8] text-xl font-semibold">EĞITIM MERKEZI</p>
+          <p className="text-[#00cfe8] text-xl font-semibold tracking-widest">EĞİTİM MERKEZİ</p>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-[#2d3142] rounded-2xl p-8 shadow-2xl border-2 border-[#6358cc]/30">
@@ -69,7 +69,7 @@ export const StudentLogin = ({ onLogin }: StudentLoginProps) => {
 
         <div className="mt-6 text-center">
           <p className="text-[#cfcce4]/60 text-sm">
-            ID'nizi bilmiyorsanız öğretmeninize sorun
+            Oyuncu ID'nizi bilmiyorsanız komutanınıza (öğretmeninize) sorun
           </p>
         </div>
       </div>
