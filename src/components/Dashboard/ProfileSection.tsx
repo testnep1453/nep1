@@ -5,15 +5,16 @@ interface ProfileSectionProps {
   student: Student;
 }
 
+// ADIM 1: AVATAR İSİMLERİ VERİTABANIYLA UYUMLU HALE GETİRİLDİ
 const AVATAR_EMOJIS: Record<string, string> = {
-  hero_cape_red: '🦸‍♂️',
-  warrior_sword: '⚔️',
-  knight_shield: '🛡️',
-  wizard_staff: '🧙‍♂️',
-  ninja_star: '🥷',
-  robot_tech: '🤖',
-  dragon_rider: '🐉',
-  space_explorer: '👨‍🚀'
+  hero_1: '🦸‍♂️',
+  hero_2: '🥷',
+  hero_3: '🧙‍♂️',
+  hero_4: '🤖',
+  hero_5: '👨‍🚀',
+  hero_6: '🐉',
+  hero_7: '⚔️',
+  hero_8: '🛡️'
 };
 
 const BADGE_INFO: Record<string, { emoji: string; name: string }> = {
