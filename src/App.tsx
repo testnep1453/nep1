@@ -25,7 +25,7 @@ function App() {
     if (student) {
       requestNotificationPermission();
       setupNotificationListener((payload) => {
-        console.log('Notification received:', payload);
+        console.log('Bildirim alındı:', payload);
       });
 
       const loadLesson = async () => {
@@ -34,21 +34,22 @@ function App() {
           if (lessonDoc.exists()) {
             const data = lessonDoc.data();
             setLesson({
-              startTime: data.startTime?.toMillis() || Date.now() + 24 * 60 * 60 * 1000,
-              title: data.title || 'Sonraki Ders',
+              startTime: data.startTime?.toMillis() || Date.now() + 3 * 24 * 60 * 60 * 1000,
+              title: data.title || 'Sıradaki Ders',
               zoomLink: data.zoomLink || 'https://us06web.zoom.us/j/81331199971?pwd=wEBSZPJcBJg3MbV4FqGMO7ggJ3onM8.1'
             });
           } else {
+            // SAYACIN GÖRÜNMESİ İÇİN VARSAYILAN SÜRE 3 GÜN YAPILDI
             setLesson({
-              startTime: Date.now() + 2 * 60 * 1000,
+              startTime: Date.now() + 3 * 24 * 60 * 60 * 1000,
               title: 'Demo Ders',
               zoomLink: 'https://us06web.zoom.us/j/81331199971?pwd=wEBSZPJcBJg3MbV4FqGMO7ggJ3onM8.1'
             });
           }
         } catch (error) {
-          console.error('Error loading lesson:', error);
+          console.error('Ders yüklenirken hata oluştu:', error);
           setLesson({
-            startTime: Date.now() + 2 * 60 * 1000,
+            startTime: Date.now() + 3 * 24 * 60 * 60 * 1000,
             title: 'Demo Ders',
             zoomLink: 'https://us06web.zoom.us/j/81331199971?pwd=wEBSZPJcBJg3MbV4FqGMO7ggJ3onM8.1'
           });
@@ -66,7 +67,7 @@ function App() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#25293c] flex items-center justify-center">
-        <div className="text-white text-2xl font-bold animate-pulse">YÜKLENIYOR...</div>
+        <div className="text-white text-2xl font-bold animate-pulse">YÜKLENİYOR...</div>
       </div>
     );
   }
@@ -81,12 +82,12 @@ function App() {
   return (
     <div className={`min-h-screen ${bgColor} ${textColor} p-4 md:p-8`}>
       <div className="max-w-7xl mx-auto">
-        <header className="flex items-center justify-between mb-8">
+        <header className="flex items-center justify-between mb-10">
           <div>
             <h1 className="text-3xl md:text-4xl font-bold text-white uppercase tracking-wider mb-1">
               🎮 NEP GAMING
             </h1>
-            <p className="text-[#00cfe8] font-semibold">Eğitim Merkezi</p>
+            <p className="text-[#00cfe8] font-semibold tracking-widest">EĞİTİM MERKEZİ</p>
           </div>
           <div className="flex items-center gap-3">
             <NotificationBell />
@@ -94,7 +95,11 @@ function App() {
           </div>
         </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        {/* 1. KATEGORİ: PROFİL BİLGİLERİ */}
+        <h3 className="text-xl font-bold text-white/80 mb-4 uppercase tracking-wider border-b-2 border-[#6358cc]/30 pb-2">
+          👤 OYUNCU BİLGİLERİ
+        </h3>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
           <div className="lg:col-span-2">
             <ProfileSection student={student} />
           </div>
@@ -103,7 +108,11 @@ function App() {
           </div>
         </div>
 
-        <div className="mb-8 bg-gradient-to-br from-[#2d3142] to-[#25293c] rounded-2xl p-8 border-2 border-[#6358cc]/30 shadow-xl">
+        {/* 2. KATEGORİ: DERS MODÜLÜ */}
+        <h3 className="text-xl font-bold text-white/80 mb-4 uppercase tracking-wider border-b-2 border-[#6358cc]/30 pb-2">
+          ⏱️ SAVAŞ (DERS) ZAMANI
+        </h3>
+        <div className="mb-12 bg-gradient-to-br from-[#2d3142] to-[#25293c] rounded-2xl p-8 border-2 border-[#6358cc]/30 shadow-xl">
           {lesson && !showJoinButton && (
             <CircularCountdown
               targetTime={lesson.startTime}
@@ -123,9 +132,14 @@ function App() {
           )}
         </div>
 
-        <div>
+        {/* 3. KATEGORİ: VİDEO MODÜLÜ */}
+        <h3 className="text-xl font-bold text-white/80 mb-4 uppercase tracking-wider border-b-2 border-[#6358cc]/30 pb-2">
+          🎬 MEDYA EKRANI
+        </h3>
+        <div className="mb-12">
           <YouTubePlayer videoId="dQw4w9WgXcQ" />
         </div>
+
       </div>
     </div>
   );
