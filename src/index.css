@@ -128,3 +128,22 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #8b7fd8;
 }
+@keyframes typing {
+  from { width: 0 }
+  to { width: 100% }
+}
+
+@keyframes blink-caret {
+  from, to { border-color: transparent }
+  50% { border-color: #00cfe8; }
+}
+
+.animate-typing {
+  overflow: hidden;
+  white-space: nowrap;
+  border-right: 0.15em solid #00cfe8;
+  margin: 0 auto;
+  animation: 
+    typing 1.5s steps(30, end),
+    blink-caret .75s step-end infinite;
+}
