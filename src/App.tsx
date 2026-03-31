@@ -64,9 +64,10 @@ function App() {
 
     if (student && appStatus === 'loggingIn') {
       setAppStatus('loginSuccessTransition');
+      // BEKLEME SÜRESİ YAVAŞLATILDI (5 Saniye)
       setTimeout(() => {
         setAppStatus('dashboard');
-      }, 3500); 
+      }, 5000); 
     } else if (!student && appStatus === 'dashboard') {
       setAppStatus('loggingIn');
     }
