@@ -1,50 +1,73 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export const StudentLogin = ({ onLogin }: { onLogin: (id: string) => Promise<boolean> }) => {
   const [studentId, setStudentId] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!studentId.trim()) return;
-    setLoading(true); setError('');
-    const success = await onLogin(studentId);
-    if (!success) { setError('SİSTEMDE BU NUMARA BULUNAMADI!'); setLoading(false); }
-  };
+  // Gerçek zamanlı kontrol: Numara 4 haneye ulaştığında otomatik tetiklenir
+  useEffect(() => {
+    const checkLogin = async () => {
+      if (studentId.length === 4) {
+        setLoading(true);
+        setError('');
+        const success = await onLogin(studentId);
+        
+        if (!success) {
+          setError('SİSTEMDE BU NUMARA BULUNAMADI!');
+          setLoading(false);
+          setStudentId(''); // Hatalıysa içini temizle ki tekrar yazabilsin
+        }
+      } else {
+        // 4 haneden azsa hatayı ekrandan kaldır
+        setError('');
+      }
+    };
+
+    checkLogin();
+  }, [studentId, onLogin]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#1a1d2e] via-[#25293c] to-[#1a1d2e] flex flex-col items-center pt-24 p-4">
       <div className="w-full max-w-md flex flex-col items-center">
-        <div className="flex flex-col items-center justify-center mb-12 animate-pulse-glow">
+        
+        {/* Logo ve Yazma Animasyonlu Başlık */}
+        <div className="flex flex-col items-center justify-center mb-16">
           <img 
-  src={`${import.meta.env.BASE_URL}nep-logo.png`} 
-  alt="NEP Logo" 
-  className="h-28 object-contain mb-6 brightness-0 invert drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]"
-/>
-          <h1 className="text-4xl font-extrabold text-white tracking-widest uppercase">SİSTEM GİRİŞİ</h1>
+            src={`${import.meta.env.BASE_URL}nep-logo.png`}  
+            alt="NEP Logo" 
+            className="h-28 object-contain mb-8 brightness-0 invert drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]"
+          />
+          {/* Yazma animasyonunu buraya ekledik */}
+          <div className="inline-block">
+            <h1 className="text-4xl font-extrabold text-white tracking-widest uppercase animate-typing">
+              SİSTEM GİRİŞİ
+            </h1>
+          </div>
         </div>
-        <form onSubmit={handleSubmit} className="w-full bg-[#2d3142] rounded-3xl p-8 border-2 border-[#6358cc]/40 flex flex-col items-center">
+
+        {/* Form Alanı - Dış kutu tamamen kaldırıldı, sadece input var */}
+        <div className="w-full flex flex-col items-center">
           <input
             name="studentId"
             type="text"
             value={studentId}
             onChange={(e) => setStudentId(e.target.value.replace(/\D/g, ''))}
             maxLength={4}
-            placeholder="1234"
-            className="w-full px-4 py-5 bg-[#1a1d2e] border-2 border-[#6358cc]/50 animate-rgb-border rounded-2xl text-white text-3xl font-black text-center placeholder:text-white/20 focus:outline-none focus:border-[#00cfe8] transition-all"
+            placeholder={loading ? "GİRİŞ YAPILIYOR..." : "1234"}
+            className={`w-full max-w-[250px] px-4 py-5 bg-[#1a1d2e]/80 border-b-4 ${error ? 'border-[#ff6b6e]' : 'border-[#00cfe8]'} rounded-xl text-white text-4xl font-black text-center placeholder:text-white/20 focus:outline-none focus:shadow-[0_0_30px_rgba(0,207,232,0.3)] transition-all disabled:opacity-50`}
             disabled={loading}
+            autoFocus
           />
-          {error && <p className="text-[#ff6b6e] text-sm font-bold mt-4 animate-pulse">{error}</p>}
           
-          <button
-            type="submit"
-            disabled={loading || !studentId}
-            className="mt-8 text-8xl transition-all duration-300 hover:scale-125 hover:-translate-y-4 active:scale-95 disabled:opacity-50 drop-shadow-[0_0_20px_rgba(255,159,67,0.6)] animate-bounce"
-          >
-            {loading ? '⏳' : '🚀'}
-          </button>
-        </form>
+          {/* Hata Mesajı */}
+          {error && (
+            <p className="text-[#ff6b6e] text-sm font-bold mt-6 animate-pulse tracking-wider">
+              {error}
+            </p>
+          )}
+        </div>
+
       </div>
     </div>
   );
