@@ -1,17 +1,14 @@
 import { useState, useEffect } from 'react';
-import { getMessages, AppMessage } from '../../services/db';
+import { subscribeToMessages, AppMessage } from '../../services/dbFirebase';
 
 export const MessageFeed = () => {
   const [messages, setMessages] = useState<AppMessage[]>([]);
 
   useEffect(() => {
-    // Polling for new messages since we are using localStorage without event listeners
-    const fetchMessages = () => {
-      setMessages(getMessages());
-    };
-    fetchMessages();
-    const interval = setInterval(fetchMessages, 3000);
-    return () => clearInterval(interval);
+    const unsubscribe = subscribeToMessages((fetchedMessages) => {
+      setMessages(fetchedMessages);
+    });
+    return () => unsubscribe && unsubscribe();
   }, []);
 
   if (messages.length === 0) return null;

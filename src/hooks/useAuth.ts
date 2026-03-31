@@ -1,8 +1,6 @@
 import { useState, useEffect } from 'react';
-import { doc, getDoc } from 'firebase/firestore';
-import { db } from '../config/firebase';
 import { Student } from '../types/student';
-import { getStudents } from '../services/db';
+import { getStudentsFromFirebase } from '../services/dbFirebase';
 
 export const useAuth = () => {
   const [student, setStudent] = useState<Student | null>(null);
@@ -18,70 +16,34 @@ export const useAuth = () => {
   }, []);
 
   const loadStudent = async (id: string) => {
-    // ÖNCE LOCALDAN (DB SIMULATOR) ARA
-    const jsonStudent = getStudents().find(s => s.id === id);
-    if (jsonStudent) {
-      setStudent({
-        id: jsonStudent.id,
-        name: jsonStudent.name,
-        nickname: jsonStudent.nickname,
-        xp: jsonStudent.xp || 0,
-        level: jsonStudent.level || 1,
-        badges: [],
-        avatar: jsonStudent.avatar || 'hero_1',
-        lastSeen: Date.now()
-      });
-      setLoading(false);
-      return;
-    }
-
-    // BULAMAZSA FIRESTORE'A BAK (OPSIYONEL)
     try {
-      const docRef = doc(db, 'students', id);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        setStudent({
-          id,
-          name: data.name,
-          xp: data.xp,
-          level: data.level,
-          badges: data.badges || [],
-          avatar: data.avatar,
-          lastSeen: data.lastSeen?.toMillis() || Date.now()
-        });
+      const students = await getStudentsFromFirebase();
+      const found = students.find((s: any) => s.id === id);
+      if (found) {
+        setStudent(found as Student);
       } else {
         localStorage.removeItem('studentId');
       }
-    } catch (error) {
-      console.warn('Firestore devre dışı, JSON kullanılıyor');
+    } catch (e) {
+      console.error(e);
+      localStorage.removeItem('studentId');
     } finally {
       setLoading(false);
     }
   };
 
   const login = async (studentId: string): Promise<boolean> => {
-    // ÖNCE LOCAL DB'DEN KONTROL ET
-    const jsonStudent = getStudents().find(s => s.id === studentId);
-    if (jsonStudent) {
-      localStorage.setItem('studentId', studentId);
-      await loadStudent(studentId);
-      return true;
-    }
-
-    // BULAMAZSA FIRESTORE'A BAK
     try {
-      const docRef = doc(db, 'students', studentId);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
+      const students = await getStudentsFromFirebase();
+      const found = students.find((s: any) => s.id === studentId);
+      if (found) {
         localStorage.setItem('studentId', studentId);
         await loadStudent(studentId);
         return true;
       }
-    } catch (error) {
-      console.warn('Firestore devre dışı');
+    } catch(e) {
+      console.error(e);
     }
-
     return false;
   };
 

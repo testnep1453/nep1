@@ -1,11 +1,16 @@
 import { useState, useEffect } from 'react';
-import { getStudents } from '../../services/db';
+import { getStudentsFromFirebase } from '../../services/dbFirebase';
 
 export const StudentLogin = ({ onLogin }: { onLogin: (id: string) => Promise<boolean> }) => {
   const [studentId, setStudentId] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [placeholderId, setPlaceholderId] = useState('---');
+  const [dbData, setDbData] = useState<any[]>([]);
+
+  useEffect(() => {
+    getStudentsFromFirebase().then(setDbData);
+  }, []);
 
   // Ortak Giriş Fonksiyonu
   const triggerLogin = async (idToSubmit: string) => {
@@ -22,12 +27,10 @@ export const StudentLogin = ({ onLogin }: { onLogin: (id: string) => Promise<boo
   // 4 Haneye Veya Eşleşen 3 Haneye Ulaşınca Otomatik Giriş
   useEffect(() => {
     if (studentId.length >= 3) {
-      const dbData = getStudents();
       const exactMatch = dbData.find((s) => s.id === studentId);
       if (exactMatch) {
          triggerLogin(studentId);
       } else if (studentId.length === 3) {
-         const dbData = getStudents();
          const partialMatch = dbData.find((s) => s.id.startsWith(studentId));
          if (partialMatch) {
             console.log(`[BİLDİRİM - ADMİN 1002]: ${studentId} ile başlayan şüpheli/kısmi giriş!`);
@@ -49,7 +52,7 @@ export const StudentLogin = ({ onLogin }: { onLogin: (id: string) => Promise<boo
 
   // Veritabanı ile Çakışmayan Rastgele Sayı Döngüsü
   useEffect(() => {
-    const dbIds = getStudents().map((s) => s.id);
+    const dbIds = dbData.map((s) => s.id);
     
     const generateSafeId = () => {
       let safeId = '';
@@ -75,7 +78,7 @@ export const StudentLogin = ({ onLogin }: { onLogin: (id: string) => Promise<boo
     }, 2000);
 
     return () => clearInterval(interval);
-  }, [studentId, loading]);
+  }, [studentId, loading, dbData]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

@@ -5,15 +5,7 @@ import { useAuth } from './hooks/useAuth';
 import { usePresence } from './hooks/usePresence';
 import { StudentLogin } from './components/Auth/StudentLogin';
 import { LoginTransitionOverlay } from './components/Transitions/LoginTransitionOverlay';
-import { CircularCountdown } from './components/Countdown/CircularCountdown';
-import { JoinClassButton } from './components/Countdown/JoinClassButton';
-import { ProfileSection } from './components/Dashboard/ProfileSection';
-import { PresenceCounter } from './components/Dashboard/PresenceCounter';
-import { NotificationBell } from './components/Dashboard/NotificationBell';
-import { ThemeToggle } from './components/Dashboard/ThemeToggle';
-import { YouTubePlayer } from './components/VideoTheater/YouTubePlayer';
-import { AdminDashboard } from './components/Admin/AdminDashboard';
-import { MessageFeed } from './components/Dashboard/MessageFeed';
+import { UnifiedDashboard } from './components/Dashboard/UnifiedDashboard';
 import { Lesson, Theme } from './types/student';
 import { requestNotificationPermission, setupNotificationListener } from './services/fcm';
 
@@ -22,7 +14,6 @@ type AppStatus = 'loggingIn' | 'loginSuccessTransition' | 'dashboard';
 function App() {
   const { student, loading, login } = useAuth();
   const onlineCount = usePresence(student?.id || null);
-  const [theme, setTheme] = useState<Theme>('dark');
   const [lesson, setLesson] = useState<Lesson | null>(null);
   const [showJoinButton, setShowJoinButton] = useState(false);
   const [appStatus, setAppStatus] = useState<AppStatus>('loggingIn');
@@ -76,10 +67,6 @@ function App() {
 
   }, [student]);
 
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-[#25293c] flex items-center justify-center">
@@ -96,78 +83,14 @@ function App() {
     return <StudentLogin onLogin={login} />;
   }
 
-  const bgColor = theme === 'dark' ? 'bg-gradient-to-br from-[#1a1d2e] via-[#25293c] to-[#1a1d2e]' : 'bg-gradient-to-br from-gray-100 via-gray-200 to-gray-100';
-  const textColor = theme === 'dark' ? 'text-[#cfcce4]' : 'text-gray-800';
-
   if (appStatus === 'dashboard' && student) {
-    if (student.id === '1002') {
-      return <AdminDashboard onLogout={() => { localStorage.removeItem('studentId'); window.location.reload(); }} />;
-    }
-
     return (
-      <div className={`min-h-screen ${bgColor} ${textColor} p-4 md:p-8 relative`}>
-        <div className="max-w-7xl mx-auto">
-          <header className="flex items-center justify-between mb-10">
-            <div className="flex flex-col items-start">
-              <img 
-                src="/68b42031492c916cc2c20789_nep_logo%201.png" 
-                alt="NEP Logo" 
-                className="h-10 md:h-14 object-contain mb-1 brightness-0 invert drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]"
-              />
-              <p className="text-[#00cfe8] font-semibold tracking-[0.2em] text-xs md:text-sm uppercase">OPERASYON KONTROL MERKEZİ</p>
-            </div>
-            <div className="flex items-center gap-3">
-              <NotificationBell />
-              <ThemeToggle theme={theme} onToggle={toggleTheme} />
-            </div>
-          </header>
-
-          <h3 className="text-xl font-bold text-white/80 mb-4 uppercase tracking-wider border-b-2 border-[#00cfe8]/30 pb-2">
-            👤 AJAN PROFİLİ
-          </h3>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-            <div className="lg:col-span-2">
-              <ProfileSection student={student} />
-            </div>
-            <div>
-              <PresenceCounter count={onlineCount} />
-            </div>
-          </div>
-          
-          <MessageFeed />
-
-          <h3 className="text-xl font-bold text-white/80 mb-4 uppercase tracking-wider border-b-2 border-[#00cfe8]/30 pb-2 mt-8">
-            ⏱️ AKTİF OPERASYON (NEP HAFTALIK GÖREVİ)
-          </h3>
-          <div className="mb-12 bg-gradient-to-br from-[#2d3142] to-[#25293c] rounded-2xl p-8 border-2 border-[#6358cc]/30 shadow-xl">
-            {lesson && !showJoinButton && (
-              <CircularCountdown
-                targetTime={lesson.startTime}
-                onComplete={() => setShowJoinButton(true)}
-              />
-            )}
-            {showJoinButton && lesson && (
-              <div className="py-12">
-                <h2 className="text-3xl font-bold text-white text-center mb-8 uppercase tracking-wider">
-                  {lesson.title}
-                </h2>
-                <JoinClassButton
-                  zoomLink={lesson.zoomLink}
-                  studentName={student.name}
-                />
-              </div>
-            )}
-          </div>
-
-          <h3 className="text-xl font-bold text-white/80 mb-4 uppercase tracking-wider border-b-2 border-[#6358cc]/30 pb-2">
-            🎬 MEDYA EKRANI
-          </h3>
-          <div className="mb-12">
-            <YouTubePlayer videoId="dQw4w9WgXcQ" />
-          </div>
-
-        </div>
-      </div>
+      <UnifiedDashboard 
+        student={student} 
+        onLogout={() => { localStorage.removeItem('studentId'); window.location.reload(); }}
+        lesson={lesson}
+        onlineCount={onlineCount}
+      />
     );
   }
 
