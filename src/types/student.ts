@@ -1,6 +1,7 @@
 export interface Student {
   id: string;
   name: string;
+  nickname?: string;
   xp: number;
   level: number;
   badges: string[];

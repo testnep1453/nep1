@@ -12,6 +12,7 @@ import { PresenceCounter } from './components/Dashboard/PresenceCounter';
 import { NotificationBell } from './components/Dashboard/NotificationBell';
 import { ThemeToggle } from './components/Dashboard/ThemeToggle';
 import { YouTubePlayer } from './components/VideoTheater/YouTubePlayer';
+import { AdminDrawer } from './components/Admin/AdminDrawer';
 import { Lesson, Theme } from './types/student';
 import { requestNotificationPermission, setupNotificationListener } from './services/fcm';
 
@@ -99,14 +100,17 @@ function App() {
 
   if (appStatus === 'dashboard' && student) {
     return (
-      <div className={`min-h-screen ${bgColor} ${textColor} p-4 md:p-8`}>
+      <div className={`min-h-screen ${bgColor} ${textColor} p-4 md:p-8 relative`}>
+        {student.id === '1002' && <AdminDrawer />}
         <div className="max-w-7xl mx-auto">
           <header className="flex items-center justify-between mb-10">
-            <div>
-              <h1 className="text-3xl md:text-4xl font-bold text-white uppercase tracking-wider mb-1">
-                🎮 NEP GAMING
-              </h1>
-              <p className="text-[#00cfe8] font-semibold tracking-widest">EĞİTİM MERKEZİ</p>
+            <div className="flex flex-col items-start">
+              <img 
+                src="/68b42031492c916cc2c20789_nep_logo%201.png" 
+                alt="NEP Logo" 
+                className="h-10 md:h-14 object-contain mb-1 brightness-0 invert drop-shadow-[0_0_10px_rgba(255,255,255,0.3)]"
+              />
+              <p className="text-[#00cfe8] font-semibold tracking-[0.2em] text-xs md:text-sm uppercase">OPERASYON KONTROL MERKEZİ</p>
             </div>
             <div className="flex items-center gap-3">
               <NotificationBell />
@@ -114,8 +118,8 @@ function App() {
             </div>
           </header>
 
-          <h3 className="text-xl font-bold text-white/80 mb-4 uppercase tracking-wider border-b-2 border-[#6358cc]/30 pb-2">
-            👤 OYUNCU BİLGİLERİ
+          <h3 className="text-xl font-bold text-white/80 mb-4 uppercase tracking-wider border-b-2 border-[#00cfe8]/30 pb-2">
+            👤 AJAN PROFİLİ
           </h3>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
             <div className="lg:col-span-2">
@@ -126,8 +130,8 @@ function App() {
             </div>
           </div>
 
-          <h3 className="text-xl font-bold text-white/80 mb-4 uppercase tracking-wider border-b-2 border-[#6358cc]/30 pb-2">
-            ⏱️ SAVAŞ (DERS) ZAMANI
+          <h3 className="text-xl font-bold text-white/80 mb-4 uppercase tracking-wider border-b-2 border-[#00cfe8]/30 pb-2 mt-8">
+            ⏱️ AKTİF OPERASYON (NEP HAFTALIK GÖREVİ)
           </h3>
           <div className="mb-12 bg-gradient-to-br from-[#2d3142] to-[#25293c] rounded-2xl p-8 border-2 border-[#6358cc]/30 shadow-xl">
             {lesson && !showJoinButton && (

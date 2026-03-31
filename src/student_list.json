@@ -1,4 +1,5 @@
 [
-  { "id": "1001", "name": "SULTAN ÇUNKU", "xp": 100, "level": 1, "avatar": "hero_1" },
-  { "id": "1002", "name": "MUHAMMED SAID ÇUNKU", "xp": 100, "level": 1, "avatar": "hero_2" }
+  { "id": "1001", "name": "SULTAN ÇUNKU", "nickname": "Gölgelerin Sesi", "xp": 0, "level": 1, "avatar": "hero_1" },
+  { "id": "1002", "name": "MUHAMMED SAİD ÇUNKU", "nickname": "Neon Lider", "xp": 0, "level": 1, "avatar": "hero_2" },
+  { "id": "1003", "name": "TEST ÖĞRENCİ", "nickname": "Siber Savaşçı", "xp": 0, "level": 1, "avatar": "hero_3" }
 ]

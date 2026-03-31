@@ -24,7 +24,8 @@ export const useAuth = () => {
       setStudent({
         id: jsonStudent.id,
         name: jsonStudent.name,
-        xp: jsonStudent.xp || 100,
+        nickname: jsonStudent.nickname,
+        xp: jsonStudent.xp || 0,
         level: jsonStudent.level || 1,
         badges: [],
         avatar: jsonStudent.avatar || 'hero_1',

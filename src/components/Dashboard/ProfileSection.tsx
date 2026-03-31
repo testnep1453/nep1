@@ -17,13 +17,13 @@ const AVATAR_EMOJIS: Record<string, string> = {
   hero_8: '🛡️'
 };
 
-const BADGE_INFO: Record<string, { emoji: string; name: string }> = {
-  first_login: { emoji: '🎮', name: 'İlk Giriş' },
-  week_streak: { emoji: '🔥', name: '1 Hafta' },
-  quiz_master: { emoji: '🧠', name: 'Quiz Ustası' },
-  perfect_score: { emoji: '💯', name: 'Mükemmel' },
-  fast_learner: { emoji: '⚡', name: 'Hızlı Öğrenci' },
-  team_player: { emoji: '🤝', name: 'Takım Oyuncusu' }
+const BADGE_INFO: Record<string, { emoji: string; name: string; hint: string }> = {
+  first_login: { emoji: '🎮', name: 'İlk Giriş', hint: 'Karanlık evrene attığın ilk adım.' },
+  week_streak: { emoji: '🔥', name: '1 Hafta', hint: 'Art arda 7 gün boyunca üsse giriş yap.' },
+  quiz_master: { emoji: '🧠', name: 'Quiz Ustası', hint: 'Ajan quizinden mükemmel puan al.' },
+  perfect_score: { emoji: '💯', name: 'Mükemmel', hint: 'Görevleri hiç hata yapmadan bitir.' },
+  fast_learner: { emoji: '⚡', name: 'Hızlı Öğrenci', hint: 'Süreli bir görevi rekor zamanda bitir.' },
+  team_player: { emoji: '🤝', name: 'Takım Oyuncusu', hint: 'Müttefiklerinle beraber büyük operasyonu tamamla.' }
 };
 
 export const ProfileSection = ({ student }: ProfileSectionProps) => {
@@ -43,10 +43,15 @@ export const ProfileSection = ({ student }: ProfileSectionProps) => {
         </div>
 
         <div className="flex-1">
-          <h2 className="text-2xl font-bold text-white mb-1 uppercase tracking-wide">
+          <h2 className="text-2xl font-bold text-white uppercase tracking-wide">
             {student.name}
           </h2>
-          <div className="flex items-center gap-2 mb-2">
+          {student.nickname && (
+            <div className="text-[#00cfe8] font-black tracking-widest text-sm mb-2 drop-shadow-[0_0_5px_rgba(0,207,232,0.5)]">
+              « {student.nickname} »
+            </div>
+          )}
+          <div className="flex items-center gap-2 mb-2 mt-1">
             <Trophy className="w-5 h-5 text-[#ff9f43]" />
             <span className="text-[#ff9f43] font-bold text-lg">
               LEVEL {student.level}
@@ -88,17 +93,22 @@ export const ProfileSection = ({ student }: ProfileSectionProps) => {
             return (
               <div
                 key={badgeId}
-                className={`relative p-3 rounded-xl border-2 transition-all ${
+                className={`group relative p-3 rounded-xl border-2 transition-all cursor-help flex flex-col items-center justify-center ${
                   unlocked
                     ? 'bg-[#1a1d2e] border-[#ff9f43] shadow-lg shadow-[#ff9f43]/30'
-                    : 'bg-[#1a1d2e]/30 border-white/10 opacity-40'
+                    : 'bg-[#1a1d2e]/30 border-white/10 opacity-40 hover:opacity-80'
                 }`}
               >
-                <div className="text-3xl text-center mb-1">
+                <div className="text-3xl text-center mb-1 transition-transform group-hover:scale-110">
                   {badge.emoji}
                 </div>
                 <div className="text-xs text-center text-white/70 font-semibold">
                   {badge.name}
+                </div>
+                <div className="absolute w-40 bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 bg-[#1a1d2e] border border-[#6358cc]/30 text-white text-xs text-center font-medium rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-10 shadow-xl pointer-events-none">
+                  <div className="text-[#ff9f43] font-bold mb-1">{badge.name}</div>
+                  {badge.hint}
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-[#6358cc]/30"></div>
                 </div>
               </div>
             );
