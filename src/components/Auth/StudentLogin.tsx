@@ -50,35 +50,41 @@ export const StudentLogin = ({ onLogin }: { onLogin: (id: string) => Promise<boo
     }
   };
 
-  // Veritabanı ile Çakışmayan Rastgele Sayı Döngüsü
+  // Yazma Efektli Placeholder Dizisi
   useEffect(() => {
-    const dbIds = dbData.map((s) => s.id);
-    
-    const generateSafeId = () => {
-      let safeId = '';
-      let isDuplicate = true;
-      while (isDuplicate) {
-        const isThreeDigits = Math.random() > 0.5;
-        const num = isThreeDigits 
-          ? Math.floor(Math.random() * 900) + 100
-          : Math.floor(Math.random() * 9000) + 1000;
-          
-        safeId = num.toString();
-        if (!dbIds.includes(safeId)) {
-          isDuplicate = false;
-        }
+    if (loading) return;
+    const phrases = ["AJAN KODU GİR...", "KİMLİK BİLGİSİ...", "SİSTEME ERİŞ..."];
+    let phraseIndex = 0;
+    let charIndex = 0;
+    let isDeleting = false;
+    let timer: ReturnType<typeof setTimeout>;
+
+    const type = () => {
+      const currentPhrase = phrases[phraseIndex];
+      
+      if (isDeleting) {
+        setPlaceholderId(currentPhrase.substring(0, charIndex - 1));
+        charIndex--;
+        timer = setTimeout(type, 50);
+      } else {
+        setPlaceholderId(currentPhrase.substring(0, charIndex + 1));
+        charIndex++;
+        timer = setTimeout(type, 120);
       }
-      return safeId;
+
+      if (!isDeleting && charIndex === currentPhrase.length) {
+        isDeleting = true;
+        timer = setTimeout(type, 2000); 
+      } else if (isDeleting && charIndex === 0) {
+        isDeleting = false;
+        phraseIndex = (phraseIndex + 1) % phrases.length;
+        timer = setTimeout(type, 500); 
+      }
     };
 
-    const interval = setInterval(() => {
-      if (!studentId && !loading) {
-        setPlaceholderId(generateSafeId());
-      }
-    }, 2000);
-
-    return () => clearInterval(interval);
-  }, [studentId, loading, dbData]);
+    timer = setTimeout(type, 500);
+    return () => clearTimeout(timer);
+  }, [loading]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,11 +94,11 @@ export const StudentLogin = ({ onLogin }: { onLogin: (id: string) => Promise<boo
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#1a1d2e] via-[#25293c] to-[#1a1d2e] flex flex-col items-center pt-24 p-4">
-      <div className="w-full max-w-md flex flex-col items-center">
+    <div className="min-h-[100dvh] w-full bg-gradient-to-br from-[#1a1d2e] via-[#25293c] to-[#1a1d2e] flex flex-col items-center justify-center p-4 overflow-hidden">
+      <div className="w-full max-w-sm md:max-w-md flex flex-col items-center justify-center">
         
         {/* Logo ve Yazı Ayrımı */}
-        <div className="flex flex-col items-center justify-center mb-16">
+        <div className="flex flex-col items-center justify-center mb-8">
           <img 
             src={`${import.meta.env.BASE_URL}nep-logo.png`}  
             alt="NEP Logo" 
@@ -106,11 +112,8 @@ export const StudentLogin = ({ onLogin }: { onLogin: (id: string) => Promise<boo
         </div>
 
         {/* Form Alanı */}
-        <form onSubmit={handleSubmit} className="w-full bg-[#2d3142] rounded-3xl p-8 shadow-[0_0_40px_rgba(99,88,204,0.15)] border-2 border-[#6358cc]/40 flex flex-col items-center">
-          <div className="w-full mb-10 relative">
-            <label htmlFor="studentIdInput" className="block text-white/80 text-sm font-bold mb-4 uppercase tracking-widest text-center">
-              NEP ÖĞRENCİ NUMARASI VEYA KODU
-            </label>
+        <form onSubmit={handleSubmit} className="w-full bg-[#2d3142] rounded-3xl p-6 md:p-8 shadow-[0_0_40px_rgba(99,88,204,0.15)] border-2 border-[#6358cc]/40 flex flex-col items-center">
+          <div className="w-full mb-8 relative">
             <input
               id="studentIdInput"
               name="studentId"
@@ -120,11 +123,11 @@ export const StudentLogin = ({ onLogin }: { onLogin: (id: string) => Promise<boo
               onKeyDown={handleKeyDown}
               maxLength={4}
               placeholder={loading ? "GİRİŞ YAPILIYOR..." : placeholderId}
-              className={`w-full px-4 py-5 bg-[#1a1d2e] border-2 ${error ? 'border-[#ff6b6e]' : 'border-[#6358cc]/50 animate-rgb-border'} rounded-2xl text-white text-3xl font-black tracking-widest text-center placeholder:text-white/20 focus:outline-none focus:border-[#00cfe8] focus:shadow-[0_0_20px_rgba(0,207,232,0.3)] transition-all`}
+              className={`w-full px-4 py-6 md:py-8 bg-[#1a1d2e] border-2 ${error ? 'border-[#ff6b6e]' : 'border-[#6358cc]/50 animate-rgb-border'} rounded-2xl text-white text-3xl md:text-4xl font-black tracking-widest text-center placeholder:text-white/20 focus:outline-none focus:border-[#00cfe8] focus:shadow-[0_0_20px_rgba(0,207,232,0.3)] transition-all`}
             />
           </div>
 
-          <div className={`w-full mb-6 p-4 rounded-xl transition-all duration-300 ${error ? 'bg-[#d44d4e]/10 border border-[#d44d4e]/50 opacity-100' : 'opacity-0 h-0 p-0 overflow-hidden'}`}>
+          <div className={`w-full mb-4 p-4 rounded-xl transition-all duration-300 ${error ? 'bg-[#d44d4e]/10 border border-[#d44d4e]/50 opacity-100' : 'opacity-0 h-0 p-0 overflow-hidden'}`}>
             <p className="text-[#ff6b6e] text-lg font-bold text-center tracking-wide typing-effect overflow-hidden whitespace-nowrap">{error}</p>
           </div>
 
