@@ -22,18 +22,17 @@ export const StudentLogin = ({ onLogin }: StudentLoginProps) => {
       setError('SİSTEMDE BU NUMARA BULUNAMADI!');
       setLoading(false);
     }
-    // Başarılı giriş durumunu parent (App.tsx) handles transition.
   };
 
   return (
-    // DEĞİŞTİ: items-centerpt-24 ile ortalamayı sağladık. justify-center kaldırıldı.
+    // ÜSTTEN MESAFE (pt-24) VE ORTALAMA
     <div className="min-h-screen bg-gradient-to-br from-[#1a1d2e] via-[#25293c] to-[#1a1d2e] flex flex-col items-center pt-24 p-4">
       <div className="w-full max-w-md flex flex-col items-center">
         
-        {/* LOGO VE BAŞLIK BÖLÜMÜ (Yazı Animasyonu ve Karanlık Mod Logosu Eklendi) */}
+        {/* LOGO VE BAŞLIK (Local resimden alıyor, simetrik) */}
         <div className="flex flex-col items-center justify-center mb-8 w-full animate-pulse-glow">
           <img 
-            src="https://cdn.prod.website-files.com/68b41d250349c9a385b11ecc/68b42031492c916cc2c20789_nep_logo%201.png" 
+            src="/68b42031492c916cc2c20789_nep_logo 1.png" 
             alt="NEP Logo" 
             className="h-24 md:h-28 object-contain mb-6 brightness-0 invert drop-shadow-[0_0_15px_rgba(255,255,255,0.4)] transition-transform hover:scale-105"
           />
@@ -42,7 +41,7 @@ export const StudentLogin = ({ onLogin }: StudentLoginProps) => {
           </h1>
         </div>
 
-        {/* FORMU BARINDIRAN BÖLÜM */}
+        {/* FORM (RGB Kenarlık ve Roket Butonu) */}
         <form onSubmit={handleSubmit} className="w-full bg-[#2d3142] rounded-3xl p-8 shadow-[0_0_40px_rgba(99,88,204,0.15)] border-2 border-[#6358cc]/40 flex flex-col items-center">
           <div className="w-full mb-8">
             <label className="block text-white/80 text-sm font-bold mb-4 uppercase tracking-widest text-center">
@@ -54,7 +53,7 @@ export const StudentLogin = ({ onLogin }: StudentLoginProps) => {
               onChange={(e) => setStudentId(e.target.value.replace(/\D/g, ''))}
               maxLength={4}
               placeholder="1234"
-              // DEĞİŞTİ: animate-rgb-border eklendi
+              // RGB DÖNGÜSÜ BURADA
               className="w-full px-4 py-5 bg-[#1a1d2e] border-2 border-[#6358cc]/50 animate-rgb-border rounded-2xl text-white text-3xl font-black tracking-widest text-center placeholder:text-white/20 focus:outline-none focus:border-[#00cfe8] focus:shadow-[0_0_20px_rgba(0,207,232,0.3)] transition-all"
               disabled={loading}
             />
@@ -71,7 +70,6 @@ export const StudentLogin = ({ onLogin }: StudentLoginProps) => {
             disabled={loading || !studentId}
             className="w-full bg-gradient-to-r from-[#6358cc] to-[#8b7fd8] text-white font-black py-5 rounded-2xl uppercase tracking-widest text-lg hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-[0_0_20px_rgba(99,88,204,0.4)]"
           >
-            {/* DEĞİŞTİ: Sadece roket emojisi */}
             {loading ? 'BAĞLANILIYOR...' : '🚀'}
           </button>
         </form>
