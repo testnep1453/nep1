@@ -18,9 +18,10 @@ export const StudentLogin = ({ onLogin }: { onLogin: (id: string) => Promise<boo
       <div className="w-full max-w-md flex flex-col items-center">
         <div className="flex flex-col items-center justify-center mb-12 animate-pulse-glow">
           <img 
-            src="/nep-logo.png"  
-            className="h-28 object-contain mb-6 brightness-0 invert drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]"
-          />
+  src={`${import.meta.env.BASE_URL}nep-logo.png`} 
+  alt="NEP Logo" 
+  className="h-28 object-contain mb-6 brightness-0 invert drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]"
+/>
           <h1 className="text-4xl font-extrabold text-white tracking-widest uppercase">SİSTEM GİRİŞİ</h1>
         </div>
         <form onSubmit={handleSubmit} className="w-full bg-[#2d3142] rounded-3xl p-8 border-2 border-[#6358cc]/40 flex flex-col items-center">
