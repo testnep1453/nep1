@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import studentData from '../../student_list.json';
+import { getStudents } from '../../services/db';
 
 export const StudentLogin = ({ onLogin }: { onLogin: (id: string) => Promise<boolean> }) => {
   const [studentId, setStudentId] = useState('');
@@ -22,11 +22,13 @@ export const StudentLogin = ({ onLogin }: { onLogin: (id: string) => Promise<boo
   // 4 Haneye Veya Eşleşen 3 Haneye Ulaşınca Otomatik Giriş
   useEffect(() => {
     if (studentId.length >= 3) {
-      const exactMatch = studentData.find((s: {id: string}) => s.id === studentId);
+      const dbData = getStudents();
+      const exactMatch = dbData.find((s) => s.id === studentId);
       if (exactMatch) {
          triggerLogin(studentId);
       } else if (studentId.length === 3) {
-         const partialMatch = studentData.find((s: {id: string}) => s.id.startsWith(studentId));
+         const dbData = getStudents();
+         const partialMatch = dbData.find((s) => s.id.startsWith(studentId));
          if (partialMatch) {
             console.log(`[BİLDİRİM - ADMİN 1002]: ${studentId} ile başlayan şüpheli/kısmi giriş!`);
          }
@@ -47,7 +49,7 @@ export const StudentLogin = ({ onLogin }: { onLogin: (id: string) => Promise<boo
 
   // Veritabanı ile Çakışmayan Rastgele Sayı Döngüsü
   useEffect(() => {
-    const dbIds = studentData.map((s: { id: string }) => s.id);
+    const dbIds = getStudents().map((s) => s.id);
     
     const generateSafeId = () => {
       let safeId = '';

@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../config/firebase';
 import { Student } from '../types/student';
-import studentData from '../student_list.json';
+import { getStudents } from '../services/db';
 
 export const useAuth = () => {
   const [student, setStudent] = useState<Student | null>(null);
@@ -18,8 +18,8 @@ export const useAuth = () => {
   }, []);
 
   const loadStudent = async (id: string) => {
-    // ÖNCE JSON'DA ARA (HIZLI VE ÜCRETSİZ)
-    const jsonStudent = studentData.find(s => s.id === id);
+    // ÖNCE LOCALDAN (DB SIMULATOR) ARA
+    const jsonStudent = getStudents().find(s => s.id === id);
     if (jsonStudent) {
       setStudent({
         id: jsonStudent.id,
@@ -61,8 +61,8 @@ export const useAuth = () => {
   };
 
   const login = async (studentId: string): Promise<boolean> => {
-    // ÖNCE JSON'DA KONTROL ET
-    const jsonStudent = studentData.find(s => s.id === studentId);
+    // ÖNCE LOCAL DB'DEN KONTROL ET
+    const jsonStudent = getStudents().find(s => s.id === studentId);
     if (jsonStudent) {
       localStorage.setItem('studentId', studentId);
       await loadStudent(studentId);

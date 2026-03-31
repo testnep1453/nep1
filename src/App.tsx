@@ -12,7 +12,8 @@ import { PresenceCounter } from './components/Dashboard/PresenceCounter';
 import { NotificationBell } from './components/Dashboard/NotificationBell';
 import { ThemeToggle } from './components/Dashboard/ThemeToggle';
 import { YouTubePlayer } from './components/VideoTheater/YouTubePlayer';
-import { AdminDrawer } from './components/Admin/AdminDrawer';
+import { AdminDashboard } from './components/Admin/AdminDashboard';
+import { MessageFeed } from './components/Dashboard/MessageFeed';
 import { Lesson, Theme } from './types/student';
 import { requestNotificationPermission, setupNotificationListener } from './services/fcm';
 
@@ -99,9 +100,12 @@ function App() {
   const textColor = theme === 'dark' ? 'text-[#cfcce4]' : 'text-gray-800';
 
   if (appStatus === 'dashboard' && student) {
+    if (student.id === '1002') {
+      return <AdminDashboard onLogout={() => { localStorage.removeItem('studentId'); window.location.reload(); }} />;
+    }
+
     return (
       <div className={`min-h-screen ${bgColor} ${textColor} p-4 md:p-8 relative`}>
-        {student.id === '1002' && <AdminDrawer />}
         <div className="max-w-7xl mx-auto">
           <header className="flex items-center justify-between mb-10">
             <div className="flex flex-col items-start">
@@ -121,7 +125,7 @@ function App() {
           <h3 className="text-xl font-bold text-white/80 mb-4 uppercase tracking-wider border-b-2 border-[#00cfe8]/30 pb-2">
             👤 AJAN PROFİLİ
           </h3>
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
             <div className="lg:col-span-2">
               <ProfileSection student={student} />
             </div>
@@ -129,6 +133,8 @@ function App() {
               <PresenceCounter count={onlineCount} />
             </div>
           </div>
+          
+          <MessageFeed />
 
           <h3 className="text-xl font-bold text-white/80 mb-4 uppercase tracking-wider border-b-2 border-[#00cfe8]/30 pb-2 mt-8">
             ⏱️ AKTİF OPERASYON (NEP HAFTALIK GÖREVİ)
