@@ -136,6 +136,7 @@ body {
 @keyframes blink-caret {
   from, to { border-color: transparent }
   50% { border-color: #00cfe8; }
+  100% { border-color: transparent; } /* Bittiğinde şeffaf kalması için eklendi */
 }
 
 .animate-typing {
@@ -143,7 +144,8 @@ body {
   white-space: nowrap;
   border-right: 0.15em solid #00cfe8;
   margin: 0 auto;
+  /* infinite yerine forwards ekledik, imleç 3 kez yanıp sönüp duracak */
   animation: 
-    typing 1.5s steps(30, end),
-    blink-caret .75s step-end infinite;
+    typing 1.5s steps(30, end) forwards,
+    blink-caret .75s step-end 3 forwards; 
 }
