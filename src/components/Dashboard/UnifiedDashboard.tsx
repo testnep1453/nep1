@@ -369,7 +369,7 @@ export const UnifiedDashboard = ({
           </div>
           <div className="hidden md:block">
             <img
-              src="/nep-logo.png"
+              src={`${import.meta.env.BASE_URL}nep-logo.png`}
               alt="NEP Logo"
               className="h-10 opacity-50 brightness-0 invert"
             />
