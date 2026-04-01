@@ -108,7 +108,7 @@ export const disableTrailer = async () => {
   });
 };
 
-extractYoutubeId('https://www.youtube.com/watch?v=dQw4w9WgXcQ') → 'dQw4w9WgXcQ'
+// URL'den YouTube video ID'sini çıkarır
 export const extractYoutubeId = (url: string): string => {
   if (!url) return '';
   const match = url.match(/(?:v\/|youtu\.be\/|v=|embed\/)([^&?\s]{11})/);

@@ -137,11 +137,11 @@ export const UnifiedDashboard = ({
 
       const validRows: Student[] = [];
       for (const row of rows) {
-        // Excel sütunları: ID, İsim, Kod (nickname) veya ilk 3 sütun sırasıyla
-        const keys = Object.keys(row);
-        const id = String(row[keys[0]] || '').trim();
-        const name = String(row[keys[1]] || '').trim();
-        const nickname = String(row[keys[2]] || '').trim();
+        const typedRow = row as Record<string, unknown>;
+        const keys = Object.keys(typedRow);
+        const id = String(typedRow[keys[0]] || '').trim();
+        const name = String(typedRow[keys[1]] || '').trim();
+        const nickname = String(typedRow[keys[2]] || '').trim();
 
         if (!id || !name) continue;
         if (validRows.some(s => s.id === id)) continue;
@@ -654,7 +654,6 @@ export const UnifiedDashboard = ({
                   </thead>
                   <tbody className="divide-y divide-gray-800">
                     {students.map((stu) => {
-                      const stuAttendance = (stu as any).attendanceHistory || [];
                       const stuStreak = (stu as any).streak || 0;
                       return (
                         <tr key={stu.id} className="hover:bg-white/5 transition-colors group">

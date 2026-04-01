@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh run:*)",
+      "Bash(powershell -Command \"cd 'C:\\\\Users\\\\03muh\\\\OneDrive - Bahceşehir Üniversitesi\\\\Belgeler\\\\nep1'; git add .; git commit -m 'fix: build hatalari duzeltildi'; git push\")"
+    ]
+  }
+}
