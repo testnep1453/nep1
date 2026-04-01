@@ -1,6 +1,6 @@
-import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, setDoc } from 'firebase/firestore';
+import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, setDoc, writeBatch } from 'firebase/firestore';
 import { db } from '../config/firebase';
-import { Student } from '../types/student';
+import { Student, Trailer, AttendanceRecord } from '../types/student';
 
 export interface AppMessage {
   id: string;
@@ -70,4 +70,57 @@ export const updateStudentInFirebase = async (id: string, updates: Partial<Stude
 
 export const removeStudentFromFirebase = async (id: string) => {
   await deleteDoc(doc(db, 'students', id));
+};
+
+// --- FRAGMAN İŞLEMLERİ ---
+
+export const subscribeToTrailer = (callback: (trailer: Trailer | null) => void) => {
+  try {
+    return onSnapshot(doc(db, 'settings', 'trailer'), (snap) => {
+      if (snap.exists()) {
+        callback(snap.data() as Trailer);
+      } else {
+        callback(null);
+      }
+    }, (error) => {
+      console.warn('Trailer dinleme hatası:', error);
+      callback(null);
+    });
+  } catch (e) {
+    callback(null);
+    return () => {};
+  }
+};
+
+export const setTrailer = async (trailer: Omit<Trailer, 'isActive'>) => {
+  await setDoc(doc(db, 'settings', 'trailer'), {
+    ...trailer,
+    isActive: true,
+  });
+};
+
+export const disableTrailer = async () => {
+  await setDoc(doc(db, 'settings', 'trailer'), {
+    youtubeId: '',
+    showDate: '',
+    showTime: '',
+    isActive: false,
+  });
+};
+
+extractYoutubeId('https://www.youtube.com/watch?v=dQw4w9WgXcQ') → 'dQw4w9WgXcQ'
+export const extractYoutubeId = (url: string): string => {
+  if (!url) return '';
+  const match = url.match(/(?:v\/|youtu\.be\/|v=|embed\/)([^&?\s]{11})/);
+  return match ? match[1] : url.slice(0, 11);
+};
+
+// --- TOPLU ÖĞRENCİ EKLEME ---
+
+export const addStudentsBatch = async (students: Student[]) => {
+  const batch = writeBatch(db);
+  students.forEach((student) => {
+    batch.set(doc(db, 'students', student.id), student);
+  });
+  await batch.commit();
 };

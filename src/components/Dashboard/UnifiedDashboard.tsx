@@ -177,7 +177,7 @@ export const UnifiedDashboard = ({
           </div>
           <div className="hidden md:block">
             <img 
-              src="/68b42031492c916cc2c20789_nep_logo%201.png" 
+              src="/nep-logo.png"
               alt="NEP Logo" 
               className="h-10 opacity-50 brightness-0 invert"
             />

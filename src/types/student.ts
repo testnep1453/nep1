@@ -7,6 +7,14 @@ export interface Student {
   badges: string[];
   avatar: string;
   lastSeen: number;
+  attendanceHistory: AttendanceRecord[];
+  streak: number;
+}
+
+export interface AttendanceRecord {
+  date: string; // YYYY-MM-DD format
+  xpEarned: number;
+  videoWatched: boolean;
 }
 
 export interface Lesson {
@@ -30,4 +38,11 @@ export interface EmojiReaction {
   emoji: string;
   x: number;
   timestamp: number;
+}
+
+export interface Trailer {
+  youtubeId: string;
+  showDate: string; // YYYY-MM-DD
+  showTime: string; // HH:MM (24h format)
+  isActive: boolean;
 }
