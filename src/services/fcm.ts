@@ -11,8 +11,11 @@ export const requestNotificationPermission = async () => {
 
     const permission = await Notification.requestPermission();
     if (permission === 'granted') {
+      const swUrl = import.meta.env.BASE_URL + 'firebase-messaging-sw.js';
+      const registration = await navigator.serviceWorker.register(swUrl);
       const token = await getToken(messaging, {
-        vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY
+        vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
+        serviceWorkerRegistration: registration
       });
       return token;
     }
