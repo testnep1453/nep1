@@ -81,7 +81,7 @@ export const StudentLogin = ({ onLogin }: { onLogin: (id: string) => Promise<boo
 
   // Tak-tak yazma efektli rastgele numara üreticisi
   useEffect(() => {
-    const dbIds = getStudents().map((s) => s.id);
+    const dbIds = getStudentsCached().map((s) => s.id);
 
     const generateSafeId = () => {
       let safeId = '';
