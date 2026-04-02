@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { getStudents } from '../../services/db';
 
 export const StudentLogin = ({ onLogin }: { onLogin: (id: string) => Promise<boolean> }) => {
@@ -7,37 +7,71 @@ export const StudentLogin = ({ onLogin }: { onLogin: (id: string) => Promise<boo
   const [error, setError] = useState('');
   const [placeholderId, setPlaceholderId] = useState('');
 
-  // Ortak Giriş Fonksiyonu
-  const triggerLogin = async (idToSubmit: string) => {
+  // PERFORMANS DÜZELTMESİ: localStorage okumasını bir kez yap, cache'le
+  const studentsCacheRef = useRef<{ id: string; name: string; nickname?: string }[] | null>(null);
+
+  const getStudentsCached = () => {
+    if (!studentsCacheRef.current) {
+      studentsCacheRef.current = getStudents();
+    }
+    return studentsCacheRef.current;
+  };
+
+  // GÜVENLİK DÜZELTMESİ: Başarısız deneme sayaç + rate limiting
+  const attemptCountRef = useRef(0);
+  const lockoutTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isLockedRef = useRef(false);
+
+  const triggerLogin = useCallback(async (idToSubmit: string) => {
+    if (isLockedRef.current) {
+      setError('Çok fazla hatalı deneme! Lütfen biraz bekleyin.');
+      return;
+    }
     setLoading(true);
     setError('');
     const success = await onLogin(idToSubmit);
-    
-    if (!success) {
-      setError('SİSTEMDE BU NUMARA BULUNAMADI!');
-      setLoading(false);
-    }
-  };
 
-  // 4 Haneye Veya Eşleşen 3 Haneye Ulaşınca Otomatik Giriş
-  useEffect(() => {
-    if (studentId.length >= 3) {
-      const dbData = getStudents();
-      const exactMatch = dbData.find((s) => s.id === studentId);
-      if (exactMatch) {
-         triggerLogin(studentId);
-      } else if (studentId.length === 3) {
-         const partialMatch = dbData.find((s) => s.id.startsWith(studentId));
-         if (partialMatch) {
-            console.log(`[BİLDİRİM - ADMİN 1002]: ${studentId} ile başlayan şüpheli/kısmi giriş!`);
-         }
-      } else if (studentId.length === 4) {
-         triggerLogin(studentId);
+    if (!success) {
+      attemptCountRef.current += 1;
+
+      if (attemptCountRef.current >= 5) {
+        isLockedRef.current = true;
+        setError('Çok fazla hatalı deneme! 30 saniye bekleyin.');
+        lockoutTimerRef.current = setTimeout(() => {
+          attemptCountRef.current = 0;
+          isLockedRef.current = false;
+          setError('');
+        }, 30000);
+      } else {
+        setError('SİSTEMDE BU NUMARA BULUNAMADI!');
       }
+      setLoading(false);
     } else {
-      setError('');
+      attemptCountRef.current = 0;
     }
-  }, [studentId]);
+  }, [onLogin]);
+
+  // Otomatik giriş — cache'lenmiş veri ile
+  useEffect(() => {
+    if (studentId.length < 3) {
+      setError('');
+      return;
+    }
+
+    const dbData = getStudentsCached();
+    const exactMatch = dbData.find((s) => s.id === studentId);
+
+    if (exactMatch) {
+      triggerLogin(studentId);
+    } else if (studentId.length === 3) {
+      const partialMatch = dbData.find((s) => s.id.startsWith(studentId));
+      if (partialMatch) {
+        console.log(`[BİLDİRİM]: ${studentId} ile başlayan kısmi giriş denemesi.`);
+      }
+    } else if (studentId.length === 4) {
+      triggerLogin(studentId);
+    }
+  }, [studentId, triggerLogin]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && studentId.length >= 3 && studentId.length <= 4) {
