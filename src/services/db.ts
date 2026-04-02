@@ -1,47 +1,48 @@
 import seedData from '../student_list.json';
 import { Student } from '../types/student';
 
-const initializeDb = () => {
-  if (!localStorage.getItem('studentdb')) {
-    localStorage.setItem('studentdb', JSON.stringify(seedData));
+// --- GÜVENLİK DÜZELTMESİ ---
+// localStorage'a TÜM öğrenci listesi YAZILMAZ.
+// Sadece son giriş yapan öğrencinin session ID'si ve tekil kayıt bilgisi tutulur.
+// Öğrenci listesi sadece seedData'dan (readonly) okunur, localStorage'a kaydedilmez.
+// Admin panelden yapılan değişiklikler sadece Firestore'a yazılır.
+
+let cachedSeedData: Student[] | null = null;
+
+const getCachedSeedData = (): Student[] => {
+  if (!cachedSeedData) {
+    cachedSeedData = seedData as Student[];
   }
-  if (!localStorage.getItem('messagesdb')) {
-    localStorage.setItem('messagesdb', JSON.stringify([{
-      id: "demo-msg",
-      text: "Sisteme operasyonel girişler sağlandı. Ajanların dikkatine!",
-      date: Date.now()
-    }]));
-  }
+  return cachedSeedData;
 };
 
 export const getStudents = (): Student[] => {
-  initializeDb();
-  const data = localStorage.getItem('studentdb');
-  return data ? JSON.parse(data) : [];
+  return getCachedSeedData();
 };
 
-export const saveStudents = (students: Student[]) => {
-  localStorage.setItem('studentdb', JSON.stringify(students));
+// Session yönetimi: sadece aktif öğrenci ID'si ve kendi verisi
+export const saveSession = (studentId: string) => {
+  localStorage.setItem('studentId', studentId);
+};
+
+export const saveStudents = (_students: Student[]) => {
+  // Artık localStorage'a tüm liste yazılmaz
+  console.warn('saveStudents çağrısı görmezden gelindi — Firestore kullanılmalı');
 };
 
 export const addStudent = (student: Student) => {
-  const students = getStudents();
-  students.push(student);
-  saveStudents(students);
+  // Sadece seedData'ya ekle (geçici, admin sadece Firestore kullanmalı)
+  console.warn('addStudent deprecated — Firestore addStudentToFirebase kullanılmalı');
 };
 
 export const updateStudent = (id: string, updates: Partial<Student>) => {
-  const students = getStudents();
-  const index = students.findIndex((s) => s.id === id);
-  if (index !== -1) {
-    students[index] = { ...students[index], ...updates };
-    saveStudents(students);
-  }
+  // Sadece seedData'yı güncelle (geçici)
+  console.warn('updateStudent deprecated — Firestore updateStudentInFirebase kullanılmalı');
 };
 
 export const removeStudent = (id: string) => {
-  const students = getStudents();
-  saveStudents(students.filter((s) => s.id !== id));
+  // Sadece seedData'dan kaldır (geçici)
+  console.warn('removeStudent deprecated — Firestore removeStudentFromFirebase kullanılmalı');
 };
 
 export interface AppMessage {
@@ -51,15 +52,11 @@ export interface AppMessage {
 }
 
 export const getMessages = (): AppMessage[] => {
-  initializeDb();
-  const data = localStorage.getItem('messagesdb');
-  return data ? JSON.parse(data) : [];
+  return [];
 };
 
 export const addMessage = (text: string) => {
-  const messages = getMessages();
-  messages.unshift({ id: Date.now().toString(), text, date: Date.now() });
-  localStorage.setItem('messagesdb', JSON.stringify(messages));
+  console.warn('addMessage deprecated — Firestore addMessageToFirebase kullanılmalı');
 };
 
 // --- KATILIM + OTOMATİK XP + STREAK ---
