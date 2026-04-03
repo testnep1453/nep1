@@ -1,10 +1,10 @@
 /**
  * Admin (1002) Giriş Bileşeni
  * İlk girişte şifre belirleme, sonrasında şifre ile giriş
+ * Hibrit: Firestore öncelikli, izin hatası olursa localStorage fallback
  */
 
 import { useState, useEffect } from 'react';
-import { getAdminAuth, saveAdminPassword } from '../../services/dbFirebase';
 
 interface AdminAuthProps {
   adminName: string;
@@ -12,7 +12,7 @@ interface AdminAuthProps {
   onCancel: () => void;
 }
 
-// Basit hash fonksiyonu (client-side)
+// SHA-256 hash (client-side)
 const hashPassword = async (password: string): Promise<string> => {
   const encoder = new TextEncoder();
   const data = encoder.encode(password + 'nep_salt_2026');
@@ -20,6 +20,53 @@ const hashPassword = async (password: string): Promise<string> => {
   const hashArray = Array.from(new Uint8Array(hashBuffer));
   return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
 };
+
+// --- Hibrit Storage: Firestore → localStorage fallback ---
+
+const ADMIN_LS_KEY = 'nep_admin_auth_hash';
+
+const saveAdminHash = async (hash: string): Promise<void> => {
+  // Önce Firestore'a yaz
+  try {
+    const { doc, setDoc } = await import('firebase/firestore');
+    const { db } = await import('../../config/firebase');
+    await setDoc(doc(db, 'admin', 'auth'), {
+      passwordHash: hash,
+      createdAt: Date.now(),
+    });
+    // Firestore başarılı → localStorage'a da yedekle
+    localStorage.setItem(ADMIN_LS_KEY, hash);
+    return;
+  } catch (e) {
+    console.warn('Firestore admin yazma hatası, localStorage kullanılıyor:', e);
+  }
+
+  // Firestore başarısız → localStorage'a yaz
+  localStorage.setItem(ADMIN_LS_KEY, hash);
+};
+
+const getAdminHash = async (): Promise<string | null> => {
+  // Önce Firestore'dan oku
+  try {
+    const { doc, getDoc } = await import('firebase/firestore');
+    const { db } = await import('../../config/firebase');
+    const snap = await getDoc(doc(db, 'admin', 'auth'));
+    if (snap.exists() && snap.data().passwordHash) {
+      const hash = snap.data().passwordHash;
+      // localStorage'a da yedekle
+      localStorage.setItem(ADMIN_LS_KEY, hash);
+      return hash;
+    }
+  } catch (e) {
+    console.warn('Firestore admin okuma hatası, localStorage kontrol ediliyor:', e);
+  }
+
+  // Firestore'da yoksa veya hata verdiyse → localStorage'dan oku
+  const lsHash = localStorage.getItem(ADMIN_LS_KEY);
+  return lsHash || null;
+};
+
+// --- Bileşen ---
 
 export const AdminAuth = ({ adminName, onSuccess, onCancel }: AdminAuthProps) => {
   const [mode, setMode] = useState<'loading' | 'setup' | 'login'>('loading');
@@ -33,14 +80,10 @@ export const AdminAuth = ({ adminName, onSuccess, onCancel }: AdminAuthProps) =>
   }, []);
 
   const checkExistingAuth = async () => {
-    try {
-      const auth = await getAdminAuth();
-      if (auth && auth.passwordHash) {
-        setMode('login');
-      } else {
-        setMode('setup');
-      }
-    } catch {
+    const hash = await getAdminHash();
+    if (hash) {
+      setMode('login');
+    } else {
       setMode('setup');
     }
   };
@@ -61,9 +104,9 @@ export const AdminAuth = ({ adminName, onSuccess, onCancel }: AdminAuthProps) =>
 
     try {
       const hashed = await hashPassword(password);
-      await saveAdminPassword(hashed);
+      await saveAdminHash(hashed);
       onSuccess();
-    } catch (err) {
+    } catch {
       setError('Şifre kaydedilemedi. Tekrar deneyin.');
     } finally {
       setLoading(false);
@@ -81,15 +124,15 @@ export const AdminAuth = ({ adminName, onSuccess, onCancel }: AdminAuthProps) =>
     setError('');
 
     try {
-      const auth = await getAdminAuth();
-      if (!auth) {
+      const savedHash = await getAdminHash();
+      if (!savedHash) {
         setMode('setup');
         setLoading(false);
         return;
       }
 
       const hashed = await hashPassword(password);
-      if (hashed === auth.passwordHash) {
+      if (hashed === savedHash) {
         onSuccess();
       } else {
         setError('Yanlış şifre!');
