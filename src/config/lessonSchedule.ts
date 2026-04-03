@@ -1,0 +1,181 @@
+/**
+ * NEP Ders Programı Konfigürasyonu
+ * 
+ * Ana Kural: Her hafta Perşembe 19:00 - 20:00 arası ders yapılır.
+ * Bugünden itibaren sonraki perşembe günleri otomatik hesaplanır.
+ */
+
+import { Lesson } from '../types/student';
+
+// Sabit Zoom linki
+const DEFAULT_ZOOM_LINK = 'https://us06web.zoom.us/j/81331199971?pwd=wEBSZPJcBJg3MbV4FqGMO7ggJ3onM8.1';
+
+// Ders saatleri (Türkiye saati - UTC+3)
+const LESSON_HOUR_START = 19; // 19:00
+const LESSON_HOUR_END = 20;   // 20:00
+const LESSON_DAY = 4;         // Perşembe (0=Pazar, 4=Perşembe)
+
+/**
+ * Bugünden itibaren en yakın perşembe gününü hesapla
+ */
+export const getNextThursday = (fromDate: Date = new Date()): Date => {
+  const d = new Date(fromDate);
+  const day = d.getDay();
+  // Perşembe'ye kaç gün var?
+  let daysUntilThursday = (LESSON_DAY - day + 7) % 7;
+  
+  // Eğer bugün perşembe ise
+  if (daysUntilThursday === 0) {
+    const now = new Date();
+    // Ders saati geçmediyse bugünü döndür
+    if (now.getHours() < LESSON_HOUR_END) {
+      daysUntilThursday = 0;
+    } else {
+      // Ders saati geçtiyse gelecek perşembeyi döndür
+      daysUntilThursday = 7;
+    }
+  }
+  
+  d.setDate(d.getDate() + daysUntilThursday);
+  return d;
+};
+
+/**
+ * Belirli bir tarih için ders bilgisi oluştur
+ */
+export const createLessonForDate = (date: Date): Lesson => {
+  const year = date.getFullYear();
+  const month = date.getMonth();
+  const day = date.getDate();
+  
+  const startTime = new Date(year, month, day, LESSON_HOUR_START, 0, 0).getTime();
+  const endTime = new Date(year, month, day, LESSON_HOUR_END, 0, 0).getTime();
+  const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+
+  return {
+    startTime,
+    endTime,
+    title: `NEP Haftalık Ders — ${day} ${getMonthName(month)}`,
+    zoomLink: DEFAULT_ZOOM_LINK,
+    date: dateStr
+  };
+};
+
+/**
+ * Şu anki veya bir sonraki ders bilgisini getir
+ */
+export const getNextLesson = (): Lesson => {
+  const nextThursday = getNextThursday();
+  return createLessonForDate(nextThursday);
+};
+
+/**
+ * Şu an ders aktif mi? (Perşembe 19:00 - 20:00 arası)
+ */
+export const isLessonActive = (): boolean => {
+  const now = new Date();
+  return now.getDay() === LESSON_DAY && 
+         now.getHours() >= LESSON_HOUR_START && 
+         now.getHours() < LESSON_HOUR_END;
+};
+
+/**
+ * Şu an ders saati geldi mi? (Perşembe 19:00 - 19:59:59)
+ * Zero-click yönlendirme için kullanılır
+ */
+export const shouldAutoRedirectToZoom = (): boolean => {
+  return isLessonActive();
+};
+
+/**
+ * Bugün ders günü mü?
+ */
+export const isLessonDay = (): boolean => {
+  return new Date().getDay() === LESSON_DAY;
+};
+
+/**
+ * Ders sona erdi mi? (Perşembe 20:00 geçti mi?)
+ */
+export const isLessonEnded = (): boolean => {
+  const now = new Date();
+  return now.getDay() === LESSON_DAY && now.getHours() >= LESSON_HOUR_END;
+};
+
+/**
+ * Hatırlatma mesajı zamanı mı? (Çarşamba 19:00)
+ */
+export const isReminderTime = (): boolean => {
+  const now = new Date();
+  return now.getDay() === 3 && // Çarşamba
+         now.getHours() === LESSON_HOUR_START &&
+         now.getMinutes() === 0;
+};
+
+/**
+ * Ders başlangıç mesajı zamanı mı? (Perşembe 19:00)
+ */
+export const isLessonStartTime = (): boolean => {
+  const now = new Date();
+  return now.getDay() === LESSON_DAY &&
+         now.getHours() === LESSON_HOUR_START &&
+         now.getMinutes() === 0;
+};
+
+/**
+ * Gelecek N perşembeyi listele (arşiv veya planlama için)
+ */
+export const getUpcomingLessons = (count: number = 4): Lesson[] => {
+  const lessons: Lesson[] = [];
+  let current = getNextThursday();
+  
+  for (let i = 0; i < count; i++) {
+    lessons.push(createLessonForDate(current));
+    const next = new Date(current);
+    next.setDate(next.getDate() + 7);
+    current = next;
+  }
+  
+  return lessons;
+};
+
+/**
+ * Geçmiş dersleri hesapla (belirli bir başlangıç tarihinden itibaren)
+ */
+export const getPastLessons = (sinceDate: Date, count: number = 10): Lesson[] => {
+  const lessons: Lesson[] = [];
+  const now = new Date();
+  let current = getNextThursday(sinceDate);
+  
+  while (current < now && lessons.length < count) {
+    if (current.getDay() === LESSON_DAY) {
+      lessons.push(createLessonForDate(current));
+    }
+    current.setDate(current.getDate() + 7);
+  }
+  
+  return lessons.reverse();
+};
+
+// Ay isimleri (Türkçe)
+const getMonthName = (month: number): string => {
+  const months = [
+    'Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
+    'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'
+  ];
+  return months[month];
+};
+
+// Ders günü formatı
+export const formatLessonDate = (dateStr: string): string => {
+  const d = new Date(dateStr);
+  return `${d.getDate()} ${getMonthName(d.getMonth())} ${d.getFullYear()}, Perşembe`;
+};
+
+export const LESSON_CONFIG = {
+  dayOfWeek: LESSON_DAY,
+  startHour: LESSON_HOUR_START,
+  endHour: LESSON_HOUR_END,
+  zoomLink: DEFAULT_ZOOM_LINK,
+  dayName: 'Perşembe',
+} as const;

@@ -1,6 +1,6 @@
-import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, setDoc, writeBatch } from 'firebase/firestore';
+import { collection, addDoc, getDocs, updateDoc, deleteDoc, doc, onSnapshot, query, orderBy, setDoc, writeBatch, where } from 'firebase/firestore';
 import { db } from '../config/firebase';
-import { Student, Trailer, AttendanceRecord } from '../types/student';
+import { Student, Trailer, FeedbackEntry } from '../types/student';
 
 export interface AppMessage {
   id: string;
@@ -123,4 +123,103 @@ export const addStudentsBatch = async (students: Student[]) => {
     batch.set(doc(db, 'students', student.id), student);
   });
   await batch.commit();
+};
+
+// --- YOKLAMA İŞLEMLERİ ---
+
+export const recordAttendanceToFirebase = async (
+  studentId: string,
+  lessonDate: string,
+  autoJoined: boolean = true
+) => {
+  try {
+    const attendanceRef = doc(db, 'attendance', `${lessonDate}_${studentId}`);
+    await setDoc(attendanceRef, {
+      studentId,
+      lessonDate,
+      joinedAt: Date.now(),
+      autoJoined,
+      xpEarned: 100,
+    }, { merge: true });
+  } catch (error) {
+    console.error('Yoklama kaydı hatası:', error);
+  }
+};
+
+export const getAttendanceForLesson = async (lessonDate: string): Promise<Array<{ studentId: string; joinedAt: number; autoJoined: boolean }>> => {
+  try {
+    const q = query(collection(db, 'attendance'), where('lessonDate', '==', lessonDate));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({
+      studentId: doc.data().studentId,
+      joinedAt: doc.data().joinedAt,
+      autoJoined: doc.data().autoJoined,
+    }));
+  } catch {
+    return [];
+  }
+};
+
+// --- GERİ BİLDİRİM İŞLEMLERİ ---
+
+export const getFeedbackForLesson = async (lessonDate: string): Promise<FeedbackEntry[]> => {
+  try {
+    const q = query(
+      collection(db, 'feedback'),
+      where('lessonDate', '==', lessonDate),
+      orderBy('createdAt', 'desc')
+    );
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    })) as FeedbackEntry[];
+  } catch {
+    return [];
+  }
+};
+
+export const getAllFeedback = async (): Promise<FeedbackEntry[]> => {
+  try {
+    const q = query(collection(db, 'feedback'), orderBy('createdAt', 'desc'));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data(),
+    })) as FeedbackEntry[];
+  } catch {
+    return [];
+  }
+};
+
+// --- NİCKNAME GÜNCELLEME (GÖREV 6) ---
+
+export const updateNickname = async (studentId: string, nickname: string) => {
+  try {
+    await updateDoc(doc(db, 'students', studentId), { nickname });
+  } catch (error) {
+    console.error('Nickname güncelleme hatası:', error);
+    throw error;
+  }
+};
+
+// --- ADMIN AUTH ---
+
+export const saveAdminPassword = async (hashedPassword: string) => {
+  await setDoc(doc(db, 'admin', 'auth'), {
+    passwordHash: hashedPassword,
+    createdAt: Date.now(),
+  });
+};
+
+export const getAdminAuth = async (): Promise<{ passwordHash: string } | null> => {
+  try {
+    const snap = await getDocs(query(collection(db, 'admin')));
+    if (snap.empty) return null;
+    const authDoc = snap.docs.find(d => d.id === 'auth');
+    if (!authDoc) return null;
+    return { passwordHash: authDoc.data().passwordHash };
+  } catch {
+    return null;
+  }
 };

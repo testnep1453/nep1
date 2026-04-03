@@ -30,17 +30,17 @@ export const saveStudents = (_students: Student[]) => {
   console.warn('saveStudents çağrısı görmezden gelindi — Firestore kullanılmalı');
 };
 
-export const addStudent = (student: Student) => {
+export const addStudent = (_student: Student) => {
   // Sadece seedData'ya ekle (geçici, admin sadece Firestore kullanmalı)
   console.warn('addStudent deprecated — Firestore addStudentToFirebase kullanılmalı');
 };
 
-export const updateStudent = (id: string, updates: Partial<Student>) => {
+export const updateStudent = (_id: string, _updates: Partial<Student>) => {
   // Sadece seedData'yı güncelle (geçici)
   console.warn('updateStudent deprecated — Firestore updateStudentInFirebase kullanılmalı');
 };
 
-export const removeStudent = (id: string) => {
+export const removeStudent = (_id: string) => {
   // Sadece seedData'dan kaldır (geçici)
   console.warn('removeStudent deprecated — Firestore removeStudentFromFirebase kullanılmalı');
 };
@@ -55,7 +55,7 @@ export const getMessages = (): AppMessage[] => {
   return [];
 };
 
-export const addMessage = (text: string) => {
+export const addMessage = (_text: string) => {
   console.warn('addMessage deprecated — Firestore addMessageToFirebase kullanılmalı');
 };
 
@@ -96,7 +96,7 @@ export const recordAttendance = (studentId: string) => {
   }
 
   const totalXp = XP_FOR_ATTENDANCE + streakBonus;
-  student.attendanceHistory.push({ date: today, xpEarned: totalXp, videoWatched: false });
+  student.attendanceHistory.push({ date: today, lessonDate: today, xpEarned: totalXp, joinedAt: Date.now(), autoJoined: false });
   student.streak = newStreak;
   student.xp = (student.xp || 0) + totalXp;
   student.level = Math.floor(student.xp / 200) + 1;

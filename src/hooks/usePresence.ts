@@ -20,7 +20,8 @@ export const usePresence = (studentId: string | null) => {
 
     const presenceCountRef = ref(rtdb, 'presence');
     const unsubscribeCount = onValue(presenceCountRef, (snapshot) => {
-      const count = snapshot.numChildren();
+      let count = 0;
+      snapshot.forEach(() => { count++; });
       setOnlineCount(count);
     });
 
