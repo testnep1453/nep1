@@ -3,12 +3,11 @@ import { useAuth } from './hooks/useAuth';
 import { usePresence } from './hooks/usePresence';
 import { StudentLogin } from './components/Auth/StudentLogin';
 import { AdminAuth } from './components/Auth/AdminAuth';
-import { LoginTransitionOverlay } from './components/Transitions/LoginTransitionOverlay';
 import { UnifiedDashboard } from './components/Dashboard/UnifiedDashboard';
 import { getNextLesson } from './config/lessonSchedule';
 import { requestNotificationPermission, setupNotificationListener } from './services/fcm';
 
-type AppStatus = 'loggingIn' | 'adminAuth' | 'loginSuccessTransition' | 'dashboard';
+type AppStatus = 'loggingIn' | 'adminAuth' | 'dashboard';
 
 function App() {
   const {
@@ -39,10 +38,7 @@ function App() {
     }
 
     if (student && appStatus === 'loggingIn') {
-      setAppStatus('loginSuccessTransition');
-      setTimeout(() => {
-        setAppStatus('dashboard');
-      }, 5000);
+      setAppStatus('dashboard');
     } else if (!student && !needsAdminAuth && appStatus === 'dashboard') {
       setAppStatus('loggingIn');
     }
@@ -70,10 +66,7 @@ function App() {
         adminName={pendingStudent.name}
         onSuccess={() => {
           confirmAdminAuth();
-          setAppStatus('loginSuccessTransition');
-          setTimeout(() => {
-            setAppStatus('dashboard');
-          }, 5000);
+          setAppStatus('dashboard');
         }}
         onCancel={() => {
           cancelAdminAuth();
@@ -83,9 +76,7 @@ function App() {
     );
   }
 
-  if (appStatus === 'loginSuccessTransition' && (student || pendingStudent)) {
-    return <LoginTransitionOverlay studentName={(student || pendingStudent)!.name} />;
-  }
+
 
   if ((appStatus === 'loggingIn' && !student) || needsConfirmation) {
     return (
@@ -95,10 +86,7 @@ function App() {
         needsConfirmation={needsConfirmation}
         onConfirm={() => {
           confirmIdentity();
-          setAppStatus('loginSuccessTransition');
-          setTimeout(() => {
-            setAppStatus('dashboard');
-          }, 5000);
+          setAppStatus('dashboard');
         }}
         onReject={rejectIdentity}
       />

@@ -229,18 +229,18 @@ export const UnifiedDashboard = ({
 
   const tabConfig = isAdmin
     ? [
-        { id: 'genel' as const, label: 'Genel Durum', icon: <Icons.Home /> },
+        { id: 'genel' as const, label: 'Ana Sayfa', icon: <Icons.Home /> },
         { id: 'fragman' as const, label: 'Fragman', icon: <Icons.Film /> },
         { id: 'ajanlar' as const, label: 'Ajan Yönetimi', icon: <Icons.Users /> },
         { id: 'mesajlar' as const, label: 'Mesaj Gönder', icon: <Icons.Message /> },
         { id: 'geribildirim' as const, label: 'Geri Bildirimler', icon: <Icons.Star /> },
       ]
     : [
-        { id: 'genel' as const, label: 'Genel Durum', icon: <Icons.Home /> },
+        { id: 'genel' as const, label: 'Ana Sayfa', icon: <Icons.Home /> },
       ];
 
   return (
-    <div className="min-h-[100dvh] bg-[#050505] text-white flex flex-col md:flex-row font-['Rajdhani',sans-serif] selection:bg-[#39FF14]/30 overflow-hidden">
+    <div className="h-[100dvh] bg-[#050505] text-white flex flex-col md:flex-row font-['Rajdhani',sans-serif] selection:bg-[#39FF14]/30 overflow-hidden">
 
       {/* Background */}
       <div className="fixed inset-0 pointer-events-none z-0 opacity-20">
@@ -279,9 +279,11 @@ export const UnifiedDashboard = ({
         >
           <Icons.Swords />
         </button>
-        <h1 className={`text-sm font-bold tracking-widest ${isAdmin ? 'text-[#39FF14]' : 'text-[#00F0FF]'}`}>
-          {isAdmin ? 'KOMUTA MERKEZİ' : 'AJAN PANELİ'}
-        </h1>
+        <img
+          src={`${import.meta.env.BASE_URL}nep-logo.png`}
+          alt="NEP"
+          className="h-7 brightness-0 invert opacity-70"
+        />
         <button
           onClick={() => setMobileNavOpen(!mobileNavOpen)}
           className="text-white p-2 min-w-[44px] min-h-[44px] flex items-center justify-center"
@@ -310,10 +312,10 @@ export const UnifiedDashboard = ({
             ))}
             <button
               onClick={onLogout}
-              className="flex items-center gap-3 w-full p-3 rounded-md text-[#FF4500] hover:bg-[#FF4500]/10 transition-all font-bold min-h-[48px]"
+              className="flex items-center gap-3 w-full p-3 rounded-md text-gray-500 hover:bg-white/5 hover:text-[#FF4500] transition-all font-semibold min-h-[48px] text-sm"
             >
               <Icons.Logout />
-              Sistemi Kapat
+              Çıkış Yap
             </button>
           </div>
         </div>
@@ -321,15 +323,12 @@ export const UnifiedDashboard = ({
 
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex w-64 bg-[#0A1128] border-r border-[#39FF14]/20 z-10 flex-col h-screen sticky top-0">
-        <div className="p-6 border-b border-[#39FF14]/20 flex items-center gap-3">
-          <div className={`w-10 h-10 ${isAdmin ? 'bg-[#39FF14]/10 border-[#39FF14]/50 shadow-[0_0_15px_rgba(57,255,20,0.3)]' : 'bg-[#00F0FF]/10 border-[#00F0FF]/50 shadow-[0_0_15px_rgba(0,240,255,0.3)]'} rounded flex items-center justify-center border`}>
-            {isAdmin ? <span className="text-xl">👑</span> : <span className="text-xl">🛡️</span>}
-          </div>
-          <div>
-            <h1 className={`text-lg font-bold ${isAdmin ? 'text-[#39FF14]' : 'text-[#00F0FF]'} tracking-widest leading-tight`}>
-              {isAdmin ? <>KOMUTA<br/>MERKEZİ</> : <>AJAN<br/>PANELİ</>}
-            </h1>
-          </div>
+        <div className="p-6 border-b border-[#39FF14]/20 flex items-center justify-center">
+          <img
+            src={`${import.meta.env.BASE_URL}nep-logo.png`}
+            alt="NEP Logo"
+            className="h-10 brightness-0 invert opacity-80"
+          />
         </div>
 
         {/* Operasyon Çekmecesi butonu */}
@@ -363,10 +362,10 @@ export const UnifiedDashboard = ({
         <div className="p-4 border-t border-[#39FF14]/20">
           <button
             onClick={onLogout}
-            className="flex items-center gap-3 w-full p-3 rounded-md text-[#FF4500] hover:bg-[#FF4500]/10 transition-all font-bold tracking-wide"
+            className="flex items-center gap-3 w-full p-3 rounded-md text-gray-500 hover:text-[#FF4500] hover:bg-white/5 transition-all font-semibold tracking-wide text-sm"
           >
             <Icons.Logout />
-            Sistemi Kapat
+            Çıkış Yap
           </button>
         </div>
       </aside>
@@ -377,22 +376,15 @@ export const UnifiedDashboard = ({
           <div>
             <h2 className={`text-xs sm:text-sm tracking-[0.2em] uppercase mb-1 flex items-center gap-2 ${isAdmin ? 'text-[#39FF14]' : 'text-[#00F0FF]'}`}>
               <span className={`inline-block w-2 h-2 animate-pulse rounded-full ${isAdmin ? 'bg-[#39FF14]' : 'bg-[#00F0FF]'}`} />
-              Güvenlik Seviyesi: {isAdmin ? 'YÖNETİCİ' : 'AJAN'}
+              {isAdmin ? 'Yönetici' : 'Ajan'}
             </h2>
             <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold uppercase tracking-wider text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">
-              {activeTab === 'genel' && 'SİSTEM DURUMU'}
+              {activeTab === 'genel' && 'ANA SAYFA'}
               {activeTab === 'fragman' && 'FRAGMAN YÖNETİMİ'}
-              {activeTab === 'ajanlar' && 'AJAN VERİTABANI'}
-              {activeTab === 'mesajlar' && 'İSTİHBARAT AĞI'}
+              {activeTab === 'ajanlar' && 'AJAN YÖNETİMİ'}
+              {activeTab === 'mesajlar' && 'MESAJ GÖNDER'}
               {activeTab === 'geribildirim' && 'GERİ BİLDİRİMLER'}
             </h1>
-          </div>
-          <div className="hidden md:block">
-            <img
-              src={`${import.meta.env.BASE_URL}nep-logo.png`}
-              alt="NEP Logo"
-              className="h-10 opacity-50 brightness-0 invert"
-            />
           </div>
         </header>
 
@@ -430,21 +422,18 @@ export const UnifiedDashboard = ({
                 </div>
               </div>
 
-              {/* Ders Durumu Mini Kartı */}
+              {/* Ders Sayacı — Sadeleştirilmiş */}
               {lesson && (
-                <div className="bg-[#0A1128]/80 border border-[#6358cc]/30 p-4 sm:p-6 rounded-lg">
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                    <div>
-                      <h3 className="text-[#6358cc] text-xs font-mono tracking-widest mb-1">SONRAKİ DERS</h3>
-                      <p className="text-white font-bold text-lg">{lesson.title}</p>
-                      <p className="text-gray-500 text-xs">Her {LESSON_CONFIG.dayName} {LESSON_CONFIG.startHour}:00 — {LESSON_CONFIG.endHour}:00</p>
+                <div
+                  className="bg-[#0A1128]/80 border border-[#6358cc]/30 p-4 sm:p-5 rounded-lg cursor-pointer hover:border-[#6358cc]/60 transition-all group"
+                  onClick={() => setDrawerOpen(true)}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">⏰</span>
+                      <span className="text-[#8b7fd8] font-bold text-sm sm:text-base uppercase tracking-wider">Sonraki Derse</span>
                     </div>
-                    <button
-                      onClick={() => setDrawerOpen(true)}
-                      className="bg-[#6358cc]/20 hover:bg-[#6358cc]/40 text-[#8b7fd8] border border-[#6358cc]/30 py-2 px-4 rounded-lg font-bold transition-all text-sm uppercase tracking-wider min-h-[44px]"
-                    >
-                      Geri Sayımı Gör
-                    </button>
+                    <span className="text-gray-500 text-xs font-mono group-hover:text-[#8b7fd8] transition-colors">Detay →</span>
                   </div>
                 </div>
               )}
@@ -706,7 +695,7 @@ export const UnifiedDashboard = ({
             }`}
           >
             <Icons.Home />
-            <span className="text-[10px] font-bold">DURUM</span>
+            <span className="text-[10px] font-bold">ANA SAYFA</span>
           </button>
           <button
             onClick={() => setDrawerOpen(true)}

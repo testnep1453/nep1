@@ -121,15 +121,12 @@ export const OperationDrawer = ({
               {currentView === 'countdown' && lesson && (
                 <div className="animate-fade-in">
                   <div className="text-center mb-4">
-                    <span className="text-xs text-[#00F0FF] font-mono tracking-widest">SONRAKİ DERS</span>
+                    <span className="text-xs text-[#00F0FF] font-mono tracking-widest">⏰ SONRAKİ DERSE</span>
                   </div>
                   <CircularCountdown
                     targetTime={lesson.startTime}
                     onComplete={() => {}}
                   />
-                  <div className="mt-4 text-center">
-                    <p className="text-white/60 text-sm">{lesson.title}</p>
-                  </div>
                 </div>
               )}
 
@@ -213,7 +210,7 @@ export const OperationDrawer = ({
                 {currentView === 'lesson_active' ? 'DERS AKTİF' :
                  currentView === 'trailer' ? 'FRAGMAN' :
                  currentView === 'lesson_ended' ? 'DERS BİTTİ' :
-                 'BEKLEMEde'}
+                 'BEKLEME'}
               </span>
             </div>
             <span className="text-gray-600 text-xs font-mono">
