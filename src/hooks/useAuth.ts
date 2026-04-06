@@ -4,6 +4,7 @@ import { db } from '../config/firebase';
 import { Student } from '../types/student';
 import { getStudents } from '../services/db';
 import { registerDevice } from '../services/deviceService';
+import { signInAndMapStudent, signOutUser } from '../services/authService';
 
 export const useAuth = () => {
   const [student, setStudent] = useState<Student | null>(null);
@@ -61,6 +62,8 @@ export const useAuth = () => {
       }
 
       setStudent(studentData);
+      // Firebase Auth oturumu başlat
+      signInAndMapStudent(studentData.id).catch(() => {});
       setLoading(false);
       return;
     }
@@ -105,6 +108,8 @@ export const useAuth = () => {
         }
 
         setStudent(studentData);
+        // Firebase Auth oturumu başlat
+        signInAndMapStudent(studentData.id).catch(() => {});
       } else {
         localStorage.removeItem('studentId');
       }
@@ -192,6 +197,8 @@ export const useAuth = () => {
     if (pendingStudent) {
       localStorage.setItem('studentId', pendingStudent.id);
       setStudent(pendingStudent);
+      // Firebase Auth oturumu başlat
+      signInAndMapStudent(pendingStudent.id).catch(() => {});
       setPendingStudent(null);
       setNeedsConfirmation(false);
     }
@@ -202,6 +209,7 @@ export const useAuth = () => {
     setPendingStudent(null);
     setNeedsConfirmation(false);
     localStorage.removeItem('studentId');
+    signOutUser().catch(() => {});
   };
 
   // Admin giriş başarılı
@@ -209,6 +217,8 @@ export const useAuth = () => {
     if (pendingStudent) {
       localStorage.setItem('studentId', pendingStudent.id);
       setStudent(pendingStudent);
+      // Firebase Auth oturumu başlat (admin)
+      signInAndMapStudent(pendingStudent.id).catch(() => {});
       setPendingStudent(null);
       setNeedsAdminAuth(false);
     }

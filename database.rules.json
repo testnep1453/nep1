@@ -3,13 +3,13 @@
     "presence": {
       "$studentId": {
         ".read": true,
-        ".write": true
+        ".write": "auth != null"
       }
     },
     "deviceApprovals": {
       "$studentId": {
-        ".read": true,
-        ".write": true
+        ".read": "auth != null",
+        ".write": "auth != null"
       }
     }
   }

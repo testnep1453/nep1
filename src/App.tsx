@@ -8,6 +8,7 @@ import { AgentDashboard } from './components/Agent/AgentDashboard';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { getNextLesson } from './config/lessonSchedule';
 import { requestNotificationPermission, setupNotificationListener } from './services/fcm';
+import { signOutUser } from './services/authService';
 
 type AppStatus = 'loggingIn' | 'adminAuth' | 'dashboard';
 
@@ -97,7 +98,11 @@ function App() {
 
   if (appStatus === 'dashboard' && student) {
     const isAdmin = student.id === '1002';
-    const handleLogout = () => { localStorage.removeItem('studentId'); window.location.reload(); };
+    const handleLogout = () => {
+      signOutUser().catch(() => {});
+      localStorage.removeItem('studentId');
+      window.location.reload();
+    };
 
     // Admin → UnifiedDashboard (yönetim paneli)
     // Ajan → AgentDashboard (6 sekmeli ajan arayüzü)

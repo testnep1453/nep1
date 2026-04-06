@@ -3,13 +3,24 @@ service cloud.firestore {
   match /databases/{database}/documents {
     
     // ============================================
+    // USER MAPPINGS — Auth UID ↔ StudentId eşlemesi
+    // ============================================
+    match /userMappings/{uid} {
+      // Sadece kendi mapping'ini okuyabilir
+      allow read: if request.auth != null && request.auth.uid == uid;
+      // Sadece kendi mapping'ini oluşturabilir/güncelleyebilir
+      allow write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // ============================================
     // STUDENTS — Öğrenci verileri
     // ============================================
     match /students/{studentId} {
       // Herkes okuyabilir (giriş ID eşleşmesi için)
       allow read: if true;
-      // Yazma sadece mevcut belgeyi güncelleyen veya admin (1002) tarafından
+      // Oluşturma/silme sadece admin
       allow create, delete: if isAdmin();
+      // Güncelleme: admin veya kendi profili
       allow update: if isAdmin() || isOwner(studentId);
     }
 
@@ -33,9 +44,9 @@ service cloud.firestore {
     // ATTENDANCE — Yoklama kayıtları
     // ============================================
     match /attendance/{recordId} {
-      allow read: if true;
-      // Yazma: admin veya kendi yoklamasını kaydeden öğrenci
-      allow create: if true;
+      allow read: if request.auth != null;
+      // Oturum açmış herkes yoklama kaydı oluşturabilir
+      allow create: if request.auth != null;
       allow update, delete: if isAdmin();
     }
 
@@ -43,10 +54,9 @@ service cloud.firestore {
     // FEEDBACK — Geri bildirimler
     // ============================================
     match /feedback/{feedbackId} {
-      allow read: if true;
-      // Herkes geri bildirim oluşturabilir
-      allow create: if true;
-      // Silme sadece admin
+      allow read: if request.auth != null;
+      // Oturum açmış herkes geri bildirim oluşturabilir
+      allow create: if request.auth != null;
       allow update, delete: if isAdmin();
     }
 
@@ -54,8 +64,8 @@ service cloud.firestore {
     // ARCHIVE — Video arşivi
     // ============================================
     match /archive/{videoId} {
-      // Herkes okuyabilir (öğrenciler arşivi görüntüler)
-      allow read: if true;
+      // Oturum açmış herkes okuyabilir
+      allow read: if request.auth != null;
       // Yazma/silme sadece admin
       allow write: if isAdmin();
     }
@@ -66,8 +76,9 @@ service cloud.firestore {
     match /notifications/{studentId}/items/{notifId} {
       // Sadece kendi bildirimlerini okuyabilir veya admin
       allow read: if isOwner(studentId) || isAdmin();
-      // Admin bildirim gönderebilir, öğrenci okundu işaretleyebilir
+      // Admin bildirim gönderebilir
       allow create: if isAdmin();
+      // Öğrenci okundu işaretleyebilir, admin her şeyi yapabilir
       allow update: if isOwner(studentId) || isAdmin();
       allow delete: if isAdmin();
     }
@@ -76,6 +87,7 @@ service cloud.firestore {
     // ADMIN — Admin ayarları (şifre hash vb.)
     // ============================================
     match /admin/{docId} {
+      // Herkes okuyabilir (giriş doğrulama için)
       allow read: if true;
       allow write: if isAdmin();
     }
@@ -92,24 +104,20 @@ service cloud.firestore {
     // HELPER FUNCTIONS
     // ============================================
     
-    // Admin kontrolü — studentId localStorage'da saklanıyor
-    // Not: Firestore Security Rules client-side auth token'a bakar.
-    // Bu projede Firebase Auth kullanılmadığından, kurallar 
-    // request.resource.data kontrolü ile desteklenir.
-    // Production'da Firebase Auth entegre edildiğinde:
-    // function isAdmin() { return request.auth.uid == '1002'; }
+    // Admin kontrolü:
+    // userMappings/{uid}.isAdmin == true ise admin
     function isAdmin() {
-      // Firebase Auth olmadan tam güvenlik sağlanamaz.
-      // Şimdilik tüm yazma işlemleri client-side kontrollere dayanır.
-      // TODO: Firebase Auth entegrasyonu sonrası bu fonksiyon güncellenmeli.
-      return true;
+      return request.auth != null &&
+        exists(/databases/$(database)/documents/userMappings/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/userMappings/$(request.auth.uid)).data.isAdmin == true;
     }
 
+    // Sahiplik kontrolü:
+    // userMappings/{uid}.studentId == istenen studentId ise sahip
     function isOwner(studentId) {
-      // Firebase Auth olmadan ownership doğrulanamaz.
-      // TODO: Firebase Auth entegrasyonu sonrası:
-      // return request.auth.uid == studentId;
-      return true;
+      return request.auth != null &&
+        exists(/databases/$(database)/documents/userMappings/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/userMappings/$(request.auth.uid)).data.studentId == studentId;
     }
   }
 }
