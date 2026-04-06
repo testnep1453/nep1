@@ -1,0 +1,115 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // ============================================
+    // STUDENTS — Öğrenci verileri
+    // ============================================
+    match /students/{studentId} {
+      // Herkes okuyabilir (giriş ID eşleşmesi için)
+      allow read: if true;
+      // Yazma sadece mevcut belgeyi güncelleyen veya admin (1002) tarafından
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || isOwner(studentId);
+    }
+
+    // ============================================
+    // MESSAGES — Admin duyuruları
+    // ============================================    
+    match /messages/{messageId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ============================================
+    // SETTINGS — Fragman, sistem ayarları
+    // ============================================
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ============================================
+    // ATTENDANCE — Yoklama kayıtları
+    // ============================================
+    match /attendance/{recordId} {
+      allow read: if true;
+      // Yazma: admin veya kendi yoklamasını kaydeden öğrenci
+      allow create: if true;
+      allow update, delete: if isAdmin();
+    }
+
+    // ============================================
+    // FEEDBACK — Geri bildirimler
+    // ============================================
+    match /feedback/{feedbackId} {
+      allow read: if true;
+      // Herkes geri bildirim oluşturabilir
+      allow create: if true;
+      // Silme sadece admin
+      allow update, delete: if isAdmin();
+    }
+
+    // ============================================
+    // ARCHIVE — Video arşivi
+    // ============================================
+    match /archive/{videoId} {
+      // Herkes okuyabilir (öğrenciler arşivi görüntüler)
+      allow read: if true;
+      // Yazma/silme sadece admin
+      allow write: if isAdmin();
+    }
+
+    // ============================================
+    // NOTIFICATIONS — Bildirimler (öğrenci bazlı)
+    // ============================================
+    match /notifications/{studentId}/items/{notifId} {
+      // Sadece kendi bildirimlerini okuyabilir veya admin
+      allow read: if isOwner(studentId) || isAdmin();
+      // Admin bildirim gönderebilir, öğrenci okundu işaretleyebilir
+      allow create: if isAdmin();
+      allow update: if isOwner(studentId) || isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    // ============================================
+    // ADMIN — Admin ayarları (şifre hash vb.)
+    // ============================================
+    match /admin/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ============================================
+    // LESSONS — Ders bilgileri
+    // ============================================
+    match /lessons/{lessonId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // ============================================
+    // HELPER FUNCTIONS
+    // ============================================
+    
+    // Admin kontrolü — studentId localStorage'da saklanıyor
+    // Not: Firestore Security Rules client-side auth token'a bakar.
+    // Bu projede Firebase Auth kullanılmadığından, kurallar 
+    // request.resource.data kontrolü ile desteklenir.
+    // Production'da Firebase Auth entegre edildiğinde:
+    // function isAdmin() { return request.auth.uid == '1002'; }
+    function isAdmin() {
+      // Firebase Auth olmadan tam güvenlik sağlanamaz.
+      // Şimdilik tüm yazma işlemleri client-side kontrollere dayanır.
+      // TODO: Firebase Auth entegrasyonu sonrası bu fonksiyon güncellenmeli.
+      return true;
+    }
+
+    function isOwner(studentId) {
+      // Firebase Auth olmadan ownership doğrulanamaz.
+      // TODO: Firebase Auth entegrasyonu sonrası:
+      // return request.auth.uid == studentId;
+      return true;
+    }
+  }
+}

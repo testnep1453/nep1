@@ -4,6 +4,7 @@ import { usePresence } from './hooks/usePresence';
 import { StudentLogin } from './components/Auth/StudentLogin';
 import { AdminAuth } from './components/Auth/AdminAuth';
 import { UnifiedDashboard } from './components/Dashboard/UnifiedDashboard';
+import { AgentDashboard } from './components/Agent/AgentDashboard';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { getNextLesson } from './config/lessonSchedule';
 import { requestNotificationPermission, setupNotificationListener } from './services/fcm';
@@ -95,10 +96,26 @@ function App() {
   }
 
   if (appStatus === 'dashboard' && student) {
+    const isAdmin = student.id === '1002';
+    const handleLogout = () => { localStorage.removeItem('studentId'); window.location.reload(); };
+
+    // Admin → UnifiedDashboard (yönetim paneli)
+    // Ajan → AgentDashboard (6 sekmeli ajan arayüzü)
+    if (isAdmin) {
+      return (
+        <UnifiedDashboard
+          student={student}
+          onLogout={handleLogout}
+          lesson={lesson}
+          onlineCount={onlineCount}
+        />
+      );
+    }
+
     return (
-      <UnifiedDashboard
+      <AgentDashboard
         student={student}
-        onLogout={() => { localStorage.removeItem('studentId'); window.location.reload(); }}
+        onLogout={handleLogout}
         lesson={lesson}
         onlineCount={onlineCount}
       />
