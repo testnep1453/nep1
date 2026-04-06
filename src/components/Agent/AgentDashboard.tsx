@@ -1,0 +1,231 @@
+import { useState, useEffect, useRef } from 'react';
+import { Student, Lesson, Trailer } from '../../types/student';
+import { ProfileSection } from '../Dashboard/ProfileSection';
+import { PresenceCounter } from '../Dashboard/PresenceCounter';
+import { MessageFeed } from '../Dashboard/MessageFeed';
+import { OperationDrawer } from '../Drawer/OperationDrawer';
+import { FeedbackForm } from '../Feedback/FeedbackForm';
+import { ArchivePage } from '../Archive/ArchivePage';
+import { LevelProgress } from './LevelProgress';
+import { ActivityPage } from './ActivityPage';
+import { FeedbackHistory } from '../Feedback/FeedbackHistory';
+import { useAutoMessages } from '../../hooks/useAutoMessages';
+import { useAutoZoom } from '../../hooks/useAutoZoom';
+import { useNotifications } from '../../hooks/useNotifications';
+import { subscribeToTrailer } from '../../services/dbFirebase';
+import { LESSON_CONFIG } from '../../config/lessonSchedule';
+import { recordAttendance } from '../../services/db';
+
+type AgentTab = 'home' | 'operation' | 'levels' | 'archive' | 'activity' | 'feedback';
+
+const Icons = {
+  Home: () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m19 8.71l-5.333-4.148a2.666 2.666 0 0 0-3.274 0L5.059 8.71a2.665 2.665 0 0 0-1.029 2.105v7.2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.2c0-.823-.38-1.6-1.03-2.105"/><path d="M16 15c-2.21 1.333-5.792 1.333-8 0"/></svg>,
+  Swords: () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 9.5l-9 9M9.5 14.5l-4-4M16 8l4-4M16 8a2 2 0 0 0 -2.828 -2.828L8 10l-4 4 4 4 4-4 4.828-5.172A2 2 0 0 0 16 8z"/></svg>,
+  Trophy: () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>,
+  Film: () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 3v18"/><path d="M3 7.5h4"/><path d="M3 12h18"/><path d="M3 16.5h4"/></svg>,
+  Calendar: () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
+  Star: () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z"/></svg>,
+  Logout: () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2"/><path d="M9 12h12l-3 -3"/><path d="M18 15l3 -3"/></svg>,
+  Menu: () => <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>,
+  Bell: () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>,
+};
+
+export const AgentDashboard = ({
+  student, onLogout, lesson, onlineCount
+}: {
+  student: Student; onLogout: () => void; lesson: Lesson | null; onlineCount: number;
+}) => {
+  const [activeTab, setActiveTab] = useState<AgentTab>('home');
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
+  const [trailer, setTrailerState] = useState<Trailer | null>(null);
+
+  useAutoMessages(false);
+  const { unreadCount } = useNotifications(student.id);
+
+  const autoZoomState = useAutoZoom(
+    student.id, student.name, lesson?.zoomLink || LESSON_CONFIG.zoomLink
+  );
+
+  useEffect(() => {
+    if (autoZoomState.status === 'feedback') {
+      const feedbackShown = sessionStorage.getItem(`feedback_${autoZoomState.lessonDate}`);
+      if (!feedbackShown) setShowFeedback(true);
+    }
+  }, [autoZoomState.status, autoZoomState.lessonDate]);
+
+  const attendanceRecorded = useRef(false);
+  useEffect(() => {
+    if (student && !attendanceRecorded.current) {
+      attendanceRecorded.current = true;
+      const result = recordAttendance(student.id);
+      if (result && result.xpEarned > 0) console.log(`+${result.xpEarned} XP`);
+    }
+  }, [student?.id]);
+
+  useEffect(() => {
+    const unsub = subscribeToTrailer(t => setTrailerState(t));
+    return () => { unsub && unsub(); };
+  }, []);
+
+  const tabs: { id: AgentTab; label: string; icon: JSX.Element }[] = [
+    { id: 'home', label: 'Ana Sayfa', icon: <Icons.Home /> },
+    { id: 'levels', label: 'Level & Rozetler', icon: <Icons.Trophy /> },
+    { id: 'archive', label: 'Arşiv', icon: <Icons.Film /> },
+    { id: 'activity', label: 'Etkinlik', icon: <Icons.Calendar /> },
+    { id: 'feedback', label: 'Geri Bildirim', icon: <Icons.Star /> },
+  ];
+
+  const tabTitles: Record<AgentTab, string> = {
+    home: 'ANA SAYFA', operation: 'OPERASYON', levels: 'LEVEL & ROZETLER',
+    archive: 'ARŞİV', activity: 'ETKİNLİK', feedback: 'GERİ BİLDİRİM',
+  };
+
+  return (
+    <div className="h-[100dvh] bg-[#050505] text-white flex flex-col md:flex-row font-['Rajdhani',sans-serif] selection:bg-[#00F0FF]/30 overflow-hidden">
+      {/* BG */}
+      <div className="fixed inset-0 pointer-events-none z-0 opacity-20">
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(0,240,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,240,255,0.03)_1px,transparent_1px)] bg-[length:40px_40px]" />
+        <div className="scanlines absolute inset-0" />
+      </div>
+
+      {/* Drawer */}
+      <OperationDrawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)}
+        lesson={lesson} trailer={trailer} isAdmin={false}
+        studentName={student.name} zoomLink={lesson?.zoomLink || LESSON_CONFIG.zoomLink} />
+
+      {/* Feedback */}
+      {showFeedback && (
+        <FeedbackForm lessonDate={autoZoomState.lessonDate} studentId={student.id}
+          onClose={() => { setShowFeedback(false); sessionStorage.setItem(`feedback_${autoZoomState.lessonDate}`, 'true'); }} />
+      )}
+
+      {/* Mobil Üst Bar */}
+      <div className="md:hidden sticky top-0 z-30 bg-[#0A1128] border-b border-[#00F0FF]/20 flex items-center justify-between px-4 py-3">
+        <button onClick={() => setDrawerOpen(true)} className="text-[#00F0FF] p-2 min-w-[44px] min-h-[44px] flex items-center justify-center">
+          <Icons.Swords />
+        </button>
+        <img src={`${import.meta.env.BASE_URL}nep-logo.png`} alt="NEP" className="h-7 brightness-0 invert opacity-70" />
+        <button onClick={() => setMobileNavOpen(!mobileNavOpen)} className="text-white p-2 min-w-[44px] min-h-[44px] flex items-center justify-center relative">
+          <Icons.Menu />
+          {unreadCount > 0 && <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#FF4500] rounded-full" />}
+        </button>
+      </div>
+
+      {/* Mobil Nav Dropdown */}
+      {mobileNavOpen && (
+        <div className="md:hidden fixed inset-0 top-[52px] bg-black/80 z-20" onClick={() => setMobileNavOpen(false)}>
+          <div className="bg-[#0A1128] border-b border-[#00F0FF]/20 p-4 space-y-2">
+            {tabs.map(tab => (
+              <button key={tab.id} onClick={() => { setActiveTab(tab.id); setMobileNavOpen(false); }}
+                className={`flex items-center gap-3 w-full p-3 rounded-md transition-all min-h-[48px] ${
+                  activeTab === tab.id ? 'bg-[#00F0FF]/10 text-[#00F0FF]' : 'text-gray-400 hover:bg-white/5'
+                }`}>
+                {tab.icon}
+                <span className="font-semibold tracking-wide">{tab.label}</span>
+              </button>
+            ))}
+            <button onClick={onLogout} className="flex items-center gap-3 w-full p-3 rounded-md text-gray-500 hover:bg-white/5 hover:text-[#FF4500] transition-all font-semibold min-h-[48px] text-sm">
+              <Icons.Logout /> Çıkış Yap
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Desktop Sidebar */}
+      <aside className="hidden md:flex w-64 bg-[#0A1128] border-r border-[#00F0FF]/20 z-10 flex-col h-screen sticky top-0">
+        <div className="p-6 border-b border-[#00F0FF]/20 flex items-center justify-center">
+          <img src={`${import.meta.env.BASE_URL}nep-logo.png`} alt="NEP" className="h-10 brightness-0 invert opacity-80" />
+        </div>
+        <div className="p-4 border-b border-[#6358cc]/20">
+          <button onClick={() => setDrawerOpen(true)}
+            className="flex items-center gap-3 w-full p-3 rounded-md bg-[#6358cc]/10 text-[#8b7fd8] hover:bg-[#6358cc]/20 border border-[#6358cc]/30 transition-all">
+            <Icons.Swords />
+            <span className="font-bold tracking-wide text-sm">OPERASYON PANELİ</span>
+          </button>
+        </div>
+        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+          {tabs.map(tab => (
+            <button key={tab.id} onClick={() => setActiveTab(tab.id)}
+              className={`flex items-center gap-3 w-full p-3 rounded-md transition-all ${
+                activeTab === tab.id
+                  ? 'bg-[#00F0FF]/10 text-[#00F0FF] border-l-4 border-[#00F0FF]'
+                  : 'text-gray-400 hover:bg-white/5 hover:text-white'
+              }`}>
+              {tab.icon}
+              <span className="font-semibold tracking-wide">{tab.label}</span>
+            </button>
+          ))}
+        </nav>
+        <div className="p-4 border-t border-[#00F0FF]/20">
+          <button onClick={onLogout} className="flex items-center gap-3 w-full p-3 rounded-md text-gray-500 hover:text-[#FF4500] hover:bg-white/5 transition-all font-semibold tracking-wide text-sm">
+            <Icons.Logout /> Çıkış Yap
+          </button>
+        </div>
+      </aside>
+
+      {/* Main */}
+      <main className="flex-1 p-4 md:p-8 z-10 overflow-y-auto pb-24 md:pb-8">
+        <header className="flex items-center justify-between mb-6 md:mb-8">
+          <div>
+            <h2 className="text-xs sm:text-sm tracking-[0.2em] uppercase mb-1 flex items-center gap-2 text-[#00F0FF]">
+              <span className="inline-block w-2 h-2 animate-pulse rounded-full bg-[#00F0FF]" /> Ajan
+            </h2>
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold uppercase tracking-wider text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">
+              {tabTitles[activeTab]}
+            </h1>
+          </div>
+        </header>
+
+        <div className="max-w-7xl mx-auto">
+          {activeTab === 'home' && (
+            <div className="space-y-6 sm:space-y-8 animate-fade-in">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+                <div className="lg:col-span-2"><ProfileSection student={student} /></div>
+                <div><PresenceCounter count={onlineCount} /></div>
+              </div>
+              {lesson && (
+                <div className="bg-[#0A1128]/80 border border-[#6358cc]/30 p-4 sm:p-5 rounded-lg cursor-pointer hover:border-[#6358cc]/60 transition-all group"
+                  onClick={() => setDrawerOpen(true)}>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">⏰</span>
+                      <span className="text-[#8b7fd8] font-bold text-sm sm:text-base uppercase tracking-wider">Sonraki Derse</span>
+                    </div>
+                    <span className="text-gray-500 text-xs font-mono group-hover:text-[#8b7fd8] transition-colors">Detay →</span>
+                  </div>
+                </div>
+              )}
+              <MessageFeed />
+            </div>
+          )}
+          {activeTab === 'levels' && <LevelProgress student={student} />}
+          {activeTab === 'archive' && <ArchivePage />}
+          {activeTab === 'activity' && <ActivityPage student={student} />}
+          {activeTab === 'feedback' && <FeedbackHistory studentId={student.id} />}
+        </div>
+      </main>
+
+      {/* Mobil Alt Bar */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-[#0A1128] border-t border-[#00F0FF]/20 z-20 flex items-center justify-around px-1 py-2 safe-area-bottom">
+        {[
+          { id: 'home' as AgentTab, icon: <Icons.Home />, label: 'ANA SAYFA' },
+          { id: 'operation' as AgentTab, icon: <Icons.Swords />, label: 'OPERASYON', action: () => setDrawerOpen(true) },
+          { id: 'levels' as AgentTab, icon: <Icons.Trophy />, label: 'LEVEL' },
+          { id: 'archive' as AgentTab, icon: <Icons.Film />, label: 'ARŞİV' },
+          { id: 'feedback' as AgentTab, icon: <Icons.Star />, label: 'GERİ BİLDİRİM' },
+        ].map(item => (
+          <button key={item.id}
+            onClick={item.action || (() => setActiveTab(item.id))}
+            className={`flex flex-col items-center gap-0.5 p-1.5 rounded-lg transition-all min-w-[52px] min-h-[48px] ${
+              activeTab === item.id && !item.action ? 'text-[#00F0FF]' : item.action ? 'bg-[#6358cc]/20 text-[#8b7fd8]' : 'text-gray-500'
+            }`}>
+            {item.icon}
+            <span className="text-[9px] font-bold">{item.label}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+};

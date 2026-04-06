@@ -5,15 +5,18 @@ import {
   addMessageToFirebase, setTrailer, disableTrailer, subscribeToTrailer, extractYoutubeId,
   getAllFeedback
 } from '../../services/dbFirebase';
+import { ref, remove } from 'firebase/database';
+import { rtdb } from '../../config/firebase';
 import { recordAttendance } from '../../services/db';
 import { Student, Lesson, Trailer, FeedbackEntry } from '../../types/student';
 import { ProfileSection } from './ProfileSection';
 import { PresenceCounter } from './PresenceCounter';
 import { MessageFeed } from './MessageFeed';
-// CircularCountdown artık sadece Drawer'da kullanılıyor
 import { YouTubePlayer } from '../VideoTheater/YouTubePlayer';
 import { OperationDrawer } from '../Drawer/OperationDrawer';
 import { FeedbackForm } from '../Feedback/FeedbackForm';
+import { AttendancePage } from '../Admin/AttendancePage';
+import { ArchiveManager } from '../Admin/ArchiveManager';
 import { useAutoMessages } from '../../hooks/useAutoMessages';
 import { useAutoZoom } from '../../hooks/useAutoZoom';
 import { formatLessonDate, LESSON_CONFIG } from '../../config/lessonSchedule';
@@ -41,7 +44,7 @@ export const UnifiedDashboard = ({
   onlineCount: number;
 }) => {
   const isAdmin = student.id === '1002';
-  const [activeTab, setActiveTab] = useState<'genel' | 'ajanlar' | 'mesajlar' | 'fragman' | 'geribildirim'>('genel');
+  const [activeTab, setActiveTab] = useState<'genel' | 'ajanlar' | 'mesajlar' | 'fragman' | 'geribildirim' | 'yoklama' | 'arsiv'>('genel');
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
@@ -184,7 +187,7 @@ export const UnifiedDashboard = ({
   };
 
   // Tek Öğrenci Ekleme
-  const [newStudent, setNewStudent] = useState({ id: '', name: '', nickname: '' });
+  const [newStudent, setNewStudent] = useState({ id: '', name: '', nickname: '', email: '' });
   const handleAddStudent = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newStudent.id || !newStudent.name) return;
@@ -192,20 +195,33 @@ export const UnifiedDashboard = ({
       alert('Bu ID zaten sistemde mevcut!');
       return;
     }
+    const nickname = newStudent.nickname || `Ajan_${newStudent.id}`;
     const newS: Student = {
-      ...newStudent, xp: 0, level: 1, badges: [], avatar: 'hero_1',
+      id: newStudent.id, name: newStudent.name, nickname,
+      email: newStudent.email || undefined,
+      xp: 0, level: 1, badges: [], avatar: 'hero_1',
       lastSeen: Date.now(), attendanceHistory: [], streak: 0,
     };
     await addStudentToFirebase(newS);
     setStudents(await getStudentsFromFirebase());
-    setNewStudent({ id: '', name: '', nickname: '' });
+    setNewStudent({ id: '', name: '', nickname: '', email: '' });
   };
 
-  // Öğrenci Silme
+  // Öğrenci Silme (Tam temizlik: Firestore + RTDB presence + RTDB deviceApprovals)
   const handleRemove = async (id: string, name: string) => {
-    if (window.confirm(`Ajan ${name} (${id}) sistemden kalıcı olarak silinecek. Onaylıyor musunuz?`)) {
+    if (!window.confirm(`Ajan ${name} (${id}) kalıcı olarak silinecek. Onaylıyor musunuz?`)) return;
+    try {
       await removeStudentFromFirebase(id);
-      setStudents(await getStudentsFromFirebase());
+      // RTDB presence temizle (hayalet oturum önlemi)
+      const presenceRef = ref(rtdb, `presence/${id}`);
+      await remove(presenceRef);
+      // RTDB deviceApprovals temizle
+      const approvalRef = ref(rtdb, `deviceApprovals/${id}`);
+      await remove(approvalRef);
+      setStudents(prev => prev.filter(s => s.id !== id));
+    } catch (error) {
+      console.error('Ajan silme hatası:', error);
+      alert('Silme işlemi sırasında hata oluştu.');
     }
   };
 
@@ -230,8 +246,10 @@ export const UnifiedDashboard = ({
   const tabConfig = isAdmin
     ? [
         { id: 'genel' as const, label: 'Ana Sayfa', icon: <Icons.Home /> },
-        { id: 'fragman' as const, label: 'Fragman', icon: <Icons.Film /> },
         { id: 'ajanlar' as const, label: 'Ajan Yönetimi', icon: <Icons.Users /> },
+        { id: 'fragman' as const, label: 'Fragman', icon: <Icons.Film /> },
+        { id: 'yoklama' as const, label: 'Yoklama', icon: <Icons.Star /> },
+        { id: 'arsiv' as const, label: 'Arşiv Yönetimi', icon: <Icons.Film /> },
         { id: 'mesajlar' as const, label: 'Mesaj Gönder', icon: <Icons.Message /> },
         { id: 'geribildirim' as const, label: 'Geri Bildirimler', icon: <Icons.Star /> },
       ]
@@ -382,6 +400,8 @@ export const UnifiedDashboard = ({
               {activeTab === 'genel' && 'ANA SAYFA'}
               {activeTab === 'fragman' && 'FRAGMAN YÖNETİMİ'}
               {activeTab === 'ajanlar' && 'AJAN YÖNETİMİ'}
+              {activeTab === 'yoklama' && 'YOKLAMA'}
+              {activeTab === 'arsiv' && 'ARŞİV YÖNETİMİ'}
               {activeTab === 'mesajlar' && 'MESAJ GÖNDER'}
               {activeTab === 'geribildirim' && 'GERİ BİLDİRİMLER'}
             </h1>
@@ -550,16 +570,19 @@ export const UnifiedDashboard = ({
                 <h3 className="text-[#39FF14] text-base sm:text-lg font-bold mb-4 uppercase tracking-widest flex items-center gap-2">
                   <span className="text-xl">+</span> Tekil Ajan Kayıt
                 </h3>
-                <form onSubmit={handleAddStudent} className="flex flex-col sm:flex-row gap-3 sm:gap-4">
+                <form onSubmit={handleAddStudent} className="grid grid-cols-1 sm:grid-cols-5 gap-3">
                   <input type="text" placeholder="ID" required value={newStudent.id}
                     onChange={(e) => setNewStudent({ ...newStudent, id: e.target.value })}
-                    className="bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#39FF14] font-mono w-full sm:w-28 transition-colors rounded" />
+                    className="bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#39FF14] font-mono transition-colors rounded" />
                   <input type="text" placeholder="İsim" required value={newStudent.name}
                     onChange={(e) => setNewStudent({ ...newStudent, name: e.target.value })}
-                    className="bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#39FF14] w-full transition-colors rounded" />
-                  <input type="text" placeholder="Takma Ad" value={newStudent.nickname}
+                    className="bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#39FF14] transition-colors rounded" />
+                  <input type="text" placeholder="Takma Ad (opsiyonel)" value={newStudent.nickname}
                     onChange={(e) => setNewStudent({ ...newStudent, nickname: e.target.value })}
-                    className="bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#39FF14] w-full transition-colors rounded" />
+                    className="bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#39FF14] transition-colors rounded" />
+                  <input type="email" placeholder="E-posta (opsiyonel)" value={newStudent.email}
+                    onChange={(e) => setNewStudent({ ...newStudent, email: e.target.value })}
+                    className="bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#39FF14] transition-colors rounded" />
                   <button type="submit"
                     className="bg-[#39FF14]/20 hover:bg-[#39FF14] text-[#39FF14] hover:text-black border border-[#39FF14] px-6 py-3 font-bold transition-all uppercase tracking-widest whitespace-nowrap rounded min-h-[48px]">
                     Sisteme Ekle
@@ -680,6 +703,16 @@ export const UnifiedDashboard = ({
                 ))
               )}
             </div>
+          )}
+
+          {/* TAB: YOKLAMA (Admin) */}
+          {isAdmin && activeTab === 'yoklama' && (
+            <AttendancePage students={students} />
+          )}
+
+          {/* TAB: ARŞİV YÖNETİMİ (Admin) */}
+          {isAdmin && activeTab === 'arsiv' && (
+            <ArchiveManager />
           )}
 
         </div>

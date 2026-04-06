@@ -4,6 +4,7 @@ import { usePresence } from './hooks/usePresence';
 import { StudentLogin } from './components/Auth/StudentLogin';
 import { AdminAuth } from './components/Auth/AdminAuth';
 import { UnifiedDashboard } from './components/Dashboard/UnifiedDashboard';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { getNextLesson } from './config/lessonSchedule';
 import { requestNotificationPermission, setupNotificationListener } from './services/fcm';
 
@@ -107,4 +108,12 @@ function App() {
   return null;
 }
 
-export default App;
+function AppWithBoundary() {
+  return (
+    <ErrorBoundary fallbackMessage="Bir hata oluştu. Lütfen sayfayı yeniden yükleyin.">
+      <App />
+    </ErrorBoundary>
+  );
+}
+
+export default AppWithBoundary;
