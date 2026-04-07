@@ -36,7 +36,6 @@ function App() {
 
   const isAdmin = student?.id === '1002';
 
-  // Session timeout — admin 60dk, ajan 30dk
   useSessionTimeout({
     timeoutMs: isAdmin ? SESSION_TIMEOUT.ADMIN : SESSION_TIMEOUT.AGENT,
     onTimeout: () => {
@@ -52,7 +51,6 @@ function App() {
       setupNotificationListener((payload) => {
         void payload;
       });
-      // Şüpheli giriş kontrolü + kayıt
       recordLoginAndCheckSuspicious(student.id);
     }
 
@@ -77,7 +75,6 @@ function App() {
     );
   }
 
-  // E-posta doğrulama ekranı
   if (needsEmailVerification && pendingStudent) {
     return (
       <EmailVerificationModal
@@ -86,11 +83,11 @@ function App() {
         onVerified={(email) => {
           confirmEmailVerification(email);
         }}
+        onBack={logout} // EKLENEN KISIM: Geri dönüş fonksiyonu eklendi
       />
     );
   }
 
-  // Admin giriş ekranı
   if (appStatus === 'adminAuth' && pendingStudent) {
     return (
       <AdminAuth
