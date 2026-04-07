@@ -102,8 +102,7 @@ export const AgentDashboard = ({
         <div className="absolute inset-0 bg-[linear-gradient(rgba(0,240,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,240,255,0.03)_1px,transparent_1px)] bg-[length:40px_40px]" />
         <div className="scanlines absolute inset-0" />
       </div>
-      {/* TopBar (Modül 1.2) */}
-      <TopBar student={student} unreadCount={unreadCount} theme={theme} onThemeChange={handleThemeChange} />
+
 
       {/* Drawer */}
       <OperationDrawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)}
@@ -157,7 +156,7 @@ export const AgentDashboard = ({
           <button onClick={() => setDrawerOpen(true)}
             className="flex items-center gap-3 w-full p-3 rounded-md bg-[#6358cc]/10 text-[#8b7fd8] hover:bg-[#6358cc]/20 border border-[#6358cc]/30 transition-all">
             <Icons.Swords />
-            <span className="font-bold tracking-wide text-sm">OPERASYON PANELİ</span>
+            <span className="font-bold tracking-wide text-sm">DERSE KATIL</span>
           </button>
         </div>
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
@@ -191,6 +190,8 @@ export const AgentDashboard = ({
               {tabTitles[activeTab]}
             </h1>
           </div>
+          {/* Bildirim + Profil */}
+          <TopBar student={student} unreadCount={unreadCount} theme={theme} onThemeChange={handleThemeChange} />
         </header>
 
         <div className="max-w-7xl mx-auto">
@@ -240,7 +241,7 @@ export const AgentDashboard = ({
                 onClick={() => setDrawerOpen(true)}
                 className="w-full bg-[#6358cc]/10 border border-[#6358cc]/30 text-[#8b7fd8] py-4 rounded-lg font-bold uppercase tracking-wider text-sm hover:bg-[#6358cc]/20 transition-all flex items-center justify-center gap-2"
               >
-                <Icons.Swords /> OPERASYON PANELİ
+                <Icons.Swords /> DERSE KATIL
               </button>
 
               <MessageFeed />
