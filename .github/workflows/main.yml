@@ -16,10 +16,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  # 1. ADIM: Sadece projeyi derle ve paketi hazırla
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -57,6 +55,15 @@ jobs:
         uses: actions/upload-pages-artifact@v3.0.1
         with:
           path: './dist'
+
+  # 2. ADIM: Hazırlanan paketi yayına al
+  deploy:
+    needs: build # Önce build işleminin bitmesini bekler
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4.0.5
