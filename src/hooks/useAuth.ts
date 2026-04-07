@@ -49,8 +49,9 @@ export const useAuth = () => {
         email: jsonStudent.email,
       };
 
-      // Admin e-posta doğrulamayı atlar
-      if (id !== ADMIN_ID && !studentData.email && !hasVerifiedEmail) {
+      // Admin e-posta doğrulamayı atlar, diğerleri HER GİRİŞTE doğrulama yapar
+      // (Google ile giriş hariç — o zaten loginWithGoogle'dan geçer)
+      if (id !== ADMIN_ID && !hasVerifiedEmail) {
         setPendingStudent(studentData);
         setNeedsEmailVerification(true);
         setLoading(false);
@@ -97,7 +98,8 @@ export const useAuth = () => {
           streak: data.streak || 0,
         };
 
-        if (id !== ADMIN_ID && !studentData.email && !hasVerifiedEmail) {
+        // Google ile giriş yapılmadıysa HER ZAMAN doğrulama iste
+        if (id !== ADMIN_ID && !hasVerifiedEmail) {
           setPendingStudent(studentData);
           setNeedsEmailVerification(true);
           setLoading(false);

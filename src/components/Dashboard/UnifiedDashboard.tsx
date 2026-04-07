@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import * as XLSX from 'xlsx';
 import {
   getStudentsFromFirebase, addStudentToFirebase, addStudentsBatch, removeStudentFromFirebase,
-  addMessageToFirebase, setTrailer, disableTrailer, subscribeToTrailer, extractYoutubeId,
-  getAllFeedback
+  updateStudentInFirebase, addMessageToFirebase, setTrailer, disableTrailer, subscribeToTrailer,
+  extractYoutubeId, getAllFeedback
 } from '../../services/dbFirebase';
 import { ref, remove } from 'firebase/database';
 import { rtdb } from '../../config/firebase';
@@ -170,10 +170,12 @@ export const UnifiedDashboard = ({
         const id = String(typedRow[keys[0]] || '').trim();
         const name = String(typedRow[keys[1]] || '').trim();
         const nickname = String(typedRow[keys[2]] || '').trim();
+        const email = String(typedRow[keys[3]] || '').trim();
         if (!id || !name) continue;
         if (validRows.some(s => s.id === id)) continue;
         validRows.push({
           id, name, nickname: nickname || undefined,
+          email: email || '',
           xp: 0, level: 1, badges: [], avatar: 'hero_1',
           lastSeen: Date.now(), attendanceHistory: [], streak: 0,
         });
@@ -203,7 +205,10 @@ export const UnifiedDashboard = ({
   const [newStudent, setNewStudent] = useState({ id: '', name: '', nickname: '', email: '' });
   const handleAddStudent = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newStudent.id || !newStudent.name) return;
+    if (!newStudent.id || !newStudent.name || !newStudent.email) {
+      alert('ID, İsim ve E-posta zorunludur!');
+      return;
+    }
     if (students.some(s => s.id === newStudent.id)) {
       alert('Bu ID zaten sistemde mevcut!');
       return;
@@ -211,13 +216,34 @@ export const UnifiedDashboard = ({
     const nickname = newStudent.nickname || `Ajan_${newStudent.id}`;
     const newS: Student = {
       id: newStudent.id, name: newStudent.name, nickname,
-      email: newStudent.email || undefined,
+      email: newStudent.email,
       xp: 0, level: 1, badges: [], avatar: 'hero_1',
       lastSeen: Date.now(), attendanceHistory: [], streak: 0,
     };
     await addStudentToFirebase(newS);
     setStudents(await getStudentsFromFirebase());
     setNewStudent({ id: '', name: '', nickname: '', email: '' });
+  };
+
+  // Öğrenci Düzenleme
+  const [editStudent, setEditStudent] = useState<{ id: string; name: string; nickname: string; email: string } | null>(null);
+  const handleSaveEdit = async () => {
+    if (!editStudent || !editStudent.name || !editStudent.email) {
+      alert('İsim ve E-posta zorunludur!');
+      return;
+    }
+    try {
+      await updateStudentInFirebase(editStudent.id, {
+        name: editStudent.name,
+        nickname: editStudent.nickname || `Ajan_${editStudent.id}`,
+        email: editStudent.email,
+      });
+      setStudents(await getStudentsFromFirebase());
+      setEditStudent(null);
+    } catch (error) {
+      console.error('Düzenleme hatası:', error);
+      alert('Güncelleme sırasında hata oluştu.');
+    }
   };
 
   // Öğrenci Silme (Tam temizlik: Firestore + RTDB presence + RTDB deviceApprovals)
@@ -582,7 +608,7 @@ export const UnifiedDashboard = ({
                   <span className="text-xl">📊</span> Excel ile Toplu Ajan Ekle
                 </h3>
                 <p className="text-gray-400 text-xs sm:text-sm mb-4">
-                  Excel formatı: Sütun A = ID, Sütun B = İsim, Sütun C = Kod (opsiyonel)
+                  Excel formatı: Sütun A = ID, Sütun B = İsim, Sütun C = Takma Ad, Sütun D = E-posta
                 </p>
                 <input
                   ref={fileInputRef}
@@ -613,7 +639,7 @@ export const UnifiedDashboard = ({
                   <input type="text" placeholder="Takma Ad (opsiyonel)" value={newStudent.nickname}
                     onChange={(e) => setNewStudent({ ...newStudent, nickname: e.target.value })}
                     className="bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#39FF14] transition-colors rounded" />
-                  <input type="email" placeholder="E-posta (opsiyonel)" value={newStudent.email}
+                  <input type="email" placeholder="E-posta (zorunlu)" required value={newStudent.email}
                     onChange={(e) => setNewStudent({ ...newStudent, email: e.target.value })}
                     className="bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#39FF14] transition-colors rounded" />
                   <button type="submit"
@@ -630,6 +656,7 @@ export const UnifiedDashboard = ({
                     <tr className="bg-gray-900 border-b border-gray-700 font-mono text-gray-400 text-xs sm:text-sm">
                       <th className="p-3 sm:p-4 font-normal">ID</th>
                       <th className="p-3 sm:p-4 font-normal">İSİM</th>
+                      <th className="p-3 sm:p-4 font-normal hidden md:table-cell">E-POSTA</th>
                       <th className="p-3 sm:p-4 font-normal hidden sm:table-cell">LEVEL</th>
                       <th className="p-3 sm:p-4 font-normal text-right">İŞLEM</th>
                     </tr>
@@ -642,25 +669,87 @@ export const UnifiedDashboard = ({
                           <div className="font-bold text-sm sm:text-lg">{stu.name}</div>
                           {stu.nickname && <div className="text-xs text-gray-400 font-mono">» {stu.nickname}</div>}
                         </td>
+                        <td className="p-3 sm:p-4 hidden md:table-cell">
+                          <div className="text-xs text-gray-400 font-mono truncate max-w-[180px]">{stu.email || '—'}</div>
+                        </td>
                         <td className="p-3 sm:p-4 hidden sm:table-cell">
                           <div className="text-[#00F0FF] font-bold text-sm">LVL {stu.level || 1}</div>
                           <div className="text-xs text-gray-400 font-mono">XP: {stu.xp || 0}</div>
                         </td>
                         <td className="p-3 sm:p-4 text-right">
-                          {stu.id !== '1002' && (
+                          <div className="flex items-center justify-end gap-2">
                             <button
-                              onClick={() => handleRemove(stu.id, stu.name)}
-                              className="px-3 py-1.5 bg-[#FF4500]/10 text-[#FF4500] text-xs font-bold border border-[#FF4500]/30 hover:bg-[#FF4500] hover:text-black transition-colors rounded min-h-[36px]"
+                              onClick={() => setEditStudent({ id: stu.id, name: stu.name, nickname: stu.nickname || '', email: stu.email || '' })}
+                              className="px-3 py-1.5 bg-[#00F0FF]/10 text-[#00F0FF] text-xs font-bold border border-[#00F0FF]/30 hover:bg-[#00F0FF] hover:text-black transition-colors rounded min-h-[36px]"
                             >
-                              SİL
+                              DÜZENLE
                             </button>
-                          )}
+                            {!PROTECTED_IDS.includes(stu.id) && (
+                              <button
+                                onClick={() => handleRemove(stu.id, stu.name)}
+                                className="px-3 py-1.5 bg-[#FF4500]/10 text-[#FF4500] text-xs font-bold border border-[#FF4500]/30 hover:bg-[#FF4500] hover:text-black transition-colors rounded min-h-[36px]"
+                              >
+                                SİL
+                              </button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
+
+              {/* Düzenleme Modalı */}
+              {editStudent && (
+                <div className="fixed inset-0 z-[200] flex items-center justify-center">
+                  <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setEditStudent(null)} />
+                  <div className="relative bg-[#0A1128] border border-[#00F0FF]/30 rounded-2xl p-6 w-full max-w-md z-[201] shadow-2xl">
+                    <h3 className="text-[#00F0FF] text-lg font-bold mb-6 uppercase tracking-widest flex items-center gap-2">
+                      <span>✏️</span> Ajan Düzenle
+                    </h3>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-gray-400 text-xs font-mono block mb-1">ID (değiştirilemez)</label>
+                        <input type="text" disabled value={editStudent.id}
+                          className="bg-[#050505]/50 border border-gray-700 text-gray-500 p-3 w-full rounded font-mono cursor-not-allowed" />
+                      </div>
+                      <div>
+                        <label className="text-gray-400 text-xs font-mono block mb-1">İsim *</label>
+                        <input type="text" required value={editStudent.name}
+                          onChange={(e) => setEditStudent({ ...editStudent, name: e.target.value })}
+                          className="bg-[#050505] border border-gray-700 text-white p-3 w-full rounded focus:outline-none focus:border-[#00F0FF] transition-colors" />
+                      </div>
+                      <div>
+                        <label className="text-gray-400 text-xs font-mono block mb-1">Takma Ad</label>
+                        <input type="text" value={editStudent.nickname}
+                          onChange={(e) => setEditStudent({ ...editStudent, nickname: e.target.value })}
+                          className="bg-[#050505] border border-gray-700 text-white p-3 w-full rounded focus:outline-none focus:border-[#00F0FF] transition-colors" />
+                      </div>
+                      <div>
+                        <label className="text-gray-400 text-xs font-mono block mb-1">E-posta * (zorunlu)</label>
+                        <input type="email" required value={editStudent.email}
+                          onChange={(e) => setEditStudent({ ...editStudent, email: e.target.value })}
+                          className="bg-[#050505] border border-gray-700 text-white p-3 w-full rounded focus:outline-none focus:border-[#00F0FF] transition-colors" />
+                      </div>
+                    </div>
+                    <div className="flex gap-3 mt-6">
+                      <button
+                        onClick={handleSaveEdit}
+                        className="flex-1 bg-[#00F0FF]/20 hover:bg-[#00F0FF] text-[#00F0FF] hover:text-black border border-[#00F0FF] px-4 py-3 font-bold transition-all uppercase tracking-widest rounded text-sm"
+                      >
+                        Kaydet
+                      </button>
+                      <button
+                        onClick={() => setEditStudent(null)}
+                        className="flex-1 bg-white/5 hover:bg-white/10 text-gray-400 border border-gray-700 px-4 py-3 font-bold transition-all uppercase tracking-widest rounded text-sm"
+                      >
+                        İptal
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

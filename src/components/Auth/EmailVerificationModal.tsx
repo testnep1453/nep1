@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { signInWithGoogle, sendVerificationLink, saveStudentEmail, mapGoogleUserToStudent, signInAndMapStudent } from '../../services/authService';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '../../config/firebase';
 
 interface EmailVerificationModalProps {
   studentId: string;
@@ -13,11 +15,27 @@ export const EmailVerificationModal = ({
   studentName,
   onVerified,
 }: EmailVerificationModalProps) => {
-  const [mode, setMode] = useState<'choice' | 'manual'>('choice');
+  const [mode, setMode] = useState<'choice' | 'manual' | 'auto-sending'>('choice');
   const [email, setEmail] = useState('');
+  const [existingEmail, setExistingEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [linkSent, setLinkSent] = useState(false);
+
+  // Kayıtlı e-postayı Firestore'dan çek
+  useEffect(() => {
+    const fetchEmail = async () => {
+      try {
+        const snap = await getDoc(doc(db, 'students', studentId));
+        if (snap.exists() && snap.data().email) {
+          setExistingEmail(snap.data().email);
+        }
+      } catch {
+        // Sessiz
+      }
+    };
+    fetchEmail();
+  }, [studentId]);
 
   // Google ile hızlı doğrulama
   const handleGoogleSignIn = async () => {
@@ -43,6 +61,30 @@ export const EmailVerificationModal = ({
     setLoading(false);
   };
 
+  // Kayıtlı e-postaya otomatik doğrulama linki gönder
+  const handleSendToExisting = async () => {
+    if (!existingEmail) return;
+    setLoading(true);
+    setError('');
+    setMode('auto-sending');
+    try {
+      await signInAndMapStudent(studentId);
+      const sent = await sendVerificationLink(existingEmail, studentId);
+      if (sent) {
+        setEmail(existingEmail);
+        setLinkSent(true);
+        onVerified(existingEmail);
+      } else {
+        setError('Doğrulama e-postası gönderilemedi. Lütfen tekrar deneyin.');
+        setMode('choice');
+      }
+    } catch {
+      setError('Bir hata oluştu. Lütfen tekrar deneyin.');
+      setMode('choice');
+    }
+    setLoading(false);
+  };
+
   // Manuel e-posta ile doğrulama linki gönder
   const handleSendLink = async () => {
     if (!email || !email.includes('@')) {
@@ -53,13 +95,10 @@ export const EmailVerificationModal = ({
     setLoading(true);
     setError('');
     try {
-      // Önce anonymous auth yap
       await signInAndMapStudent(studentId);
-      // Sonra doğrulama linki gönder
       const sent = await sendVerificationLink(email, studentId);
       if (sent) {
         setLinkSent(true);
-        // E-postayı Firestore'a kaydet
         await saveStudentEmail(studentId, email);
         onVerified(email);
       } else {
@@ -71,7 +110,7 @@ export const EmailVerificationModal = ({
     setLoading(false);
   };
 
-  // Link gönderildikten sonra
+  // Gönderim sonrası ekran
   if (linkSent) {
     return (
       <div className="min-h-[100dvh] w-full bg-[#050505] flex flex-col items-center justify-center p-4 overflow-hidden relative">
@@ -165,6 +204,26 @@ export const EmailVerificationModal = ({
     );
   }
 
+  // Otomatik gönderim sırasında yükleniyor
+  if (mode === 'auto-sending') {
+    return (
+      <div className="min-h-[100dvh] w-full bg-[#050505] flex flex-col items-center justify-center p-4 overflow-hidden relative">
+        <div className="absolute inset-0 pointer-events-none z-0 opacity-20">
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(0,240,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,240,255,0.03)_1px,transparent_1px)] bg-[length:40px_40px]" />
+        </div>
+        <div className="w-full max-w-md z-10 relative text-center space-y-6">
+          <div className="text-6xl mb-4 animate-pulse">📨</div>
+          <h2 className="text-xl font-bold text-white uppercase tracking-wider">
+            Doğrulama Gönderiliyor...
+          </h2>
+          <p className="text-gray-400 text-sm">
+            <span className="text-[#00F0FF] font-bold">{existingEmail}</span> adresine doğrulama kodu gönderiliyor.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   // Ana seçim ekranı
   return (
     <div className="min-h-[100dvh] w-full bg-[#050505] flex flex-col items-center justify-center p-4 overflow-hidden relative">
@@ -177,13 +236,30 @@ export const EmailVerificationModal = ({
         <div className="text-center">
           <div className="text-5xl mb-4">🔐</div>
           <h2 className="text-2xl font-bold text-white uppercase tracking-wider">
-            E-Posta Doğrulaması
+            Kimlik Doğrulama
           </h2>
           <p className="text-gray-400 text-sm mt-2">
             Merhaba <span className="text-[#00F0FF] font-bold">{studentName}</span>!
-            Güvenliğin için e-posta adresini doğrulamalısın.
+            Güvenliğin için kimliğini doğrulamalısın.
           </p>
         </div>
+
+        {/* Kayıtlı e-posta varsa otomatik gönder butonu */}
+        {existingEmail && (
+          <button
+            onClick={handleSendToExisting}
+            disabled={loading}
+            className="w-full bg-[#6358cc]/20 hover:bg-[#6358cc] text-[#B8B0FF] hover:text-white border border-[#6358cc]/50 hover:border-[#6358cc] py-4 px-6 rounded-lg font-bold text-base transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <div className="flex items-center justify-center gap-3">
+              <span className="text-xl">📨</span>
+              <div className="text-left">
+                <div className="text-sm">{loading ? 'GÖNDERİLİYOR...' : 'Doğrulama Kodu Gönder'}</div>
+                <div className="text-xs opacity-60 font-normal">{existingEmail}</div>
+              </div>
+            </div>
+          </button>
+        )}
 
         {/* Google ile Giriş */}
         <button
@@ -197,24 +273,28 @@ export const EmailVerificationModal = ({
             <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
             <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
           </svg>
-          {loading ? 'BEKLEYİN...' : 'Google ile Doğrula'}
+          {loading ? 'BEKLEYİN...' : 'Google ile Doğrula (kod gerekmez)'}
         </button>
 
-        {/* Ayırıcı */}
-        <div className="flex items-center gap-4">
-          <div className="flex-1 h-px bg-gray-700" />
-          <span className="text-gray-500 text-xs uppercase tracking-wider">veya</span>
-          <div className="flex-1 h-px bg-gray-700" />
-        </div>
+        {/* Ayırıcı — sadece kayıtlı e-posta yoksa veya her zaman */}
+        {!existingEmail && (
+          <>
+            <div className="flex items-center gap-4">
+              <div className="flex-1 h-px bg-gray-700" />
+              <span className="text-gray-500 text-xs uppercase tracking-wider">veya</span>
+              <div className="flex-1 h-px bg-gray-700" />
+            </div>
 
-        {/* Manuel Email */}
-        <button
-          onClick={() => setMode('manual')}
-          disabled={loading}
-          className="w-full bg-[#0A1128]/80 hover:bg-[#0A1128] text-[#00F0FF] border border-[#00F0FF]/30 hover:border-[#00F0FF] py-4 px-6 rounded-lg font-bold text-base transition-all disabled:opacity-50"
-        >
-          ✉️ E-posta ile Doğrula
-        </button>
+            {/* Manuel Email */}
+            <button
+              onClick={() => setMode('manual')}
+              disabled={loading}
+              className="w-full bg-[#0A1128]/80 hover:bg-[#0A1128] text-[#00F0FF] border border-[#00F0FF]/30 hover:border-[#00F0FF] py-4 px-6 rounded-lg font-bold text-base transition-all disabled:opacity-50"
+            >
+              ✉️ E-posta ile Doğrula
+            </button>
+          </>
+        )}
 
         {error && (
           <p className="text-[#FF4500] text-sm font-bold text-center">{error}</p>
@@ -223,7 +303,7 @@ export const EmailVerificationModal = ({
         {/* Bilgi */}
         <div className="bg-[#0A1128]/50 border border-gray-800 p-4 rounded-lg">
           <p className="text-gray-500 text-xs text-center">
-            🛡️ E-posta adresin güvende. Sadece hesap doğrulama ve ders bildirimleri için kullanılacak.
+            🛡️ Her girişte kimlik doğrulaması yapılır. Google ile giriş yaparsan kod gerekmez.
           </p>
         </div>
       </div>

@@ -2,7 +2,7 @@ export interface Student {
   id: string;
   name: string;
   nickname?: string;
-  email?: string;
+  email: string;
   encryptedName?: string;
   encryptedEmail?: string;
   xp: number;
