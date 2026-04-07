@@ -1,6 +1,9 @@
 name: Deploy Vite App to GitHub Pages
+
 env:
+  # Node.js uyarısını bastırmak için
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+
 on:
   push:
     branches: ['main']
@@ -16,19 +19,21 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  # 1. ADIM: Sadece projeyi derle ve paketi hazırla
   build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4.2.2
+        uses: actions/checkout@v4
+        
       - name: Set up Node
-        uses: actions/setup-node@v4.4.0
+        uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: 'npm'
+          
       - name: Install dependencies
         run: npm install
+        
       - name: Inject Firebase config to SW
         run: |
           sed -i 's|__VITE_FIREBASE_API_KEY__|${{ secrets.VITE_FIREBASE_API_KEY }}|g' public/firebase-messaging-sw.js
@@ -37,6 +42,7 @@ jobs:
           sed -i 's|__VITE_FIREBASE_STORAGE_BUCKET__|${{ secrets.VITE_FIREBASE_STORAGE_BUCKET }}|g' public/firebase-messaging-sw.js
           sed -i 's|__VITE_FIREBASE_MESSAGING_SENDER_ID__|${{ secrets.VITE_FIREBASE_MESSAGING_SENDER_ID }}|g' public/firebase-messaging-sw.js
           sed -i 's|__VITE_FIREBASE_APP_ID__|${{ secrets.VITE_FIREBASE_APP_ID }}|g' public/firebase-messaging-sw.js
+          
       - name: Build
         run: npm run build
         env:
@@ -49,16 +55,15 @@ jobs:
           VITE_FIREBASE_MEASUREMENT_ID: ${{ secrets.VITE_FIREBASE_MEASUREMENT_ID }}
           VITE_FIREBASE_DATABASE_URL: ${{ secrets.VITE_FIREBASE_DATABASE_URL }}
           VITE_FIREBASE_VAPID_KEY: ${{ secrets.VITE_FIREBASE_VAPID_KEY }}
+          
       - name: Setup Pages
         uses: actions/configure-pages@v5
+        
       - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3.0.1
+        uses: actions/upload-pages-artifact@v3
         with:
           path: './dist'
-          # ÇÖZÜM BURADA: Pakete her denemede benzersiz bir isim veriyoruz
-          name: github-pages-${{ github.run_id }}-${{ github.run_attempt }}
 
-  # 2. ADIM: Hazırlanan paketi yayına al
   deploy:
     needs: build
     environment:
@@ -68,7 +73,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4.0.5
-        with:
-          # ÇÖZÜM BURADA: Sadece bu benzersiz isimli paketi arayıp bulmasını söylüyoruz
-          artifact_name: github-pages-${{ github.run_id }}-${{ github.run_attempt }}
+        uses: actions/deploy-pages@v4
