@@ -218,4 +218,4 @@ src/
 ## License
 
 Private educational project for NEP Education Center.
-
+Son Güncelleme: Artifact hatası çözümü için temiz kurulum tetiklemesi.
