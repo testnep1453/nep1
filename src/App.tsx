@@ -33,7 +33,6 @@ function App() {
   const [appStatus, setAppStatus] = useState<AppStatus>('loggingIn');
 
   const lesson = getNextLesson();
-
   const isAdmin = student?.id === '1002';
 
   useSessionTimeout({
@@ -67,6 +66,7 @@ function App() {
     }
   }, [needsAdminAuth]);
 
+  // 1. Ekran: Yükleniyor
   if (loading) {
     return (
       <div className="min-h-[100dvh] bg-[#050505] flex items-center justify-center">
@@ -75,6 +75,7 @@ function App() {
     );
   }
 
+  // 2. Ekran: E-posta Doğrulama (Geri dön butonu onBack eklendi)
   if (needsEmailVerification && pendingStudent) {
     return (
       <EmailVerificationModal
@@ -88,6 +89,7 @@ function App() {
     );
   }
 
+  // 3. Ekran: Admin Giriş ve Onay
   if (appStatus === 'adminAuth' && pendingStudent) {
     return (
       <AdminAuth
@@ -104,6 +106,7 @@ function App() {
     );
   }
 
+  // 4. Ekran: Normal Öğrenci Giriş
   if (appStatus === 'loggingIn' && !student) {
     return (
       <StudentLogin
@@ -113,6 +116,7 @@ function App() {
     );
   }
 
+  // 5. Ekran: Ana Paneller (Admin veya Ajan)
   if (appStatus === 'dashboard' && student) {
     const handleLogout = () => {
       logout();
@@ -142,6 +146,7 @@ function App() {
   return null;
 }
 
+// Hata Yakalayıcı (ErrorBoundary) ile Sarmalama
 function AppWithBoundary() {
   return (
     <ErrorBoundary fallbackMessage="Bir hata oluştu. Lütfen sayfayı yeniden yükleyin.">
