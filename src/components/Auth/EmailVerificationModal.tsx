@@ -7,20 +7,21 @@ interface EmailVerificationModalProps {
   studentId: string;
   studentName: string;
   onVerified: (email: string) => void;
-  onSkip?: () => void;
+  onBack?: () => void;
 }
 
 export const EmailVerificationModal = ({
   studentId,
   studentName,
   onVerified,
+  onBack,
 }: EmailVerificationModalProps) => {
-  const [mode, setMode] = useState<'choice' | 'manual' | 'auto-sending'>('choice');
-  const [email, setEmail] = useState('');
+  const [mode, setMode] = useState<'choice' | 'confirm-email' | 'new-email' | 'sending' | 'sent'>('choice');
   const [existingEmail, setExistingEmail] = useState('');
+  const [newEmail, setNewEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [linkSent, setLinkSent] = useState(false);
+  const [sentTo, setSentTo] = useState('');
 
   // Kayıtlı e-postayı Firestore'dan çek
   useEffect(() => {
@@ -44,99 +45,76 @@ export const EmailVerificationModal = ({
     try {
       const result = await signInWithGoogle();
       if (!result) {
-        setError('Google girişi iptal edildi.');
         setLoading(false);
-        return;
+        return; // Kullanıcı popup'ı kapattı — sessiz
       }
-
-      // Google e-postasını öğrenciye kaydet
       await saveStudentEmail(studentId, result.email);
-      // userMappings'e kaydet
       await mapGoogleUserToStudent(result.user, studentId);
-
       onVerified(result.email);
-    } catch {
-      setError('Google girişi sırasında bir hata oluştu.');
+    } catch (err) {
+      const msg = (err as Error)?.message || '';
+      if (msg.includes('popup-closed')) {
+        // Sessiz
+      } else if (msg.includes('network')) {
+        setError('İnternet bağlantınızı kontrol edin.');
+      } else {
+        setError('Google girişi başarısız. Lütfen tekrar deneyin.');
+      }
     }
     setLoading(false);
   };
 
-  // Kayıtlı e-postaya otomatik doğrulama linki gönder
-  const handleSendToExisting = async () => {
-    if (!existingEmail) return;
+  // E-postaya doğrulama linki gönder
+  const handleSendVerification = async (email: string) => {
+    if (!email || !email.includes('@')) {
+      setError('Geçerli bir e-posta adresi girin.');
+      return;
+    }
     setLoading(true);
     setError('');
-    setMode('auto-sending');
+    setMode('sending');
+
     try {
       await signInAndMapStudent(studentId);
-      const sent = await sendVerificationLink(existingEmail, studentId);
+      const sent = await sendVerificationLink(email, studentId);
       if (sent) {
-        setEmail(existingEmail);
-        setLinkSent(true);
-        onVerified(existingEmail);
+        await saveStudentEmail(studentId, email);
+        setSentTo(email);
+        setMode('sent');
       } else {
-        setError('Doğrulama e-postası gönderilemedi. Lütfen tekrar deneyin.');
+        setError('Doğrulama gönderilemedi. Sunucu ayarlarında bir sorun olabilir.');
         setMode('choice');
       }
-    } catch {
-      setError('Bir hata oluştu. Lütfen tekrar deneyin.');
+    } catch (err) {
+      const msg = (err as Error)?.message || '';
+      if (msg.includes('network')) {
+        setError('İnternet bağlantınızı kontrol edin.');
+      } else {
+        setError('Beklenmeyen bir hata oluştu: ' + msg);
+      }
       setMode('choice');
     }
     setLoading(false);
   };
 
-  // Manuel e-posta ile doğrulama linki gönder
-  const handleSendLink = async () => {
-    if (!email || !email.includes('@')) {
-      setError('Geçerli bir e-posta adresi girin.');
-      return;
-    }
-
-    setLoading(true);
-    setError('');
-    try {
-      await signInAndMapStudent(studentId);
-      const sent = await sendVerificationLink(email, studentId);
-      if (sent) {
-        setLinkSent(true);
-        await saveStudentEmail(studentId, email);
-        onVerified(email);
-      } else {
-        setError('Doğrulama e-postası gönderilemedi. Lütfen tekrar deneyin.');
-      }
-    } catch {
-      setError('Bir hata oluştu. Lütfen tekrar deneyin.');
-    }
-    setLoading(false);
-  };
-
-  // Gönderim sonrası ekran
-  if (linkSent) {
+  // Gönderildi ekranı
+  if (mode === 'sent') {
     return (
       <div className="min-h-[100dvh] w-full bg-[#050505] flex flex-col items-center justify-center p-4 overflow-hidden relative">
         <div className="absolute inset-0 pointer-events-none z-0 opacity-20">
           <div className="absolute inset-0 bg-[linear-gradient(rgba(0,240,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,240,255,0.03)_1px,transparent_1px)] bg-[length:40px_40px]" />
         </div>
-
         <div className="w-full max-w-md z-10 relative text-center space-y-6">
           <div className="text-6xl mb-4">📧</div>
-          <h2 className="text-2xl font-bold text-white uppercase tracking-wider">
-            Doğrulama Gönderildi
-          </h2>
+          <h2 className="text-2xl font-bold text-white uppercase tracking-wider">Doğrulama Gönderildi</h2>
           <p className="text-gray-400 text-sm">
-            <span className="text-[#00F0FF] font-bold">{email}</span> adresine doğrulama gönderildi.
+            <span className="text-[#00F0FF] font-bold">{sentTo}</span> adresine doğrulama gönderildi.
           </p>
-          <p className="text-gray-500 text-xs">
-            E-postanızı kontrol edin ve doğrulama linkine tıklayın.
-            Ardından bu sayfaya geri dönün.
-          </p>
+          <p className="text-gray-500 text-xs">E-postanızı kontrol edin ve doğrulama linkine tıklayın.</p>
           <div className="bg-[#0A1128]/80 border border-[#6358cc]/30 p-4 rounded-lg">
             <p className="text-gray-400 text-xs">
               E-posta gelmediyse spam klasörünü kontrol edin veya
-              <button
-                onClick={() => { setLinkSent(false); setMode('choice'); }}
-                className="text-[#00F0FF] hover:underline ml-1"
-              >
+              <button onClick={() => { setMode('choice'); setError(''); }} className="text-[#00F0FF] hover:underline ml-1">
                 tekrar deneyin
               </button>
             </p>
@@ -146,66 +124,8 @@ export const EmailVerificationModal = ({
     );
   }
 
-  // Manuel e-posta giriş ekranı
-  if (mode === 'manual') {
-    return (
-      <div className="min-h-[100dvh] w-full bg-[#050505] flex flex-col items-center justify-center p-4 overflow-hidden relative">
-        <div className="absolute inset-0 pointer-events-none z-0 opacity-20">
-          <div className="absolute inset-0 bg-[linear-gradient(rgba(0,240,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,240,255,0.03)_1px,transparent_1px)] bg-[length:40px_40px]" />
-        </div>
-
-        <div className="w-full max-w-md z-10 relative space-y-6">
-          <div className="text-center">
-            <div className="text-5xl mb-4">✉️</div>
-            <h2 className="text-2xl font-bold text-white uppercase tracking-wider">
-              E-Posta Doğrulama
-            </h2>
-            <p className="text-gray-400 text-sm mt-2">
-              <span className="text-[#00F0FF] font-bold">{studentName}</span>, e-posta adresini gir.
-              Doğrulama linki göndereceğiz.
-            </p>
-          </div>
-
-          <div className="space-y-4">
-            <input
-              id="emailVerificationInput"
-              name="email"
-              type="email"
-              value={email}
-              onChange={(e) => { setEmail(e.target.value); setError(''); }}
-              placeholder="ornek@gmail.com"
-              className="w-full px-4 py-4 bg-[#0A1128] border-2 border-[#00F0FF]/30 text-white text-lg rounded-lg focus:border-[#00F0FF] focus:outline-none transition-all placeholder:text-gray-600"
-              disabled={loading}
-              autoComplete="email"
-              autoFocus
-            />
-
-            {error && (
-              <p className="text-[#FF4500] text-sm font-bold text-center">{error}</p>
-            )}
-
-            <button
-              onClick={handleSendLink}
-              disabled={loading || !email}
-              className="w-full bg-[#00F0FF]/20 hover:bg-[#00F0FF] text-[#00F0FF] hover:text-black border border-[#00F0FF] py-4 font-bold transition-all uppercase tracking-widest rounded-lg text-lg disabled:opacity-30 disabled:cursor-not-allowed"
-            >
-              {loading ? 'GÖNDERİLİYOR...' : 'DOĞRULAMA LİNKİ GÖNDER'}
-            </button>
-
-            <button
-              onClick={() => setMode('choice')}
-              className="w-full text-gray-500 hover:text-gray-300 text-sm py-2 transition-colors"
-            >
-              ← Geri Dön
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Otomatik gönderim sırasında yükleniyor
-  if (mode === 'auto-sending') {
+  // Gönderiliyor
+  if (mode === 'sending') {
     return (
       <div className="min-h-[100dvh] w-full bg-[#050505] flex flex-col items-center justify-center p-4 overflow-hidden relative">
         <div className="absolute inset-0 pointer-events-none z-0 opacity-20">
@@ -213,12 +133,82 @@ export const EmailVerificationModal = ({
         </div>
         <div className="w-full max-w-md z-10 relative text-center space-y-6">
           <div className="text-6xl mb-4 animate-pulse">📨</div>
-          <h2 className="text-xl font-bold text-white uppercase tracking-wider">
-            Doğrulama Gönderiliyor...
-          </h2>
-          <p className="text-gray-400 text-sm">
-            <span className="text-[#00F0FF] font-bold">{existingEmail}</span> adresine doğrulama kodu gönderiliyor.
-          </p>
+          <h2 className="text-xl font-bold text-white uppercase tracking-wider">Gönderiliyor...</h2>
+        </div>
+      </div>
+    );
+  }
+
+  // E-posta onayı — "Bu senin e-postan mı?"
+  if (mode === 'confirm-email') {
+    return (
+      <div className="min-h-[100dvh] w-full bg-[#050505] flex flex-col items-center justify-center p-4 overflow-hidden relative">
+        <div className="absolute inset-0 pointer-events-none z-0 opacity-20">
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(0,240,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,240,255,0.03)_1px,transparent_1px)] bg-[length:40px_40px]" />
+        </div>
+        <div className="w-full max-w-md z-10 relative space-y-6">
+          <div className="text-center">
+            <div className="text-5xl mb-4">📬</div>
+            <h2 className="text-2xl font-bold text-white uppercase tracking-wider">E-posta Onayı</h2>
+            <p className="text-gray-400 text-sm mt-3">Sistemde kayıtlı e-postan:</p>
+          </div>
+          <div className="bg-[#0A1128] border-2 border-[#00F0FF]/30 rounded-lg p-4 text-center">
+            <p className="text-[#00F0FF] text-lg font-bold font-mono">{existingEmail}</p>
+          </div>
+          {error && <p className="text-[#FF4500] text-sm font-bold text-center">{error}</p>}
+          <button
+            onClick={() => handleSendVerification(existingEmail)}
+            disabled={loading}
+            className="w-full bg-[#00F0FF]/20 hover:bg-[#00F0FF] text-[#00F0FF] hover:text-black border border-[#00F0FF] py-4 font-bold rounded-lg transition-all"
+          >
+            {loading ? 'GÖNDERİLİYOR...' : '✅ EVET, BU ADRESE GÖNDER'}
+          </button>
+          <button
+            onClick={() => { setMode('new-email'); setError(''); }}
+            className="w-full bg-white/5 hover:bg-white/10 text-gray-400 border border-gray-700 py-3 font-bold rounded-lg transition-all"
+          >
+            ❌ HAYIR, FARKLI E-POSTA GİR
+          </button>
+          <button onClick={() => { setMode('choice'); setError(''); }} className="w-full text-gray-500 hover:text-gray-300 text-sm py-2">
+            ← Geri Dön
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // Yeni e-posta
+  if (mode === 'new-email') {
+    return (
+      <div className="min-h-[100dvh] w-full bg-[#050505] flex flex-col items-center justify-center p-4 overflow-hidden relative">
+        <div className="absolute inset-0 pointer-events-none z-0 opacity-20">
+          <div className="absolute inset-0 bg-[linear-gradient(rgba(0,240,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,240,255,0.03)_1px,transparent_1px)] bg-[length:40px_40px]" />
+        </div>
+        <div className="w-full max-w-md z-10 relative space-y-6">
+          <div className="text-center">
+            <div className="text-5xl mb-4">✉️</div>
+            <h2 className="text-2xl font-bold text-white uppercase tracking-wider">Yeni E-Posta</h2>
+          </div>
+          <input
+            type="email"
+            value={newEmail}
+            onChange={(e) => { setNewEmail(e.target.value); setError(''); }}
+            placeholder="ornek@gmail.com"
+            className="w-full px-4 py-4 bg-[#0A1128] border-2 border-[#00F0FF]/30 text-white text-lg rounded-lg outline-none focus:border-[#00F0FF] transition-all"
+            autoFocus
+            disabled={loading}
+          />
+          {error && <p className="text-[#FF4500] text-sm font-bold text-center">{error}</p>}
+          <button
+            onClick={() => handleSendVerification(newEmail)}
+            disabled={!newEmail || loading}
+            className="w-full bg-[#00F0FF]/20 hover:bg-[#00F0FF] text-[#00F0FF] hover:text-black border border-[#00F0FF] py-4 font-bold rounded-lg disabled:opacity-30 transition-all uppercase"
+          >
+            {loading ? 'GÖNDERİLİYOR...' : 'DOĞRULAMA GÖNDER'}
+          </button>
+          <button onClick={() => { setMode(existingEmail ? 'confirm-email' : 'choice'); setError(''); }} className="w-full text-gray-500 hover:text-gray-300 text-sm py-2">
+            ← Geri Dön
+          </button>
         </div>
       </div>
     );
@@ -232,40 +222,29 @@ export const EmailVerificationModal = ({
       </div>
 
       <div className="w-full max-w-md z-10 relative space-y-8">
-        {/* Başlık */}
         <div className="text-center">
           <div className="text-5xl mb-4">🔐</div>
-          <h2 className="text-2xl font-bold text-white uppercase tracking-wider">
-            Kimlik Doğrulama
-          </h2>
-          <p className="text-gray-400 text-sm mt-2">
-            Merhaba <span className="text-[#00F0FF] font-bold">{studentName}</span>!
-            Güvenliğin için kimliğini doğrulamalısın.
-          </p>
+          <h2 className="text-2xl font-bold text-white uppercase tracking-wider">Kimlik Doğrulama</h2>
+          <p className="text-gray-400 text-sm mt-2">Merhaba <span className="text-[#00F0FF] font-bold">{studentName}</span>! Güvenliğin için kimliğini doğrulamalısın.</p>
         </div>
 
-        {/* Kayıtlı e-posta varsa otomatik gönder butonu */}
-        {existingEmail && (
-          <button
-            onClick={handleSendToExisting}
-            disabled={loading}
-            className="w-full bg-[#6358cc]/20 hover:bg-[#6358cc] text-[#B8B0FF] hover:text-white border border-[#6358cc]/50 hover:border-[#6358cc] py-4 px-6 rounded-lg font-bold text-base transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            <div className="flex items-center justify-center gap-3">
-              <span className="text-xl">📨</span>
-              <div className="text-left">
-                <div className="text-sm">{loading ? 'GÖNDERİLİYOR...' : 'Doğrulama Kodu Gönder'}</div>
-                <div className="text-xs opacity-60 font-normal">{existingEmail}</div>
-              </div>
-            </div>
-          </button>
-        )}
+        {/* Doğrulama Kodu Gönder Butonu */}
+        <button
+          onClick={() => { setError(''); setMode(existingEmail ? 'confirm-email' : 'new-email'); }}
+          disabled={loading}
+          className="w-full bg-[#6358cc]/20 hover:bg-[#6358cc] text-[#B8B0FF] hover:text-white border border-[#6358cc]/50 hover:border-[#6358cc] py-4 px-6 rounded-lg font-bold text-base transition-all disabled:opacity-50"
+        >
+          <div className="flex items-center justify-center gap-3">
+            <span className="text-xl">📨</span>
+            <span>Doğrulama Kodu Gönder</span>
+          </div>
+        </button>
 
         {/* Google ile Giriş */}
         <button
           onClick={handleGoogleSignIn}
           disabled={loading}
-          className="w-full flex items-center justify-center gap-3 bg-white hover:bg-gray-100 text-gray-800 py-4 px-6 rounded-lg font-bold text-base transition-all shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full flex items-center justify-center gap-3 bg-white hover:bg-gray-100 text-gray-800 py-4 px-6 rounded-lg font-bold text-base transition-all shadow-lg hover:shadow-xl disabled:opacity-50"
         >
           <svg className="w-6 h-6" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />
@@ -276,32 +255,15 @@ export const EmailVerificationModal = ({
           {loading ? 'BEKLEYİN...' : 'Google ile Doğrula (kod gerekmez)'}
         </button>
 
-        {/* Ayırıcı — sadece kayıtlı e-posta yoksa veya her zaman */}
-        {!existingEmail && (
-          <>
-            <div className="flex items-center gap-4">
-              <div className="flex-1 h-px bg-gray-700" />
-              <span className="text-gray-500 text-xs uppercase tracking-wider">veya</span>
-              <div className="flex-1 h-px bg-gray-700" />
-            </div>
+        {error && <p className="text-[#FF4500] text-sm font-bold text-center">{error}</p>}
 
-            {/* Manuel Email */}
-            <button
-              onClick={() => setMode('manual')}
-              disabled={loading}
-              className="w-full bg-[#0A1128]/80 hover:bg-[#0A1128] text-[#00F0FF] border border-[#00F0FF]/30 hover:border-[#00F0FF] py-4 px-6 rounded-lg font-bold text-base transition-all disabled:opacity-50"
-            >
-              ✉️ E-posta ile Doğrula
-            </button>
-          </>
+        {onBack && (
+          <button onClick={onBack} className="w-full text-gray-500 hover:text-gray-300 text-sm py-2 transition-colors font-bold uppercase tracking-wider mt-4">
+            ← ÇIKIŞ YAP VE GERİ DÖN
+          </button>
         )}
 
-        {error && (
-          <p className="text-[#FF4500] text-sm font-bold text-center">{error}</p>
-        )}
-
-        {/* Bilgi */}
-        <div className="bg-[#0A1128]/50 border border-gray-800 p-4 rounded-lg">
+        <div className="bg-[#0A1128]/50 border border-gray-800 p-4 rounded-lg mt-4">
           <p className="text-gray-500 text-xs text-center">
             🛡️ Her girişte kimlik doğrulaması yapılır. Google ile giriş yaparsan kod gerekmez.
           </p>
