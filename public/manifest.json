@@ -1,0 +1,19 @@
+{
+  "name": "NEP Eğitim Platformu",
+  "short_name": "NEP",
+  "description": "Haftalık NEP Ders Platformu — Ajan Modu",
+  "theme_color": "#050505",
+  "background_color": "#050505",
+  "display": "standalone",
+  "orientation": "portrait",
+  "scope": "/nep1/",
+  "start_url": "/nep1/",
+  "icons": [
+    {
+      "src": "nep-logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

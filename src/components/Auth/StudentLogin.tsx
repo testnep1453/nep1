@@ -5,19 +5,11 @@ import { signInWithGoogle, findStudentByEmail, saveStudentEmail, mapGoogleUserTo
 interface StudentLoginProps {
   onLogin: (id: string) => Promise<boolean>;
   onLoginWithGoogle?: (id: string, email: string) => Promise<boolean>;
-  pendingStudent?: { name: string; id: string } | null;
-  needsConfirmation?: boolean;
-  onConfirm?: () => void;
-  onReject?: () => void;
 }
 
 export const StudentLogin = ({
   onLogin,
   onLoginWithGoogle,
-  pendingStudent,
-  needsConfirmation,
-  onConfirm,
-  onReject,
 }: StudentLoginProps) => {
   const [studentId, setStudentId] = useState('');
   const [loading, setLoading] = useState(false);
@@ -81,7 +73,6 @@ export const StudentLogin = ({
         return;
       }
 
-      // Firestore'da bu e-postayla eşleşen öğrenci var mı?
       const matchedStudentId = await findStudentByEmail(result.email);
       if (matchedStudentId) {
         await mapGoogleUserToStudent(result.user, matchedStudentId);
@@ -92,7 +83,6 @@ export const StudentLogin = ({
           await onLogin(matchedStudentId);
         }
       } else {
-        // E-posta eşleşmedi — local JSON'da ara
         const localStudents = getStudentsCached();
         const localMatch = localStudents.find(s => (s as { email?: string }).email === result.email);
         if (localMatch) {
@@ -113,7 +103,6 @@ export const StudentLogin = ({
     setGoogleLoading(false);
   };
 
-  // Suppress unused variable warning
   void lockoutTimerRef;
 
   // Otomatik giriş
@@ -128,11 +117,6 @@ export const StudentLogin = ({
 
     if (exactMatch) {
       triggerLogin(studentId);
-    } else if (studentId.length === 3) {
-      const partialMatch = dbData.find((s) => s.id.startsWith(studentId));
-      if (partialMatch) {
-        // Kısmi eşleşme tespit edildi — sessiz
-      }
     } else if (studentId.length === 4) {
       triggerLogin(studentId);
     }
@@ -167,14 +151,14 @@ export const StudentLogin = ({
     let typingTimer: ReturnType<typeof setTimeout>;
 
     const runPlaceholderCycle = () => {
-      if (studentId || loading || needsConfirmation) return;
+      if (studentId || loading) return;
 
       const newId = generateSafeId();
       let currentStr = '';
       let charIdx = 0;
 
       const typeChar = () => {
-        if (studentId || loading || needsConfirmation) return;
+        if (studentId || loading) return;
         currentStr += newId[charIdx];
         setPlaceholderId(currentStr);
         charIdx++;
@@ -194,7 +178,7 @@ export const StudentLogin = ({
 
     typingTimer = setTimeout(runPlaceholderCycle, 500);
     return () => clearTimeout(typingTimer);
-  }, [studentId, loading, needsConfirmation]);
+  }, [studentId, loading]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -202,54 +186,6 @@ export const StudentLogin = ({
       triggerLogin(studentId);
     }
   };
-
-  // İsim Doğrulama Görünümü
-  if (needsConfirmation && pendingStudent) {
-    return (
-      <div className="min-h-[100dvh] w-full bg-[#050505] flex flex-col items-center justify-center p-4 overflow-hidden relative">
-        <div className="absolute inset-0 pointer-events-none z-0 opacity-20">
-          <div className="absolute inset-0 bg-[linear-gradient(rgba(0,240,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,240,255,0.03)_1px,transparent_1px)] bg-[length:40px_40px]" />
-        </div>
-
-        <div className="w-full max-w-sm z-10 relative text-center">
-          <div className="text-6xl mb-6">🛡️</div>
-
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2 uppercase tracking-wider">
-            KİMLİK DOĞRULAMA
-          </h2>
-
-          <p className="text-gray-400 text-sm mb-8">
-            Sen{' '}
-            <span className="text-[#00F0FF] font-bold text-lg">
-              {pendingStudent.name}
-            </span>{' '}
-            mısın?
-          </p>
-
-          <div className="flex gap-4">
-            <button
-              id="confirmIdentityBtn"
-              onClick={onConfirm}
-              className="flex-1 bg-[#39FF14]/20 hover:bg-[#39FF14] text-[#39FF14] hover:text-black border border-[#39FF14] py-4 font-bold transition-all uppercase tracking-widest rounded-lg text-lg min-h-[56px]"
-            >
-              EVET, BENİM
-            </button>
-            <button
-              id="rejectIdentityBtn"
-              onClick={() => {
-                onReject?.();
-                setStudentId('');
-                setLoading(false);
-              }}
-              className="flex-1 bg-[#FF4500]/20 hover:bg-[#FF4500] text-[#FF4500] hover:text-black border border-[#FF4500] py-4 font-bold transition-all uppercase tracking-widest rounded-lg text-lg min-h-[56px]"
-            >
-              HAYIR
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-[100dvh] w-full bg-[#050505] flex flex-col items-center justify-center p-4 overflow-hidden relative">
@@ -324,10 +260,6 @@ export const StudentLogin = ({
           </svg>
           {googleLoading ? 'BEKLEYİN...' : 'Google ile Giriş Yap'}
         </button>
-
-        <p className="text-gray-600 text-[10px] mt-4 text-center">
-          Google ile giriş yapabilmek için e-postan sisteme kayıtlı olmalı.
-        </p>
       </div>
     </div>
   );

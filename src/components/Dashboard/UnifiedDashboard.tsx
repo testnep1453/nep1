@@ -10,7 +10,7 @@ import { rtdb } from '../../config/firebase';
 import { recordAttendance } from '../../services/db';
 import { Student, Lesson, Trailer, FeedbackEntry } from '../../types/student';
 import { ProfileSection } from './ProfileSection';
-import { PresenceCounter } from './PresenceCounter';
+import { TopBar } from './TopBar';
 import { MessageFeed } from './MessageFeed';
 import { YouTubePlayer } from '../VideoTheater/YouTubePlayer';
 import { OperationDrawer } from '../Drawer/OperationDrawer';
@@ -19,6 +19,7 @@ import { AttendancePage } from '../Admin/AttendancePage';
 import { ArchiveManager } from '../Admin/ArchiveManager';
 import { useAutoMessages } from '../../hooks/useAutoMessages';
 import { useAutoZoom } from '../../hooks/useAutoZoom';
+import { useNotifications, sendNotificationToAll } from '../../hooks/useNotifications';
 import { formatLessonDate, LESSON_CONFIG } from '../../config/lessonSchedule';
 
 const Icons = {
@@ -48,6 +49,14 @@ export const UnifiedDashboard = ({
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    return (localStorage.getItem('nepTheme') as 'dark' | 'light') || 'dark';
+  });
+  const handleThemeChange = (t: 'dark' | 'light') => {
+    setTheme(t);
+    localStorage.setItem('nepTheme', t);
+  };
+  const { unreadCount } = useNotifications(student.id);
 
   // Otomatik mesajlar
   useAutoMessages(isAdmin);
@@ -207,14 +216,18 @@ export const UnifiedDashboard = ({
   };
 
   // Öğrenci Silme (Tam temizlik: Firestore + RTDB presence + RTDB deviceApprovals)
+  // Korumalı ID'ler: 1001, 1002, 1003 silinemez (Modül 3.2)
+  const PROTECTED_IDS = ['1001', '1002', '1003'];
   const handleRemove = async (id: string, name: string) => {
+    if (PROTECTED_IDS.includes(id)) {
+      alert(`⚠️ Ajan ${name} (${id}) sistem tarafından korunan bir hesaptır ve silinemez.`);
+      return;
+    }
     if (!window.confirm(`Ajan ${name} (${id}) kalıcı olarak silinecek. Onaylıyor musunuz?`)) return;
     try {
       await removeStudentFromFirebase(id);
-      // RTDB presence temizle (hayalet oturum önlemi)
       const presenceRef = ref(rtdb, `presence/${id}`);
       await remove(presenceRef);
-      // RTDB deviceApprovals temizle
       const approvalRef = ref(rtdb, `deviceApprovals/${id}`);
       await remove(approvalRef);
       setStudents(prev => prev.filter(s => s.id !== id));
@@ -224,13 +237,20 @@ export const UnifiedDashboard = ({
     }
   };
 
-  // Global Mesaj Gönderme
+  // Global Mesaj Gönderme + Push Bildirim (Modül 3)
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (messageText.trim()) {
       await addMessageToFirebase(messageText.trim());
+      // Aynı anda tüm öğrencilere notification gönder
+      const studentIds = students.map(s => s.id).filter(id => id !== '1002');
+      await sendNotificationToAll(studentIds, {
+        title: 'Admin Duyurusu',
+        body: messageText.trim(),
+        type: 'admin',
+      });
       setMessageText('');
-      alert('Mesaj tüm ajanlara başarıyla iletildi!');
+      alert('Mesaj ve bildirimler tüm ajanlara iletildi!');
     }
   };
 
@@ -264,6 +284,9 @@ export const UnifiedDashboard = ({
         <div className="absolute inset-0 bg-[linear-gradient(rgba(57,255,20,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(57,255,20,0.03)_1px,transparent_1px)] bg-[length:40px_40px]" />
         <div className="scanlines absolute inset-0" />
       </div>
+
+      {/* TopBar (Modül 1.2) */}
+      <TopBar student={student} unreadCount={unreadCount} theme={theme} onThemeChange={handleThemeChange} />
 
       {/* Drawer */}
       <OperationDrawer
@@ -432,30 +455,33 @@ export const UnifiedDashboard = ({
                 </div>
               )}
 
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-                <div className="lg:col-span-2">
-                  <ProfileSection student={student} />
-                </div>
-                <div>
-                  <PresenceCounter count={onlineCount} />
-                </div>
-              </div>
-
-              {/* Ders Sayacı — Sadeleştirilmiş */}
-              {lesson && (
-                <div
-                  className="bg-[#0A1128]/80 border border-[#6358cc]/30 p-4 sm:p-5 rounded-lg cursor-pointer hover:border-[#6358cc]/60 transition-all group"
-                  onClick={() => setDrawerOpen(true)}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">⏰</span>
-                      <span className="text-[#8b7fd8] font-bold text-sm sm:text-base uppercase tracking-wider">Sonraki Derse</span>
+              {/* 3+ Hafta Devamsız Ajanlar (Modül 3.3) */}
+              {isAdmin && (() => {
+                const THREE_WEEKS = 21 * 24 * 60 * 60 * 1000;
+                const inactiveAgents = students.filter(s =>
+                  s.id !== '1002' && s.lastSeen && (Date.now() - s.lastSeen > THREE_WEEKS)
+                );
+                if (inactiveAgents.length === 0) return null;
+                return (
+                  <div className="bg-[#0A1128]/80 border border-[#FF4500]/30 p-4 sm:p-6 rounded-lg">
+                    <h3 className="text-[#FF4500] text-sm font-bold uppercase tracking-wider mb-3 flex items-center gap-2">
+                      <span>⚠️</span> {inactiveAgents.length} Ajan 3+ Hafta Devamsız
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      {inactiveAgents.slice(0, 10).map(a => (
+                        <span key={a.id} className="text-xs bg-[#FF4500]/10 text-[#FF4500] px-2 py-1 rounded font-mono">
+                          {a.name} ({a.id})
+                        </span>
+                      ))}
+                      {inactiveAgents.length > 10 && (
+                        <span className="text-xs text-gray-500">+{inactiveAgents.length - 10} daha</span>
+                      )}
                     </div>
-                    <span className="text-gray-500 text-xs font-mono group-hover:text-[#8b7fd8] transition-colors">Detay →</span>
                   </div>
-                </div>
-              )}
+                );
+              })()}
+
+              <ProfileSection student={student} />
 
               <MessageFeed />
             </div>

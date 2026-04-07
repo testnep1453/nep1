@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from './hooks/useAuth';
 import { usePresence } from './hooks/usePresence';
+import { useSessionTimeout, SESSION_TIMEOUT } from './hooks/useSessionTimeout';
 import { StudentLogin } from './components/Auth/StudentLogin';
 import { AdminAuth } from './components/Auth/AdminAuth';
 import { EmailVerificationModal } from './components/Auth/EmailVerificationModal';
@@ -9,7 +10,7 @@ import { AgentDashboard } from './components/Agent/AgentDashboard';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { getNextLesson } from './config/lessonSchedule';
 import { requestNotificationPermission, setupNotificationListener } from './services/fcm';
-import { signOutUser } from './services/authService';
+import { recordLoginAndCheckSuspicious } from './services/loginAlertService';
 
 type AppStatus = 'loggingIn' | 'adminAuth' | 'dashboard';
 
@@ -19,10 +20,8 @@ function App() {
     loading,
     login,
     loginWithGoogle,
+    logout,
     pendingStudent,
-    needsConfirmation,
-    confirmIdentity,
-    rejectIdentity,
     needsAdminAuth,
     confirmAdminAuth,
     cancelAdminAuth,
@@ -33,15 +32,28 @@ function App() {
   const onlineCount = usePresence(student?.id || null);
   const [appStatus, setAppStatus] = useState<AppStatus>('loggingIn');
 
-  // Lesson otomatik hesaplama (artık Firestore'a bağımlı değil — lessonSchedule.ts'den geliyor)
   const lesson = getNextLesson();
+
+  const isAdmin = student?.id === '1002';
+
+  // Session timeout — admin 60dk, ajan 30dk
+  useSessionTimeout({
+    timeoutMs: isAdmin ? SESSION_TIMEOUT.ADMIN : SESSION_TIMEOUT.AGENT,
+    onTimeout: () => {
+      logout();
+      window.location.reload();
+    },
+    enabled: !!student,
+  });
 
   useEffect(() => {
     if (student) {
-      requestNotificationPermission();
+      requestNotificationPermission(student.id);
       setupNotificationListener((payload) => {
-        void payload; // Bildirim alındı — sessiz
+        void payload;
       });
+      // Şüpheli giriş kontrolü + kayıt
+      recordLoginAndCheckSuspicious(student.id);
     }
 
     if (student && appStatus === 'loggingIn') {
@@ -51,7 +63,6 @@ function App() {
     }
   }, [student]);
 
-  // Admin auth ekranına geçiş
   useEffect(() => {
     if (needsAdminAuth) {
       setAppStatus('adminAuth');
@@ -96,33 +107,21 @@ function App() {
     );
   }
 
-
-
-  if ((appStatus === 'loggingIn' && !student) || needsConfirmation) {
+  if (appStatus === 'loggingIn' && !student) {
     return (
       <StudentLogin
         onLogin={login}
         onLoginWithGoogle={loginWithGoogle}
-        pendingStudent={pendingStudent}
-        needsConfirmation={needsConfirmation}
-        onConfirm={() => {
-          confirmIdentity();
-        }}
-        onReject={rejectIdentity}
       />
     );
   }
 
   if (appStatus === 'dashboard' && student) {
-    const isAdmin = student.id === '1002';
     const handleLogout = () => {
-      signOutUser().catch(() => {});
-      localStorage.removeItem('studentId');
+      logout();
       window.location.reload();
     };
 
-    // Admin → UnifiedDashboard (yönetim paneli)
-    // Ajan → AgentDashboard (6 sekmeli ajan arayüzü)
     if (isAdmin) {
       return (
         <UnifiedDashboard
@@ -139,7 +138,6 @@ function App() {
         student={student}
         onLogout={handleLogout}
         lesson={lesson}
-        onlineCount={onlineCount}
       />
     );
   }

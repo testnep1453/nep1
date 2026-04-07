@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Student, Lesson, Trailer } from '../../types/student';
 import { ProfileSection } from '../Dashboard/ProfileSection';
-import { PresenceCounter } from '../Dashboard/PresenceCounter';
+import { TopBar } from '../Dashboard/TopBar';
 import { MessageFeed } from '../Dashboard/MessageFeed';
 import { OperationDrawer } from '../Drawer/OperationDrawer';
 import { FeedbackForm } from '../Feedback/FeedbackForm';
@@ -31,15 +31,23 @@ const Icons = {
 };
 
 export const AgentDashboard = ({
-  student, onLogout, lesson, onlineCount
+  student, onLogout, lesson
 }: {
-  student: Student; onLogout: () => void; lesson: Lesson | null; onlineCount: number;
+  student: Student; onLogout: () => void; lesson: Lesson | null;
 }) => {
   const [activeTab, setActiveTab] = useState<AgentTab>('home');
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [trailer, setTrailerState] = useState<Trailer | null>(null);
+  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
+    return (localStorage.getItem('nepTheme') as 'dark' | 'light') || 'dark';
+  });
+
+  const handleThemeChange = (t: 'dark' | 'light') => {
+    setTheme(t);
+    localStorage.setItem('nepTheme', t);
+  };
 
   useAutoMessages(false);
   const { unreadCount } = useNotifications(student.id);
@@ -88,6 +96,8 @@ export const AgentDashboard = ({
         <div className="absolute inset-0 bg-[linear-gradient(rgba(0,240,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,240,255,0.03)_1px,transparent_1px)] bg-[length:40px_40px]" />
         <div className="scanlines absolute inset-0" />
       </div>
+      {/* TopBar (Modül 1.2) */}
+      <TopBar student={student} unreadCount={unreadCount} theme={theme} onThemeChange={handleThemeChange} />
 
       {/* Drawer */}
       <OperationDrawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)}
@@ -180,22 +190,53 @@ export const AgentDashboard = ({
         <div className="max-w-7xl mx-auto">
           {activeTab === 'home' && (
             <div className="space-y-6 sm:space-y-8 animate-fade-in">
-              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-                <div className="lg:col-span-2"><ProfileSection student={student} /></div>
-                <div><PresenceCounter count={onlineCount} /></div>
-              </div>
-              {lesson && (
-                <div className="bg-[#0A1128]/80 border border-[#6358cc]/30 p-4 sm:p-5 rounded-lg cursor-pointer hover:border-[#6358cc]/60 transition-all group"
-                  onClick={() => setDrawerOpen(true)}>
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <span className="text-2xl">⏰</span>
-                      <span className="text-[#8b7fd8] font-bold text-sm sm:text-base uppercase tracking-wider">Sonraki Derse</span>
+              <ProfileSection student={student} />
+
+              {/* Minimal XP Progress Bar (Modül 4.1) */}
+              {(() => {
+                const THRESHOLDS = [0, 200, 500, 1000, 2000, 3500, 5500, 8000, 12000, 18000, 25000];
+                const lvl = student.level || 1;
+                const xp = student.xp || 0;
+                const curr = THRESHOLDS[lvl - 1] || 0;
+                const next = THRESHOLDS[lvl] || THRESHOLDS[THRESHOLDS.length - 1];
+                const pct = Math.min(((xp - curr) / (next - curr)) * 100, 100);
+                return (
+                  <div className="bg-[#0A1128]/80 border border-[#00F0FF]/20 p-4 rounded-lg">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <span className="text-[#00F0FF] text-xs font-bold">LVL {lvl}</span>
+                        <span className="text-gray-500 text-xs font-mono">{xp} XP</span>
+                      </div>
+                      <span className="text-gray-600 text-[10px] font-mono">{next - xp} XP kaldı</span>
                     </div>
-                    <span className="text-gray-500 text-xs font-mono group-hover:text-[#8b7fd8] transition-colors">Detay →</span>
+                    <div className="h-2 bg-[#050505] rounded-full overflow-hidden border border-gray-800">
+                      <div
+                        className="h-full bg-gradient-to-r from-[#00F0FF] to-[#6358cc] rounded-full transition-all duration-1000 ease-out shadow-[0_0_8px_rgba(0,240,255,0.4)]"
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
                   </div>
-                </div>
+                );
+              })()}
+
+              {/* Dinamik Feedback Butonu (Modül 4.2) — Ders bittikten sonra */}
+              {autoZoomState.status === 'feedback' && !showFeedback && (
+                <button
+                  onClick={() => setShowFeedback(true)}
+                  className="w-full bg-gradient-to-r from-[#FF9F43]/20 to-[#FF4500]/20 border border-[#FF9F43]/40 text-[#FF9F43] py-4 rounded-lg font-bold uppercase tracking-wider text-sm hover:from-[#FF9F43]/30 hover:to-[#FF4500]/30 transition-all animate-pulse"
+                >
+                  📝 Ders Hakkında Geri Bildirim Ver
+                </button>
               )}
+
+              {/* Derse Katıl Butonu */}
+              <button
+                onClick={() => setDrawerOpen(true)}
+                className="w-full bg-[#6358cc]/10 border border-[#6358cc]/30 text-[#8b7fd8] py-4 rounded-lg font-bold uppercase tracking-wider text-sm hover:bg-[#6358cc]/20 transition-all flex items-center justify-center gap-2"
+              >
+                <Icons.Swords /> OPERASYON PANELİ
+              </button>
+
               <MessageFeed />
             </div>
           )}

@@ -1,42 +1,97 @@
 import { getMessagingInstance } from '../config/firebase';
-import { getToken, onMessage } from 'firebase/messaging';
+import { getToken, onMessage, MessagePayload } from 'firebase/messaging';
+import { doc, setDoc } from 'firebase/firestore';
+import { db } from '../config/firebase';
 
-export const requestNotificationPermission = async () => {
+/**
+ * FCM Push Notification Service (Modül 2)
+ * - İzin iste → Token al → Firestore'a kaydet
+ * - Foreground mesaj dinleme
+ * - Token yenileme
+ */
+
+/**
+ * Bildirim izni iste ve FCM token al
+ * Token'ı Firestore'a kaydeder
+ */
+export const requestNotificationPermission = async (studentId?: string): Promise<string | null> => {
   try {
+    // Tarayıcı desteği kontrolü
+    if (!('Notification' in window) || !('serviceWorker' in navigator)) {
+      return null;
+    }
+
     const messaging = await getMessagingInstance();
     if (!messaging) return null;
 
     const permission = await Notification.requestPermission();
-    if (permission === 'granted') {
-      try {
-        const swUrl = import.meta.env.BASE_URL + 'firebase-messaging-sw.js';
-        const registration = await navigator.serviceWorker.register(swUrl);
-        const token = await getToken(messaging, {
-          vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
-          serviceWorkerRegistration: registration
-        });
-        return token;
-      } catch {
-        // Service Worker / Push API kullanılamıyorsa sessizce atla
-        return null;
+    if (permission !== 'granted') return null;
+
+    try {
+      const swUrl = import.meta.env.BASE_URL + 'firebase-messaging-sw.js';
+      const registration = await navigator.serviceWorker.register(swUrl);
+
+      const token = await getToken(messaging, {
+        vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
+        serviceWorkerRegistration: registration
+      });
+
+      // Token'ı Firestore'a kaydet
+      if (token && studentId) {
+        await saveTokenToFirestore(studentId, token);
       }
+
+      return token;
+    } catch {
+      return null;
     }
-    return null;
   } catch {
-    // Bildirim izni alınamadı — sessizce atla
     return null;
   }
 };
 
-export const setupNotificationListener = async (callback: (payload: unknown) => void) => {
+/**
+ * FCM Token'ı Firestore'a kaydet
+ */
+const saveTokenToFirestore = async (studentId: string, token: string) => {
+  try {
+    await setDoc(doc(db, 'fcmTokens', studentId), {
+      token,
+      updatedAt: Date.now(),
+      platform: navigator.userAgent.includes('Mobile') ? 'mobile' : 'desktop',
+    }, { merge: true });
+  } catch {
+    // Token kaydedilemedi — sessiz
+  }
+};
+
+/**
+ * Foreground mesaj dinleyici
+ * Uygulama açıkken gelen push mesajlarını yakalar
+ */
+export const setupNotificationListener = async (
+  callback: (payload: MessagePayload) => void
+) => {
   try {
     const messaging = await getMessagingInstance();
     if (!messaging) return;
 
     onMessage(messaging, (payload) => {
+      // Foreground'da browser notification göster
+      if ('Notification' in window && Notification.permission === 'granted') {
+        const title = payload.notification?.title || 'NEP Eğitim';
+        const body = payload.notification?.body || 'Yeni bildirim';
+
+        new Notification(title, {
+          body,
+          icon: `${window.location.origin}${import.meta.env.BASE_URL}nep-logo.png`,
+          tag: 'nep-foreground',
+        });
+      }
+
       callback(payload);
     });
   } catch {
-    // Listener kurulamadı — sessizce atla
+    // Listener kurulamadı
   }
 };

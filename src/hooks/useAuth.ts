@@ -6,27 +6,33 @@ import { getStudents } from '../services/db';
 import { registerDevice } from '../services/deviceService';
 import { signInAndMapStudent, signOutUser } from '../services/authService';
 
+const ADMIN_ID = '1002';
+
 export const useAuth = () => {
   const [student, setStudent] = useState<Student | null>(null);
   const [loading, setLoading] = useState(true);
   const [pendingStudent, setPendingStudent] = useState<Student | null>(null);
-  const [needsConfirmation, setNeedsConfirmation] = useState(false);
   const [needsDeviceApproval, setNeedsDeviceApproval] = useState(false);
   const [needsAdminAuth, setNeedsAdminAuth] = useState(false);
-  // E-posta doğrulaması gerekiyor mu?
   const [needsEmailVerification, setNeedsEmailVerification] = useState(false);
 
   useEffect(() => {
     const storedId = localStorage.getItem('studentId');
+    const emailVerified = localStorage.getItem('emailVerified') === 'true';
+
     if (storedId) {
-      loadStudent(storedId, true);
+      loadStudent(storedId, emailVerified);
     } else {
       setLoading(false);
     }
   }, []);
 
-  const loadStudent = async (id: string, skipConfirmation: boolean = false) => {
-    // ÖNCE LOCALDAN (DB SIMULATOR) ARA
+  /**
+   * Öğrenci yükleme — Kimlik doğrulama kaldırıldı (Modül 1.1)
+   * Doğrudan e-posta kontrolüne gider
+   */
+  const loadStudent = async (id: string, hasVerifiedEmail: boolean = false) => {
+    // ÖNCE LOCALDAN ARA
     const jsonStudent = getStudents().find(s => s.id === id);
     if (jsonStudent) {
       const studentData: Student = {
@@ -43,9 +49,10 @@ export const useAuth = () => {
         email: jsonStudent.email,
       };
 
-      if (!skipConfirmation) {
+      // Admin e-posta doğrulamayı atlar
+      if (id !== ADMIN_ID && !studentData.email && !hasVerifiedEmail) {
         setPendingStudent(studentData);
-        setNeedsConfirmation(true);
+        setNeedsEmailVerification(true);
         setLoading(false);
         return;
       }
@@ -63,13 +70,14 @@ export const useAuth = () => {
         // Cihaz kaydı hatasında yine de giriş yap
       }
 
+      localStorage.setItem('emailVerified', 'true');
       setStudent(studentData);
       signInAndMapStudent(studentData.id).catch(() => {});
       setLoading(false);
       return;
     }
 
-    // BULAMAZSA FIRESTORE'A BAK
+    // FIRESTORE
     try {
       const docRef = doc(db, 'students', id);
       const docSnap = await getDoc(docRef);
@@ -89,9 +97,9 @@ export const useAuth = () => {
           streak: data.streak || 0,
         };
 
-        if (!skipConfirmation) {
+        if (id !== ADMIN_ID && !studentData.email && !hasVerifiedEmail) {
           setPendingStudent(studentData);
-          setNeedsConfirmation(true);
+          setNeedsEmailVerification(true);
           setLoading(false);
           return;
         }
@@ -109,13 +117,15 @@ export const useAuth = () => {
           // Hata durumunda girişe izin ver
         }
 
+        localStorage.setItem('emailVerified', 'true');
         setStudent(studentData);
         signInAndMapStudent(studentData.id).catch(() => {});
       } else {
         localStorage.removeItem('studentId');
+        localStorage.removeItem('emailVerified');
       }
     } catch {
-      // Firestore devre dışı — JSON kullanılıyor (sessiz)
+      // Firestore devre dışı
     } finally {
       setLoading(false);
     }
@@ -123,8 +133,8 @@ export const useAuth = () => {
 
   const login = async (studentId: string): Promise<boolean> => {
     // Admin kontrolü
-    if (studentId === '1002') {
-      const jsonStudent = getStudents().find(s => s.id === '1002');
+    if (studentId === ADMIN_ID) {
+      const jsonStudent = getStudents().find(s => s.id === ADMIN_ID);
       if (jsonStudent) {
         setPendingStudent({
           id: jsonStudent.id,
@@ -144,12 +154,12 @@ export const useAuth = () => {
       }
 
       try {
-        const docRef = doc(db, 'students', '1002');
+        const docRef = doc(db, 'students', ADMIN_ID);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
           const data = docSnap.data();
           setPendingStudent({
-            id: '1002',
+            id: ADMIN_ID,
             name: data.name || 'Admin',
             nickname: data.nickname,
             email: data.email,
@@ -170,11 +180,12 @@ export const useAuth = () => {
       return false;
     }
 
-    // Normal öğrenci girişi
+    // Normal öğrenci girişi — Kimlik doğrulama kaldırıldı
+    // Doğrudan loadStudent çağrılır, e-posta yoksa modal açılır
     const jsonStudent = getStudents().find(s => s.id === studentId);
     if (jsonStudent) {
       localStorage.setItem('studentId', studentId);
-      await loadStudent(studentId, false);
+      await loadStudent(studentId);
       return true;
     }
 
@@ -183,17 +194,17 @@ export const useAuth = () => {
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
         localStorage.setItem('studentId', studentId);
-        await loadStudent(studentId, false);
+        await loadStudent(studentId);
         return true;
       }
     } catch {
-      // Firestore devre dışı (sessiz)
+      // Firestore devre dışı
     }
 
     return false;
   };
 
-  // Google ile giriş — kimlik doğrulama ve e-posta doğrulamayı atla
+  // Google ile giriş — kimlik + e-posta doğrulamayı atla
   const loginWithGoogle = async (studentId: string, email: string): Promise<boolean> => {
     const jsonStudent = getStudents().find(s => s.id === studentId);
     let studentData: Student | null = null;
@@ -240,32 +251,17 @@ export const useAuth = () => {
     if (!studentData) return false;
 
     localStorage.setItem('studentId', studentId);
+    localStorage.setItem('emailVerified', 'true');
     setStudent(studentData);
     signInAndMapStudent(studentId).catch(() => {});
     return true;
-  };
-
-  // İsim doğrulama onayı — e-posta yoksa EmailVerification'a gönder
-  const confirmIdentity = () => {
-    if (pendingStudent) {
-      localStorage.setItem('studentId', pendingStudent.id);
-      // E-posta yoksa doğrulama gerekiyor
-      if (!pendingStudent.email) {
-        setNeedsEmailVerification(true);
-        setNeedsConfirmation(false);
-        return;
-      }
-      setStudent(pendingStudent);
-      signInAndMapStudent(pendingStudent.id).catch(() => {});
-      setPendingStudent(null);
-      setNeedsConfirmation(false);
-    }
   };
 
   // E-posta doğrulama tamamlandı
   const confirmEmailVerification = (email: string) => {
     if (pendingStudent) {
       const updated = { ...pendingStudent, email };
+      localStorage.setItem('emailVerified', 'true');
       setStudent(updated);
       signInAndMapStudent(updated.id).catch(() => {});
       setPendingStudent(null);
@@ -273,19 +269,11 @@ export const useAuth = () => {
     }
   };
 
-  // İsim doğrulama reddi
-  const rejectIdentity = () => {
-    setPendingStudent(null);
-    setNeedsConfirmation(false);
-    setNeedsEmailVerification(false);
-    localStorage.removeItem('studentId');
-    signOutUser().catch(() => {});
-  };
-
-  // Admin giriş başarılı — admin için e-posta opsiyonel
+  // Admin giriş başarılı
   const confirmAdminAuth = () => {
     if (pendingStudent) {
       localStorage.setItem('studentId', pendingStudent.id);
+      localStorage.setItem('emailVerified', 'true');
       setStudent(pendingStudent);
       signInAndMapStudent(pendingStudent.id).catch(() => {});
       setPendingStudent(null);
@@ -299,15 +287,24 @@ export const useAuth = () => {
     setNeedsAdminAuth(false);
   };
 
+  // Çıkış
+  const logout = () => {
+    setStudent(null);
+    setPendingStudent(null);
+    setNeedsEmailVerification(false);
+    setNeedsAdminAuth(false);
+    localStorage.removeItem('studentId');
+    localStorage.removeItem('emailVerified');
+    signOutUser().catch(() => {});
+  };
+
   return {
     student,
     loading,
     login,
     loginWithGoogle,
+    logout,
     pendingStudent,
-    needsConfirmation,
-    confirmIdentity,
-    rejectIdentity,
     needsDeviceApproval,
     needsAdminAuth,
     confirmAdminAuth,
