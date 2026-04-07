@@ -166,7 +166,7 @@ export const OperationDrawer = ({
                 {currentView === 'lesson_active' ? 'DERS AKTİF' :
                  currentView === 'trailer' ? 'FRAGMAN' :
                  currentView === 'lesson_ended' ? 'DERS TAMAMLANDI' :
-                 'GERİ SAYIM'}
+                 'HAZIRLIK'}
               </span>
             </div>
             <span className="text-gray-600 text-xs font-mono">

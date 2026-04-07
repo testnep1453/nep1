@@ -383,7 +383,9 @@ export const UnifiedDashboard = ({
             className="flex items-center gap-3 w-full p-3 rounded-md bg-[#6358cc]/10 text-[#8b7fd8] hover:bg-[#6358cc]/20 border border-[#6358cc]/30 transition-all"
           >
             <Icons.Swords />
-            <span className="font-bold tracking-wide text-sm">OPERASYON PANELİ</span>
+            <span className="font-bold tracking-wide text-sm">
+              {isAdmin ? '⚡ DERS YÖNETİMİ' : '⚡ DERSE KATIL'}
+            </span>
           </button>
         </div>
 
@@ -486,7 +488,7 @@ export const UnifiedDashboard = ({
                 );
               })()}
 
-              <ProfileSection student={student} />
+              <ProfileSection student={student} isAdmin={isAdmin} />
 
               <MessageFeed />
             </div>

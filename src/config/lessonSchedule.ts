@@ -15,6 +15,18 @@ const LESSON_HOUR_START = 19; // 19:00
 const LESSON_HOUR_END = 20;   // 20:00
 const LESSON_DAY = 4;         // Perşembe (0=Pazar, 4=Perşembe)
 
+// Sabit Ders Takvimi (Modül 2.2 / Emir 8)
+export const FIXED_LESSON_SCHEDULE: { lessonNo: number; date: string }[] = [
+  { lessonNo: 8,  date: '2026-04-09' },
+  { lessonNo: 9,  date: '2026-04-16' },
+  { lessonNo: 10, date: '2026-04-23' },
+  { lessonNo: 11, date: '2026-04-30' },
+  { lessonNo: 12, date: '2026-05-07' },
+  { lessonNo: 13, date: '2026-05-14' },
+  { lessonNo: 14, date: '2026-05-21' },
+  { lessonNo: 15, date: '2026-06-04' },
+];
+
 /**
  * Bugünden itibaren en yakın perşembe gününü hesapla
  */
@@ -65,6 +77,30 @@ export const createLessonForDate = (date: Date): Lesson => {
  * Şu anki veya bir sonraki ders bilgisini getir
  */
 export const getNextLesson = (): Lesson => {
+  const now = new Date();
+  const nowTime = now.getTime();
+
+  // Sabit takvimden gelecekteki ilk dersi bul
+  const upcoming = FIXED_LESSON_SCHEDULE
+    .map(({ lessonNo, date }) => {
+      const [year, month, day] = date.split('-').map(Number);
+      const startTime = new Date(year, month - 1, day, LESSON_HOUR_START, 0, 0).getTime();
+      const endTime   = new Date(year, month - 1, day, LESSON_HOUR_END,   0, 0).getTime();
+      return { lessonNo, date, startTime, endTime };
+    })
+    .find(l => l.endTime > nowTime); // Bitişi geçmemiş ilk ders
+
+  if (upcoming) {
+    return {
+      startTime: upcoming.startTime,
+      endTime:   upcoming.endTime,
+      title:     `Ders ${upcoming.lessonNo}`,
+      zoomLink:  DEFAULT_ZOOM_LINK,
+      date:      upcoming.date,
+    };
+  }
+
+  // Tüm dersler geçtiyse eski dinamik hesaplamaya geri dön
   const nextThursday = getNextThursday();
   return createLessonForDate(nextThursday);
 };
@@ -74,9 +110,13 @@ export const getNextLesson = (): Lesson => {
  */
 export const isLessonActive = (): boolean => {
   const now = new Date();
-  return now.getDay() === LESSON_DAY && 
-         now.getHours() >= LESSON_HOUR_START && 
-         now.getHours() < LESSON_HOUR_END;
+  const nowTime = now.getTime();
+  return FIXED_LESSON_SCHEDULE.some(({ date }) => {
+    const [year, month, day] = date.split('-').map(Number);
+    const start = new Date(year, month - 1, day, LESSON_HOUR_START, 0, 0).getTime();
+    const end   = new Date(year, month - 1, day, LESSON_HOUR_END,   0, 0).getTime();
+    return nowTime >= start && nowTime < end;
+  });
 };
 
 /**
@@ -99,7 +139,13 @@ export const isLessonDay = (): boolean => {
  */
 export const isLessonEnded = (): boolean => {
   const now = new Date();
-  return now.getDay() === LESSON_DAY && now.getHours() >= LESSON_HOUR_END;
+  const today = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  return FIXED_LESSON_SCHEDULE.some(({ date }) => {
+    if (date !== today) return false;
+    const [year, month, day] = date.split('-').map(Number);
+    const end = new Date(year, month - 1, day, LESSON_HOUR_END, 0, 0).getTime();
+    return Date.now() >= end;
+  });
 };
 
 /**
