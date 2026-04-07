@@ -50,11 +50,16 @@ export const UnifiedDashboard = ({
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
-    return (localStorage.getItem('nepTheme') as 'dark' | 'light') || 'dark';
+    const saved = (localStorage.getItem('nepTheme') as 'dark' | 'light') || 'dark';
+    if (saved === 'light') document.body.classList.add('theme-light');
+    else document.body.classList.remove('theme-light');
+    return saved;
   });
   const handleThemeChange = (t: 'dark' | 'light') => {
     setTheme(t);
     localStorage.setItem('nepTheme', t);
+    if (t === 'light') document.body.classList.add('theme-light');
+    else document.body.classList.remove('theme-light');
   };
   const { unreadCount } = useNotifications(student.id);
 

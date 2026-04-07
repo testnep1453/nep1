@@ -41,12 +41,18 @@ export const AgentDashboard = ({
   const [showFeedback, setShowFeedback] = useState(false);
   const [trailer, setTrailerState] = useState<Trailer | null>(null);
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
-    return (localStorage.getItem('nepTheme') as 'dark' | 'light') || 'dark';
+    const saved = (localStorage.getItem('nepTheme') as 'dark' | 'light') || 'dark';
+    // Sayfa yüklendiğinde body class'ını ayarla
+    if (saved === 'light') document.body.classList.add('theme-light');
+    else document.body.classList.remove('theme-light');
+    return saved;
   });
 
   const handleThemeChange = (t: 'dark' | 'light') => {
     setTheme(t);
     localStorage.setItem('nepTheme', t);
+    if (t === 'light') document.body.classList.add('theme-light');
+    else document.body.classList.remove('theme-light');
   };
 
   useAutoMessages(false);
