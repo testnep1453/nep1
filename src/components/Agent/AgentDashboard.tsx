@@ -59,8 +59,7 @@ export const AgentDashboard = ({
   useEffect(() => {
     if (student && !attendanceRecorded.current) {
       attendanceRecorded.current = true;
-      const result = recordAttendance(student.id);
-      if (result && result.xpEarned > 0) console.log(`+${result.xpEarned} XP`);
+      void recordAttendance(student.id);
     }
   }, [student?.id]);
 

@@ -3,6 +3,7 @@ import { useAuth } from './hooks/useAuth';
 import { usePresence } from './hooks/usePresence';
 import { StudentLogin } from './components/Auth/StudentLogin';
 import { AdminAuth } from './components/Auth/AdminAuth';
+import { EmailVerificationModal } from './components/Auth/EmailVerificationModal';
 import { UnifiedDashboard } from './components/Dashboard/UnifiedDashboard';
 import { AgentDashboard } from './components/Agent/AgentDashboard';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -17,6 +18,7 @@ function App() {
     student,
     loading,
     login,
+    loginWithGoogle,
     pendingStudent,
     needsConfirmation,
     confirmIdentity,
@@ -24,6 +26,8 @@ function App() {
     needsAdminAuth,
     confirmAdminAuth,
     cancelAdminAuth,
+    needsEmailVerification,
+    confirmEmailVerification,
   } = useAuth();
 
   const onlineCount = usePresence(student?.id || null);
@@ -36,7 +40,7 @@ function App() {
     if (student) {
       requestNotificationPermission();
       setupNotificationListener((payload) => {
-        console.log('Bildirim alındı:', payload);
+        void payload; // Bildirim alındı — sessiz
       });
     }
 
@@ -59,6 +63,19 @@ function App() {
       <div className="min-h-[100dvh] bg-[#050505] flex items-center justify-center">
         <div className="text-white text-2xl font-bold animate-pulse tracking-widest">YÜKLENİYOR...</div>
       </div>
+    );
+  }
+
+  // E-posta doğrulama ekranı
+  if (needsEmailVerification && pendingStudent) {
+    return (
+      <EmailVerificationModal
+        studentId={pendingStudent.id}
+        studentName={pendingStudent.name}
+        onVerified={(email) => {
+          confirmEmailVerification(email);
+        }}
+      />
     );
   }
 
@@ -85,11 +102,11 @@ function App() {
     return (
       <StudentLogin
         onLogin={login}
+        onLoginWithGoogle={loginWithGoogle}
         pendingStudent={pendingStudent}
         needsConfirmation={needsConfirmation}
         onConfirm={() => {
           confirmIdentity();
-          setAppStatus('dashboard');
         }}
         onReject={rejectIdentity}
       />

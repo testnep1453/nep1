@@ -13,11 +13,13 @@ export const useAuth = () => {
   const [needsConfirmation, setNeedsConfirmation] = useState(false);
   const [needsDeviceApproval, setNeedsDeviceApproval] = useState(false);
   const [needsAdminAuth, setNeedsAdminAuth] = useState(false);
+  // E-posta doğrulaması gerekiyor mu?
+  const [needsEmailVerification, setNeedsEmailVerification] = useState(false);
 
   useEffect(() => {
     const storedId = localStorage.getItem('studentId');
     if (storedId) {
-      loadStudent(storedId, true); // auto-login, isim doğrulama atla
+      loadStudent(storedId, true);
     } else {
       setLoading(false);
     }
@@ -38,10 +40,10 @@ export const useAuth = () => {
         lastSeen: Date.now(),
         attendanceHistory: [],
         streak: 0,
+        email: jsonStudent.email,
       };
 
       if (!skipConfirmation) {
-        // İsim doğrulama adımı
         setPendingStudent(studentData);
         setNeedsConfirmation(true);
         setLoading(false);
@@ -62,7 +64,6 @@ export const useAuth = () => {
       }
 
       setStudent(studentData);
-      // Firebase Auth oturumu başlat
       signInAndMapStudent(studentData.id).catch(() => {});
       setLoading(false);
       return;
@@ -78,6 +79,7 @@ export const useAuth = () => {
           id,
           name: data.name,
           nickname: data.nickname,
+          email: data.email,
           xp: data.xp || 0,
           level: data.level || 1,
           badges: data.badges || [],
@@ -108,13 +110,12 @@ export const useAuth = () => {
         }
 
         setStudent(studentData);
-        // Firebase Auth oturumu başlat
         signInAndMapStudent(studentData.id).catch(() => {});
       } else {
         localStorage.removeItem('studentId');
       }
-    } catch (error) {
-      console.warn('Firestore devre dışı, JSON kullanılıyor');
+    } catch {
+      // Firestore devre dışı — JSON kullanılıyor (sessiz)
     } finally {
       setLoading(false);
     }
@@ -123,7 +124,6 @@ export const useAuth = () => {
   const login = async (studentId: string): Promise<boolean> => {
     // Admin kontrolü
     if (studentId === '1002') {
-      // Admin için özel giriş akışı
       const jsonStudent = getStudents().find(s => s.id === '1002');
       if (jsonStudent) {
         setPendingStudent({
@@ -137,12 +137,12 @@ export const useAuth = () => {
           lastSeen: Date.now(),
           attendanceHistory: [],
           streak: 0,
+          email: jsonStudent.email,
         });
         setNeedsAdminAuth(true);
         return true;
       }
 
-      // Firestore'da kontrol et
       try {
         const docRef = doc(db, 'students', '1002');
         const docSnap = await getDoc(docRef);
@@ -152,6 +152,7 @@ export const useAuth = () => {
             id: '1002',
             name: data.name || 'Admin',
             nickname: data.nickname,
+            email: data.email,
             xp: data.xp || 0,
             level: data.level || 1,
             badges: data.badges || [],
@@ -173,7 +174,7 @@ export const useAuth = () => {
     const jsonStudent = getStudents().find(s => s.id === studentId);
     if (jsonStudent) {
       localStorage.setItem('studentId', studentId);
-      await loadStudent(studentId, false); // isim doğrulaması seçeneğiyle
+      await loadStudent(studentId, false);
       return true;
     }
 
@@ -186,21 +187,89 @@ export const useAuth = () => {
         return true;
       }
     } catch {
-      console.warn('Firestore devre dışı');
+      // Firestore devre dışı (sessiz)
     }
 
     return false;
   };
 
-  // İsim doğrulama onayı
+  // Google ile giriş — kimlik doğrulama ve e-posta doğrulamayı atla
+  const loginWithGoogle = async (studentId: string, email: string): Promise<boolean> => {
+    const jsonStudent = getStudents().find(s => s.id === studentId);
+    let studentData: Student | null = null;
+
+    if (jsonStudent) {
+      studentData = {
+        id: jsonStudent.id,
+        name: jsonStudent.name,
+        nickname: jsonStudent.nickname,
+        email,
+        xp: jsonStudent.xp || 0,
+        level: jsonStudent.level || 1,
+        badges: [],
+        avatar: jsonStudent.avatar || 'hero_1',
+        lastSeen: Date.now(),
+        attendanceHistory: [],
+        streak: 0,
+      };
+    } else {
+      try {
+        const docRef = doc(db, 'students', studentId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          studentData = {
+            id: studentId,
+            name: data.name,
+            nickname: data.nickname,
+            email,
+            xp: data.xp || 0,
+            level: data.level || 1,
+            badges: data.badges || [],
+            avatar: data.avatar || 'hero_1',
+            lastSeen: data.lastSeen?.toMillis?.() || data.lastSeen || Date.now(),
+            attendanceHistory: data.attendanceHistory || [],
+            streak: data.streak || 0,
+          };
+        }
+      } catch {
+        // Firestore erişimi yok
+      }
+    }
+
+    if (!studentData) return false;
+
+    localStorage.setItem('studentId', studentId);
+    setStudent(studentData);
+    signInAndMapStudent(studentId).catch(() => {});
+    return true;
+  };
+
+  // İsim doğrulama onayı — e-posta yoksa EmailVerification'a gönder
   const confirmIdentity = () => {
     if (pendingStudent) {
       localStorage.setItem('studentId', pendingStudent.id);
+      // E-posta yoksa doğrulama gerekiyor
+      if (!pendingStudent.email) {
+        setNeedsEmailVerification(true);
+        setNeedsConfirmation(false);
+        return;
+      }
       setStudent(pendingStudent);
-      // Firebase Auth oturumu başlat
       signInAndMapStudent(pendingStudent.id).catch(() => {});
       setPendingStudent(null);
       setNeedsConfirmation(false);
+    }
+  };
+
+  // E-posta doğrulama tamamlandı
+  const confirmEmailVerification = (email: string) => {
+    if (pendingStudent) {
+      const updated = { ...pendingStudent, email };
+      setStudent(updated);
+      signInAndMapStudent(updated.id).catch(() => {});
+      setPendingStudent(null);
+      setNeedsEmailVerification(false);
     }
   };
 
@@ -208,16 +277,16 @@ export const useAuth = () => {
   const rejectIdentity = () => {
     setPendingStudent(null);
     setNeedsConfirmation(false);
+    setNeedsEmailVerification(false);
     localStorage.removeItem('studentId');
     signOutUser().catch(() => {});
   };
 
-  // Admin giriş başarılı
+  // Admin giriş başarılı — admin için e-posta opsiyonel
   const confirmAdminAuth = () => {
     if (pendingStudent) {
       localStorage.setItem('studentId', pendingStudent.id);
       setStudent(pendingStudent);
-      // Firebase Auth oturumu başlat (admin)
       signInAndMapStudent(pendingStudent.id).catch(() => {});
       setPendingStudent(null);
       setNeedsAdminAuth(false);
@@ -234,6 +303,7 @@ export const useAuth = () => {
     student,
     loading,
     login,
+    loginWithGoogle,
     pendingStudent,
     needsConfirmation,
     confirmIdentity,
@@ -242,5 +312,7 @@ export const useAuth = () => {
     needsAdminAuth,
     confirmAdminAuth,
     cancelAdminAuth,
+    needsEmailVerification,
+    confirmEmailVerification,
   };
 };

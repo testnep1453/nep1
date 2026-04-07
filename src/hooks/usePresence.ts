@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ref, onValue, set, onDisconnect } from 'firebase/database';
-import { rtdb } from '../config/firebase';
+import { rtdb, auth } from '../config/firebase';
 
 export const usePresence = (studentId: string | null) => {
   const [onlineCount, setOnlineCount] = useState(0);
@@ -11,10 +11,21 @@ export const usePresence = (studentId: string | null) => {
     const presenceRef = ref(rtdb, `presence/${studentId}`);
     const connectedRef = ref(rtdb, '.info/connected');
 
+    // Auth hazır olana kadar yazma denemesi yapma
+    const trySetPresence = () => {
+      if (!auth.currentUser) {
+        // Auth henüz hazır değil — 1sn sonra tekrar dene
+        const timer = setTimeout(trySetPresence, 1000);
+        return () => clearTimeout(timer);
+      }
+      set(presenceRef, true).catch(() => {});
+      onDisconnect(presenceRef).remove().catch(() => {});
+      return undefined;
+    };
+
     const unsubscribeConnected = onValue(connectedRef, (snap) => {
       if (snap.val() === true) {
-        set(presenceRef, true);
-        onDisconnect(presenceRef).remove();
+        trySetPresence();
       }
     });
 

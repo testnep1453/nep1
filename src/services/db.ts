@@ -26,23 +26,19 @@ export const saveSession = (studentId: string) => {
 };
 
 export const saveStudents = (_students: Student[]) => {
-  // Artık localStorage'a tüm liste yazılmaz
-  console.warn('saveStudents çağrısı görmezden gelindi — Firestore kullanılmalı');
+  // Deprecated — Firestore kullanılmalı (sessiz)
 };
 
 export const addStudent = (_student: Student) => {
-  // Sadece seedData'ya ekle (geçici, admin sadece Firestore kullanmalı)
-  console.warn('addStudent deprecated — Firestore addStudentToFirebase kullanılmalı');
+  // Deprecated — Firestore kullanılmalı (sessiz)
 };
 
 export const updateStudent = (_id: string, _updates: Partial<Student>) => {
-  // Sadece seedData'yı güncelle (geçici)
-  console.warn('updateStudent deprecated — Firestore updateStudentInFirebase kullanılmalı');
+  // Deprecated — Firestore kullanılmalı (sessiz)
 };
 
 export const removeStudent = (_id: string) => {
-  // Sadece seedData'dan kaldır (geçici)
-  console.warn('removeStudent deprecated — Firestore removeStudentFromFirebase kullanılmalı');
+  // Deprecated — Firestore kullanılmalı (sessiz)
 };
 
 export interface AppMessage {
@@ -56,7 +52,7 @@ export const getMessages = (): AppMessage[] => {
 };
 
 export const addMessage = (_text: string) => {
-  console.warn('addMessage deprecated — Firestore addMessageToFirebase kullanılmalı');
+  // Deprecated — Firestore kullanılmalı (sessiz)
 };
 
 // --- KATILIM + OTOMATİK XP + STREAK ---

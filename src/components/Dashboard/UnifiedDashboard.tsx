@@ -75,9 +75,8 @@ export const UnifiedDashboard = ({
     if (student && !attendanceRecorded.current) {
       attendanceRecorded.current = true;
       const result = recordAttendance(student.id);
-      if (result && result.xpEarned > 0) {
-        console.log(`Katılım kaydedildi: +${result.xpEarned} XP`);
-      }
+      // XP kaydı sessiz
+      void result;
     }
   }, [student?.id]);
 
