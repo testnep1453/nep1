@@ -1,7 +1,7 @@
 /**
- * TopBar — Ortak üst bar (Modül 1.2)
- * Sol: NEP logosu
- * Sağ: Bildirim çanı + Profil avatarı
+ * TopBar — Bildirim + Profil (Modül 1.2)
+ * NEP logosu yok, sadece çan + kullanıcı adı + profil ikonu
+ * Main content header'ın sağ tarafında inline olarak render edilir
  */
 
 import { useState } from 'react';
@@ -38,48 +38,36 @@ export const TopBar = ({ student, unreadCount, theme, onThemeChange }: TopBarPro
 
   return (
     <>
-      <div className="hidden md:flex items-center justify-between px-6 py-3 bg-[#0A1128]/80 border-b border-white/10 z-30 relative">
-        {/* Sol — Logo */}
-        <div className="flex items-center gap-3">
-          <img
-            src={`${import.meta.env.BASE_URL}nep-logo.png`}
-            alt="NEP"
-            className="h-8 brightness-0 invert opacity-80"
-          />
-        </div>
-
-        {/* Sağ — Bildirim + Profil */}
-        <div className="flex items-center gap-3">
-          {/* Bildirim çanı */}
-          <button
-            onClick={() => { setShowNotifications(!showNotifications); setShowProfile(false); }}
-            className="relative w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-all"
-          >
-            <BellIcon />
-            {unreadCount > 0 && (
-              <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-[#FF4500] rounded-full flex items-center justify-center text-[10px] text-white font-bold px-1">
-                {unreadCount > 9 ? '9+' : unreadCount}
-              </span>
-            )}
-          </button>
-
-          {/* Profil */}
-          <button
-            onClick={() => { setShowProfile(!showProfile); setShowNotifications(false); }}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 transition-all"
-          >
-            <div
-              className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white"
-              style={{ backgroundColor: `${accentColor}30`, borderColor: `${accentColor}60`, borderWidth: 1 }}
-            >
-              {student.name.charAt(0)}
-            </div>
-            <span className="text-sm text-gray-300 font-medium hidden lg:block">
-              {student.nickname || student.name.split(' ')[0]}
+      <div className="flex items-center gap-3 relative">
+        {/* Bildirim çanı */}
+        <button
+          onClick={() => { setShowNotifications(!showNotifications); setShowProfile(false); }}
+          className="relative w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-all"
+        >
+          <BellIcon />
+          {unreadCount > 0 && (
+            <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-[#FF4500] rounded-full flex items-center justify-center text-[10px] text-white font-bold px-1">
+              {unreadCount > 9 ? '9+' : unreadCount}
             </span>
-            <UserIcon />
-          </button>
-        </div>
+          )}
+        </button>
+
+        {/* Profil */}
+        <button
+          onClick={() => { setShowProfile(!showProfile); setShowNotifications(false); }}
+          className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 transition-all"
+        >
+          <div
+            className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white"
+            style={{ backgroundColor: `${accentColor}30`, borderColor: `${accentColor}60`, borderWidth: 1 }}
+          >
+            {student.name.charAt(0)}
+          </div>
+          <span className="text-sm text-gray-300 font-medium hidden lg:block">
+            {student.nickname || student.name.split(' ')[0]}
+          </span>
+          <UserIcon />
+        </button>
 
         {/* Bildirim Paneli */}
         {showNotifications && (

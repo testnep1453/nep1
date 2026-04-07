@@ -290,8 +290,7 @@ export const UnifiedDashboard = ({
         <div className="scanlines absolute inset-0" />
       </div>
 
-      {/* TopBar (Modül 1.2) */}
-      <TopBar student={student} unreadCount={unreadCount} theme={theme} onThemeChange={handleThemeChange} />
+
 
       {/* Drawer */}
       <OperationDrawer
@@ -435,6 +434,8 @@ export const UnifiedDashboard = ({
               {activeTab === 'geribildirim' && 'GERİ BİLDİRİMLER'}
             </h1>
           </div>
+          {/* Bildirim + Profil (Modül 1.2) */}
+          <TopBar student={student} unreadCount={unreadCount} theme={theme} onThemeChange={handleThemeChange} />
         </header>
 
         <div className="max-w-7xl mx-auto">
