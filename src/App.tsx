@@ -83,7 +83,7 @@ function App() {
         onVerified={(email) => {
           confirmEmailVerification(email);
         }}
-        onBack={logout} // EKLENEN KISIM: Geri dönüş fonksiyonu eklendi
+        onBack={logout}
       />
     );
   }
