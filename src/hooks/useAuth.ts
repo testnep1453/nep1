@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Student } from '../types/student';
-import { getStudents } from '../services/db'; 
+import { getStudents } from '../services/db';
 import { getStudentById, upsertStudent, signOutUser, saveStudentEmail, signInAndMapStudent } from '../services/authService';
 import { registerDevice } from '../services/deviceService';
 
@@ -26,7 +26,7 @@ export const useAuth = () => {
 
   const loadStudent = async (id: string, hasVerifiedEmail: boolean = false) => {
     setLoading(true);
-    
+
     const jsonStudent = getStudents().find(s => s.id === id);
     if (!jsonStudent) {
       setLoading(false);
@@ -51,9 +51,9 @@ export const useAuth = () => {
       return;
     }
 
-    try { await registerDevice(id); } catch {}
-    
-    await signInAndMapStudent(id); // Köprü fonksiyonu çağrıldı, hata iptal!
+    try { await registerDevice(id); } catch { }
+
+    await signInAndMapStudent(id);
 
     sessionStorage.setItem('emailVerified', 'true');
     setStudent(studentData);
@@ -90,22 +90,22 @@ export const useAuth = () => {
   };
 
   const loginWithGoogle = async (studentId: string, email: string): Promise<boolean> => {
-     const jsonStudent = getStudents().find(s => s.id === studentId);
-     if (jsonStudent) {
-       localStorage.setItem('studentId', studentId);
-       sessionStorage.setItem('emailVerified', 'true');
-       await saveStudentEmail(studentId, email); 
-       await loadStudent(studentId, true);
-       return true;
-     }
-     return false;
+    const jsonStudent = getStudents().find(s => s.id === studentId);
+    if (jsonStudent) {
+      localStorage.setItem('studentId', studentId);
+      sessionStorage.setItem('emailVerified', 'true');
+      await saveStudentEmail(studentId, email);
+      await loadStudent(studentId, true);
+      return true;
+    }
+    return false;
   };
 
   const confirmEmailVerification = (email: string) => {
     if (pendingStudent) {
       const updated = { ...pendingStudent, email };
       sessionStorage.setItem('emailVerified', 'true');
-      saveStudentEmail(updated.id, email); 
+      saveStudentEmail(updated.id, email);
       setStudent(updated);
       setPendingStudent(null);
       setNeedsEmailVerification(false);
