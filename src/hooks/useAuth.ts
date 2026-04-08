@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Student } from '../types/student';
-import { getStudents } from '../services/db'; // Yerel öğrenci listesi yedeği
+import { getStudents } from '../services/db'; 
 import { getStudentById, upsertStudent, signOutUser, saveStudentEmail } from '../services/authService';
 import { registerDevice } from '../services/deviceService';
 
@@ -27,18 +27,14 @@ export const useAuth = () => {
   const loadStudent = async (id: string, hasVerifiedEmail: boolean = false) => {
     setLoading(true);
     
-    // 1. Önce öğrencinin temel bilgilerini JSON'dan bul (İsim, XP vb.)
     const jsonStudent = getStudents().find(s => s.id === id);
-
     if (!jsonStudent) {
       setLoading(false);
       return;
     }
 
-    // 2. Supabase'den öğrencinin en güncel halini (varsa) çek
     let studentData = await getStudentById(id);
 
-    // 3. Eğer Supabase'de ilk kez giriyorsa (kayıt yoksa), hemen oluştur!
     if (!studentData) {
       studentData = {
         id: jsonStudent.id,
@@ -53,11 +49,9 @@ export const useAuth = () => {
         attendanceHistory: [],
         streak: 0,
       };
-      // Supabase'e kaydet
       await upsertStudent(studentData);
     }
 
-    // 4. Admin ve E-posta Doğrulama Kontrolleri
     if (id !== ADMIN_ID && !hasVerifiedEmail) {
       setPendingStudent(studentData);
       setNeedsEmailVerification(true);
@@ -65,12 +59,8 @@ export const useAuth = () => {
       return;
     }
 
-    // 5. Cihaz onayı vb. (Sessizce çalışır)
-    try {
-        await registerDevice(id);
-    } catch {}
+    try { await registerDevice(id); } catch {}
 
-    // Her şey tamamsa içeri al
     sessionStorage.setItem('emailVerified', 'true');
     setStudent(studentData);
     setLoading(false);
@@ -110,7 +100,7 @@ export const useAuth = () => {
      if (jsonStudent) {
        localStorage.setItem('studentId', studentId);
        sessionStorage.setItem('emailVerified', 'true');
-       await saveStudentEmail(studentId, email); // Supabase'e güncel maili kaydet
+       await saveStudentEmail(studentId, email); 
        await loadStudent(studentId, true);
        return true;
      }
@@ -121,7 +111,7 @@ export const useAuth = () => {
     if (pendingStudent) {
       const updated = { ...pendingStudent, email };
       sessionStorage.setItem('emailVerified', 'true');
-      saveStudentEmail(updated.id, email); // Supabase'e güncel maili kaydet
+      saveStudentEmail(updated.id, email); 
       setStudent(updated);
       setPendingStudent(null);
       setNeedsEmailVerification(false);
