@@ -3,10 +3,6 @@ import { Student } from '../types/student';
 
 const ADMIN_STUDENT_ID = '1002';
 
-// ==========================================
-// 1. SUPABASE ANA FONKSİYONLARI
-// ==========================================
-
 export const getStudentById = async (id: string): Promise<Student | null> => {
   try {
     const { data, error } = await supabase.from('students').select('*').eq('id', id).single();
@@ -43,14 +39,6 @@ export const signOutUser = async () => {
   await supabase.auth.signOut();
 };
 
-// ==========================================
-// 2. ÇÖKMEYİ ENGELLEYEN KÖPRÜLER (HATA İMHA EDİCİLER)
-// ==========================================
-
-export const signInAndMapStudent = async (studentId: string): Promise<any> => {
-  return { uid: studentId }; // Eski arayüzler hata vermesin diye eklendi
-};
-
 export const signInWithGoogle = async (): Promise<{ email: string; user: any } | null> => {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: 'google',
@@ -70,36 +58,33 @@ export const findStudentByEmail = async (email: string): Promise<string | null> 
   }
 };
 
-export const mapGoogleUserToStudent = async (user: any, studentId: string): Promise<void> => {};
+// ==========================================
+// YENİ: 6 HANELİ KOD (OTP) SİSTEMİ
+// ==========================================
 
-export const sendVerificationLink = async (email: string, studentId: string): Promise<boolean> => {
+export const sendVerificationCode = async (email: string): Promise<boolean> => {
   try {
-    const { error } = await supabase.auth.signInWithOtp({
-      email: email,
-      options: { emailRedirectTo: `${window.location.origin}/?studentId=${studentId}&mode=emailVerify` }
-    });
-    if (error) throw error;
-    localStorage.setItem('emailForVerification', email);
-    localStorage.setItem('pendingVerifyStudentId', studentId);
-    return true;
+    // Sadece mail gönderir (Supabase standart olarak 6 haneli kod yollar)
+    const { error } = await supabase.auth.signInWithOtp({ email });
+    return !error;
   } catch {
     return false;
   }
 };
 
-export const handleEmailLinkVerification = async (): Promise<{ email: string; studentId: string } | null> => {
-  const email = localStorage.getItem('emailForVerification');
-  const studentId = localStorage.getItem('pendingVerifyStudentId');
-  if (!email || !studentId) return null;
-  localStorage.removeItem('emailForVerification');
-  localStorage.removeItem('pendingVerifyStudentId');
-  return { email, studentId };
+export const verifyEmailCode = async (email: string, code: string): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase.auth.verifyOtp({ email, token: code, type: 'email' });
+    return !error && !!data.user;
+  } catch {
+    return false;
+  }
 };
 
-export const getStudentMapping = async (uid: string): Promise<{ studentId: string; isAdmin: boolean } | null> => {
-  return { studentId: uid, isAdmin: uid === ADMIN_STUDENT_ID };
-};
-
-export const getCurrentUser = (): any => {
-  return null;
-};
+// Çökmeyi engelleyen köprüler
+export const signInAndMapStudent = async (studentId: string): Promise<any> => { return { uid: studentId }; };
+export const mapGoogleUserToStudent = async (user: any, studentId: string): Promise<void> => {};
+export const handleEmailLinkVerification = async () => { return null; };
+export const getStudentMapping = async (uid: string) => { return { studentId: uid, isAdmin: uid === ADMIN_STUDENT_ID }; };
+export const getCurrentUser = (): any => { return null; };
+export const sendVerificationLink = async () => { return false; };
