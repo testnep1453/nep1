@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Student } from '../types/student';
 import { getStudents } from '../services/db'; 
-import { getStudentById, upsertStudent, signOutUser, saveStudentEmail } from '../services/authService';
+import { getStudentById, upsertStudent, signOutUser, saveStudentEmail, signInAndMapStudent } from '../services/authService';
 import { registerDevice } from '../services/deviceService';
 
 const ADMIN_ID = '1002';
@@ -37,17 +37,9 @@ export const useAuth = () => {
 
     if (!studentData) {
       studentData = {
-        id: jsonStudent.id,
-        name: jsonStudent.name,
-        nickname: jsonStudent.nickname,
-        email: jsonStudent.email,
-        xp: jsonStudent.xp || 0,
-        level: jsonStudent.level || 1,
-        badges: [],
-        avatar: jsonStudent.avatar || 'hero_1',
-        lastSeen: Date.now(),
-        attendanceHistory: [],
-        streak: 0,
+        id: jsonStudent.id, name: jsonStudent.name, nickname: jsonStudent.nickname, email: jsonStudent.email,
+        xp: jsonStudent.xp || 0, level: jsonStudent.level || 1, badges: [],
+        avatar: jsonStudent.avatar || 'hero_1', lastSeen: Date.now(), attendanceHistory: [], streak: 0,
       };
       await upsertStudent(studentData);
     }
@@ -60,6 +52,8 @@ export const useAuth = () => {
     }
 
     try { await registerDevice(id); } catch {}
+    
+    await signInAndMapStudent(id); // Köprü fonksiyonu çağrıldı, hata iptal!
 
     sessionStorage.setItem('emailVerified', 'true');
     setStudent(studentData);
@@ -141,6 +135,7 @@ export const useAuth = () => {
     localStorage.removeItem('studentId');
     sessionStorage.removeItem('emailVerified');
     signOutUser();
+    window.location.reload();
   };
 
   return { student, loading, login, loginWithGoogle, logout, pendingStudent, needsAdminAuth, confirmAdminAuth, cancelAdminAuth, needsEmailVerification, confirmEmailVerification };
