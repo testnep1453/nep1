@@ -1,223 +1,97 @@
-/**
- * Firebase Auth Servisi
- * 
- * Sayısal ID girişini Firebase Auth ile eşler.
- * Desteklenen yöntemler:
- *   1. Anonymous Auth — sayısal ID ile giriş
- *   2. Google Sign-In — Google hesabı ile giriş + otomatik e-posta
- *   3. E-posta doğrulama — link tabanlı Firebase doğrulama
- */
-
-import {
-  signInAnonymously,
-  signInWithPopup,
-  GoogleAuthProvider,
-  sendSignInLinkToEmail,
-  isSignInWithEmailLink,
-  signInWithEmailLink,
-  linkWithCredential,
-  EmailAuthProvider,
-  User,
-  AuthError,
-} from 'firebase/auth';
-import { doc, setDoc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
-import { auth, db } from '../config/firebase';
-
-const ADMIN_STUDENT_ID = '1002';
-const googleProvider = new GoogleAuthProvider();
+import { supabase } from '../config/supabase';
+import { Student } from '../types/student';
 
 // ============================================
-// ANONYMOUS AUTH
+// 1. ÖĞRENCİ VERİTABANI İŞLEMLERİ
 // ============================================
 
-/**
- * Firebase Anonymous Auth ile giriş yap ve studentId'yi eşle
- */
-export const signInAndMapStudent = async (studentId: string): Promise<User | null> => {
+export const getStudentById = async (id: string): Promise<Student | null> => {
   try {
-    if (auth.currentUser) {
-      const existingMapping = await getStudentMapping(auth.currentUser.uid);
-      if (existingMapping?.studentId === studentId) {
-        return auth.currentUser;
-      }
-    }
+    const { data, error } = await supabase.from('students').select('*').eq('id', id).single();
+    if (error || !data) return null;
 
-    const credential = await signInAnonymously(auth);
-    const user = credential.user;
-
-    await setDoc(doc(db, 'userMappings', user.uid), {
-      studentId,
-      isAdmin: studentId === ADMIN_STUDENT_ID,
-      lastLogin: Date.now(),
-    });
-
-    return user;
-  } catch {
-    return null;
-  }
-};
-
-// ============================================
-// GOOGLE SIGN-IN
-// ============================================
-
-/**
- * Google ile giriş yap — e-posta otomatik doğrulanır
- * Dönüş: { email, isNewUser } veya null
- */
-export const signInWithGoogle = async (): Promise<{ email: string; user: User } | null> => {
-  try {
-    const result = await signInWithPopup(auth, googleProvider);
-    const email = result.user.email;
-    if (!email) return null;
-    return { email, user: result.user };
-  } catch (error) {
-    const authError = error as AuthError;
-    if (authError.code === 'auth/popup-closed-by-user') {
-      return null; // Kullanıcı popup'ı kapattı — normal durum
-    }
-    return null;
-  }
-};
-
-/**
- * Google e-postasıyla eşleşen öğrenciyi bul
- */
-export const findStudentByEmail = async (email: string): Promise<string | null> => {
-  try {
-    const q = query(collection(db, 'students'), where('email', '==', email));
-    const snap = await getDocs(q);
-    if (!snap.empty) {
-      return snap.docs[0].id; // studentId
-    }
-    return null;
-  } catch {
-    return null;
-  }
-};
-
-/**
- * Google auth sonrası userMappings'e kaydet
- */
-export const mapGoogleUserToStudent = async (user: User, studentId: string): Promise<void> => {
-  await setDoc(doc(db, 'userMappings', user.uid), {
-    studentId,
-    isAdmin: studentId === ADMIN_STUDENT_ID,
-    email: user.email,
-    provider: 'google',
-    lastLogin: Date.now(),
-  });
-};
-
-// ============================================
-// EMAIL LINK VERIFICATION (doğrulama linki)
-// ============================================
-
-/**
- * E-posta doğrulama linki gönder
- */
-export const sendVerificationLink = async (email: string, studentId: string): Promise<boolean> => {
-  try {
-    const actionCodeSettings = {
-      url: `${window.location.origin}${import.meta.env.BASE_URL || '/'}?studentId=${studentId}&mode=emailVerify`,
-      handleCodeInApp: true,
+    return {
+      id: data.id, name: data.name, nickname: data.nickname, email: data.email,
+      xp: data.xp || 0, level: data.level || 1, badges: data.badges || [],
+      avatar: data.avatar || 'hero_1', lastSeen: data.lastSeen || Date.now(),
+      attendanceHistory: data.attendanceHistory || [], streak: data.streak || 0,
     };
+  } catch (err) {
+    console.error('Supabase öğrenci çekme hatası:', err);
+    return null;
+  }
+};
 
-    await sendSignInLinkToEmail(auth, email, actionCodeSettings);
-    // E-postayı localStorage'a kaydet — geri dönüşte kullanılacak
-    localStorage.setItem('emailForVerification', email);
-    localStorage.setItem('pendingVerifyStudentId', studentId);
+export const upsertStudent = async (student: Student): Promise<boolean> => {
+  try {
+    const { error } = await supabase.from('students').upsert({
+      id: student.id, name: student.name, nickname: student.nickname, email: student.email,
+      xp: student.xp, level: student.level, avatar: student.avatar, streak: student.streak,
+      badges: student.badges, attendanceHistory: student.attendanceHistory, lastSeen: Date.now()
+    });
+    if (error) throw error;
     return true;
-  } catch {
+  } catch (err) {
+    console.error('Supabase öğrenci kaydetme hatası:', err);
     return false;
   }
 };
 
-/**
- * E-posta doğrulama linkini kontrol et (sayfa yüklendiğinde)
- */
-export const handleEmailLinkVerification = async (): Promise<{ email: string; studentId: string } | null> => {
-  try {
-    if (!isSignInWithEmailLink(auth, window.location.href)) {
-      return null;
-    }
-
-    let email = localStorage.getItem('emailForVerification');
-    const studentId = localStorage.getItem('pendingVerifyStudentId');
-
-    if (!email) {
-      // Kullanıcı farklı cihazdan gelmiş olabilir
-      email = window.prompt('Doğrulama için e-posta adresinizi tekrar girin:');
-    }
-
-    if (!email || !studentId) return null;
-
-    // Mevcut anonim kullanıcıyı email ile link'le
-    if (auth.currentUser) {
-      try {
-        const credential = EmailAuthProvider.credentialWithLink(email, window.location.href);
-        await linkWithCredential(auth.currentUser, credential);
-      } catch {
-        // Link zaten varsa signInWithEmailLink dene
-        await signInWithEmailLink(auth, email, window.location.href);
-      }
-    } else {
-      await signInWithEmailLink(auth, email, window.location.href);
-    }
-
-    // Temizle
-    localStorage.removeItem('emailForVerification');
-    localStorage.removeItem('pendingVerifyStudentId');
-
-    // URL'den link parametrelerini temizle
-    window.history.replaceState(null, '', window.location.pathname);
-
-    return { email, studentId };
-  } catch {
-    return null;
-  }
-};
-
-// ============================================
-// EMAIL'İ STUDENT'A KAYDET
-// ============================================
-
-/**
- * Öğrencinin e-posta adresini Firestore'a kaydet
- */
 export const saveStudentEmail = async (studentId: string, email: string): Promise<void> => {
+  await supabase.from('students').update({ email }).eq('id', studentId);
+};
+
+// ============================================
+// 2. GOOGLE SIGN-IN (Tek Satırda!)
+// ============================================
+
+export const signInWithGoogle = async () => {
   try {
-    const studentRef = doc(db, 'students', studentId);
-    await setDoc(studentRef, { email }, { merge: true });
-  } catch {
-    // Firestore yazma hatası — sessiz
+    // Supabase arka planda popup açıp, hesabı bağlayıp bize geri döner
+    const { data, error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin }
+    });
+    if (error) throw error;
+    return data;
+  } catch (err) {
+    console.error('Google giriş hatası:', err);
+    return null;
   }
 };
 
 // ============================================
-// HELPER FUNCTIONS
+// 3. E-POSTA DOĞRULAMA (Magic Link / OTP)
 // ============================================
 
-export const getStudentMapping = async (uid: string): Promise<{ studentId: string; isAdmin: boolean } | null> => {
+export const sendVerificationLink = async (email: string): Promise<boolean> => {
   try {
-    const snap = await getDoc(doc(db, 'userMappings', uid));
-    if (snap.exists()) {
-      return snap.data() as { studentId: string; isAdmin: boolean };
-    }
-    return null;
-  } catch {
-    return null;
+    // Firebase'deki o actionCodeSettings, localStorage cart curt yok. Sadece bu:
+    const { error } = await supabase.auth.signInWithOtp({
+      email: email,
+      options: { emailRedirectTo: window.location.origin }
+    });
+    if (error) throw error;
+    return true;
+  } catch (err) {
+    console.error('Mail gönderme hatası:', err);
+    return false;
   }
+};
+
+// ============================================
+// 4. OTURUM (SESSION) VE ÇIKIŞ İŞLEMLERİ
+// ============================================
+
+export const getSession = async () => {
+  const { data } = await supabase.auth.getSession();
+  return data.session;
 };
 
 export const signOutUser = async () => {
   try {
-    await auth.signOut();
-  } catch {
-    // Sessiz
+    await supabase.auth.signOut();
+  } catch (err) {
+    console.error('Çıkış hatası:', err);
   }
-};
-
-export const getCurrentUser = (): User | null => {
-  return auth.currentUser;
 };
