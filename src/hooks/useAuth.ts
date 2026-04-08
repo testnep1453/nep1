@@ -18,7 +18,6 @@ export const useAuth = () => {
 
   useEffect(() => {
     const storedId = localStorage.getItem('studentId');
-    // KRİTİK GÜVENLİK GÜNCELLEMESİ: emailVerified artık sessionStorage'dan okunuyor
     const emailVerified = sessionStorage.getItem('emailVerified') === 'true';
 
     if (storedId) {
@@ -30,6 +29,8 @@ export const useAuth = () => {
 
   const loadStudent = async (id: string, hasVerifiedEmail: boolean = false) => {
     const jsonStudent = getStudents().find(s => s.id === id);
+    
+    // Eğer yerel JSON'da varsa HIZLICA devam et
     if (jsonStudent) {
       const studentData: Student = {
         id: jsonStudent.id,
@@ -61,33 +62,34 @@ export const useAuth = () => {
           return;
         }
       } catch {
-        // Cihaz kaydı hatasında yine de giriş yap
+        // Cihaz hatasını yoksay, girişi engelleme
       }
 
       sessionStorage.setItem('emailVerified', 'true');
       setStudent(studentData);
-      signInAndMapStudent(studentData.id).catch(() => {});
+      
+      // Firestore hatası tüm uygulamayı dondurmasın diye arka planda (sessiz) çağır
+      signInAndMapStudent(studentData.id).catch(() => console.warn("Firestore oturumu atlandı (API hatası)."));
       setLoading(false);
       return;
     }
 
+    // Eğer Firebase'de aranacaksa, maksimum 3 saniye süre ver!
     try {
       const docRef = doc(db, 'students', id);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
+      // Promise.race ile Timeout mekanizması ekliyoruz
+      const docSnap = await Promise.race([
+        getDoc(docRef),
+        new Promise((_, reject) => setTimeout(() => reject(new Error("Firestore bağlantı zaman aşımı")), 3000))
+      ]) as any;
+
+      if (docSnap && docSnap.exists()) {
         const data = docSnap.data();
         const studentData: Student = {
-          id,
-          name: data.name,
-          nickname: data.nickname,
-          email: data.email,
-          xp: data.xp || 0,
-          level: data.level || 1,
-          badges: data.badges || [],
-          avatar: data.avatar || 'hero_1',
-          lastSeen: data.lastSeen?.toMillis?.() || data.lastSeen || Date.now(),
-          attendanceHistory: data.attendanceHistory || [],
-          streak: data.streak || 0,
+          id, name: data.name, nickname: data.nickname, email: data.email,
+          xp: data.xp || 0, level: data.level || 1, badges: data.badges || [],
+          avatar: data.avatar || 'hero_1', lastSeen: data.lastSeen?.toMillis?.() || data.lastSeen || Date.now(),
+          attendanceHistory: data.attendanceHistory || [], streak: data.streak || 0,
         };
 
         if (id !== ADMIN_ID && !hasVerifiedEmail) {
@@ -105,9 +107,7 @@ export const useAuth = () => {
             setLoading(false);
             return;
           }
-        } catch {
-          // Hata durumunda girişe izin ver
-        }
+        } catch {}
 
         sessionStorage.setItem('emailVerified', 'true');
         setStudent(studentData);
@@ -116,43 +116,31 @@ export const useAuth = () => {
         localStorage.removeItem('studentId');
         sessionStorage.removeItem('emailVerified');
       }
-    } catch {
-      // Firestore devre dışı
+    } catch (e) {
+      console.warn("Firestore çevrimdışı, login iptal edildi: ", e);
+      localStorage.removeItem('studentId');
+      sessionStorage.removeItem('emailVerified');
     } finally {
-      setLoading(false);
+      setLoading(false); // Her durumda Yükleniyor ekranını kapa
     }
   };
 
   const login = async (studentId: string): Promise<boolean> => {
+    setLoading(true); // Tıklandığında yükleniyor göster
     if (studentId === ADMIN_ID) {
       const jsonStudent = getStudents().find(s => s.id === ADMIN_ID);
       if (jsonStudent) {
         setPendingStudent({
-          id: jsonStudent.id, name: jsonStudent.name, nickname: jsonStudent.nickname,
-          xp: jsonStudent.xp || 0, level: jsonStudent.level || 1, badges: [],
-          avatar: jsonStudent.avatar || 'hero_2', lastSeen: Date.now(), attendanceHistory: [],
-          streak: 0, email: jsonStudent.email,
+           id: jsonStudent.id, name: jsonStudent.name, nickname: jsonStudent.nickname, 
+           xp: jsonStudent.xp || 0, level: jsonStudent.level || 1, badges: [], 
+           avatar: jsonStudent.avatar || 'hero_2', lastSeen: Date.now(), attendanceHistory: [], 
+           streak: 0, email: jsonStudent.email 
         });
         setNeedsAdminAuth(true);
+        setLoading(false);
         return true;
       }
-
-      try {
-        const docRef = doc(db, 'students', ADMIN_ID);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          setPendingStudent({
-            id: ADMIN_ID, name: data.name || 'Admin', nickname: data.nickname, email: data.email,
-            xp: data.xp || 0, level: data.level || 1, badges: data.badges || [],
-            avatar: data.avatar || 'hero_2', lastSeen: Date.now(), attendanceHistory: [], streak: 0,
-          });
-          setNeedsAdminAuth(true);
-          return true;
-        }
-      } catch {
-        // Firestore erişimi yok
-      }
+      setLoading(false);
       return false;
     }
 
@@ -162,57 +150,26 @@ export const useAuth = () => {
       await loadStudent(studentId);
       return true;
     }
-
-    try {
-      const docRef = doc(db, 'students', studentId);
-      const docSnap = await getDoc(docRef);
-      if (docSnap.exists()) {
-        localStorage.setItem('studentId', studentId);
-        await loadStudent(studentId);
-        return true;
-      }
-    } catch {
-      // Firestore devre dışı
-    }
-
+    
+    setLoading(false);
     return false;
   };
 
   const loginWithGoogle = async (studentId: string, email: string): Promise<boolean> => {
     const jsonStudent = getStudents().find(s => s.id === studentId);
-    let studentData: Student | null = null;
-
     if (jsonStudent) {
-      studentData = {
+      const studentData = {
         id: jsonStudent.id, name: jsonStudent.name, nickname: jsonStudent.nickname, email,
         xp: jsonStudent.xp || 0, level: jsonStudent.level || 1, badges: [],
         avatar: jsonStudent.avatar || 'hero_1', lastSeen: Date.now(), attendanceHistory: [], streak: 0,
       };
-    } else {
-      try {
-        const docRef = doc(db, 'students', studentId);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          studentData = {
-            id: studentId, name: data.name, nickname: data.nickname, email,
-            xp: data.xp || 0, level: data.level || 1, badges: data.badges || [],
-            avatar: data.avatar || 'hero_1', lastSeen: data.lastSeen?.toMillis?.() || data.lastSeen || Date.now(),
-            attendanceHistory: data.attendanceHistory || [], streak: data.streak || 0,
-          };
-        }
-      } catch {
-        // Firestore erişimi yok
-      }
+      localStorage.setItem('studentId', studentId);
+      sessionStorage.setItem('emailVerified', 'true');
+      setStudent(studentData);
+      signInAndMapStudent(studentId).catch(() => {});
+      return true;
     }
-
-    if (!studentData) return false;
-
-    localStorage.setItem('studentId', studentId);
-    sessionStorage.setItem('emailVerified', 'true');
-    setStudent(studentData);
-    signInAndMapStudent(studentId).catch(() => {});
-    return true;
+    return false;
   };
 
   const confirmEmailVerification = (email: string) => {
