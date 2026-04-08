@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
 import { Mail, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { sendVerificationCode, verifyEmailCode } from '../../services/authService';
 
@@ -51,7 +50,8 @@ export const EmailVerificationModal: React.FC<Props> = ({ studentId, onVerified,
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="bg-slate-900 border border-slate-700 p-8 rounded-2xl w-full max-w-md shadow-2xl relative">
+      {/* framer-motion tamamen kaldırıldı, standart HTML ve Tailwind eklendi */}
+      <div className="bg-slate-900 border border-slate-700 p-8 rounded-2xl w-full max-w-md shadow-2xl relative transform transition-all duration-300">
         <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
           <Mail className="text-blue-400 w-6 h-6" />
           Kimlik Doğrulama
@@ -102,7 +102,7 @@ export const EmailVerificationModal: React.FC<Props> = ({ studentId, onVerified,
             </div>
           </form>
         )}
-      </motion.div>
+      </div>
     </div>
   );
 };
