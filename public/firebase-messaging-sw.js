@@ -1,9 +1,6 @@
 importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js');
 importScripts('https://www.gstatic.com/firebasejs/10.7.0/firebase-messaging-compat.js');
 
-// Bu dosya build sırasında Vite plugin ile ENV değerleri inject edilmelidir.
-// GitHub Actions'da VITE_FIREBASE_* env'leri secret olarak ayarlıdır.
-// Aşağıdaki placeholder'lar build pipeline'da replaceAll ile doldurulur.
 firebase.initializeApp({
   apiKey: "__VITE_FIREBASE_API_KEY__",
   authDomain: "__VITE_FIREBASE_AUTH_DOMAIN__",
@@ -29,7 +26,6 @@ messaging.onBackgroundMessage((payload) => {
   self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
-// Bildirime tıklama — uygulamaya yönlendirme
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   event.waitUntil(
@@ -42,4 +38,10 @@ self.addEventListener('notificationclick', (event) => {
       return self.clients.openWindow('/nep1/');
     })
   );
+});
+
+// YENİ EKLENEN KISIM: Chrome/Safari/Edge'in "Yükle" butonunu göstermesi için ZORUNLU kural.
+// Tarayıcıya "Evet, çevrimdışı çalışabiliyorum" mesajı verir.
+self.addEventListener('fetch', (event) => {
+  // PWA motorunu kandırmak için boş bırakıyoruz
 });
