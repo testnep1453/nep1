@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Student } from '../../types/student';
-import { Shield, Lock, Zap } from 'lucide-react';
+import { Shield, Lock, Zap, Dices } from 'lucide-react';
 import { updateNickname } from '../../services/dbFirebase';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '../../config/firebase';
 
 interface ProfileSectionProps {
   student: Student;
@@ -21,6 +23,15 @@ export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps
   const [isEditingNickname, setIsEditingNickname] = useState(false);
   const [nicknameValue, setNicknameValue] = useState(student.nickname || '');
   const [saving, setSaving] = useState(false);
+
+  // ANA SAYFA AVATAR YÖNETİMİ
+  const [localAvatar, setLocalAvatar] = useState(student.avatar || `avataaars:${student.id}`);
+  const [isRandomizing, setIsRandomizing] = useState(false);
+
+  // Profil başka yerden güncellenirse eşleşmeyi sağlar
+  useEffect(() => {
+    if (student.avatar) setLocalAvatar(student.avatar);
+  }, [student.avatar]);
 
   const xpForNextLevel = student.level * 200;
   const xpProgress = (student.xp % 200) / 200 * 100;
@@ -42,29 +53,40 @@ export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps
     }
   };
 
-  // %100 ERKEK ÇOCUĞU / ERKEK AJAN FİLTRESİ
-  const getAvatarUrl = () => {
-    const validStyles = ['avataaars', 'bottts', 'pixel-art', 'identicon'];
-    let style = 'avataaars'; 
-    let seed = student.id;
-
-    if (student.avatar && student.avatar.includes(':')) {
-      const parts = student.avatar.split(':');
-      style = validStyles.includes(parts[0]) ? parts[0] : 'avataaars';
-      seed = parts[1] || student.id;
+  // RESME TIKLANINCA ÇALIŞACAK ZAR ATMA FONKSİYONU
+  const handleRandomizeAvatar = async () => {
+    if (isRandomizing || isAdmin) return;
+    setIsRandomizing(true);
+    
+    const newSeed = Math.random().toString(36).substring(2, 10);
+    const style = localAvatar.split(':')[0] || 'avataaars';
+    const newAvatar = `${style}:${newSeed}`;
+    
+    try {
+      await updateDoc(doc(db, 'students', student.id), { avatar: newAvatar });
+      student.avatar = newAvatar;
+      setLocalAvatar(newAvatar);
+    } catch (error) {
+      console.error('Karakter güncellenemedi', error);
+    } finally {
+      setIsRandomizing(false);
     }
+  };
+
+  const getAvatarUrl = () => {
+    const parts = localAvatar.split(':');
+    const style = parts[0] || 'avataaars';
+    const seed = parts[1] || student.id;
 
     let url = `https://api.dicebear.com/9.x/${style}/svg?seed=${seed}&backgroundColor=transparent`;
 
-    // Eğer İnsan (Ajan) stili seçiliyse, kız/kadın özelliklerini YASAKLA:
+    // Sadece maskülen / erkek çocuk filtresi
     if (style === 'avataaars') {
-      // Sadece kısa erkek saçları ve ajan maskeleri/şapkaları
       url += '&top=shortHairDreads01,shortHairDreads02,shortHairFrizzle,shortHairShaggyMullet,shortHairShortCurly,shortHairShortFlat,shortHairShortRound,shortHairShortWaved,shortHairSides,shortHairTheCaesar,shortHairTheCaesarSidePart,eyepatch';
-      url += '&accessoriesProbability=0'; // Kadınsı gözlük, küpe vb. iptal
-      url += '&facialHairProbability=0'; // 10 yaşında oldukları için sakal iptal
-      url += '&clothing=blazerAndShirt,blazerAndSweater,collarAndSweater,graphicShirt,hoodie,overall,shirtCrewNeck,shirtScoopNeck,shirtVNeck'; // Sadece maskülen kıyafetler
+      url += '&accessoriesProbability=0'; 
+      url += '&facialHairProbability=0';
+      url += '&clothing=blazerAndShirt,blazerAndSweater,collarAndSweater,graphicShirt,hoodie,overall,shirtCrewNeck,shirtScoopNeck,shirtVNeck';
     }
-
     return url;
   };
 
@@ -75,11 +97,29 @@ export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps
       
       {/* SOL: AVATAR VE KİMLİK */}
       <div className="flex flex-col items-center text-center w-full lg:w-1/3 shrink-0">
-        <div className="relative mb-4">
-          <div className="w-24 h-24 md:w-40 md:h-40 rounded-3xl bg-[#050505] border-2 border-[#00F0FF]/50 p-2 shadow-[0_0_20px_rgba(0,240,255,0.2)]">
-            <img src={dicebearUrl} alt="Avatar" className="w-full h-full object-contain drop-shadow-md" />
+        
+        {/* AVATAR KUTUSU - TIKLANABİLİR ZAR ATMA ALANI */}
+        <div 
+          className={`relative mb-4 ${!isAdmin ? 'cursor-pointer group' : ''}`} 
+          onClick={handleRandomizeAvatar}
+          title={!isAdmin ? "Karakteri Değiştirmek İçin Tıkla!" : ""}
+        >
+          <div className="w-24 h-24 md:w-40 md:h-40 rounded-3xl bg-[#050505] border-2 border-[#00F0FF]/50 p-2 shadow-[0_0_20px_rgba(0,240,255,0.2)] relative overflow-hidden">
+            <img 
+              src={dicebearUrl} 
+              alt="Avatar" 
+              className={`w-full h-full object-contain drop-shadow-md transition-all duration-300 ${isRandomizing ? 'opacity-30 scale-90' : 'opacity-100 scale-100'}`} 
+            />
+            
+            {/* Üzerine gelince çıkan Zar İkonu */}
+            {!isAdmin && (
+              <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                <Dices className="w-8 h-8 text-[#39FF14] mb-1 animate-pulse" />
+                <span className="text-[#39FF14] text-[10px] font-black tracking-widest">DEĞİŞTİR</span>
+              </div>
+            )}
           </div>
-          <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-[#00F0FF] text-[#0A1128] font-black text-xs md:text-sm px-4 py-1 rounded-lg border-2 border-[#0A1128] shadow-lg whitespace-nowrap">
+          <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-[#00F0FF] text-[#0A1128] font-black text-xs md:text-sm px-4 py-1 rounded-lg border-2 border-[#0A1128] shadow-lg whitespace-nowrap z-10">
             LVL {student.level}
           </div>
         </div>
