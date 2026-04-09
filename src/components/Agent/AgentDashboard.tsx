@@ -25,9 +25,7 @@ const Icons = {
   Film: () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 3v18"/><path d="M3 7.5h4"/><path d="M3 12h18"/><path d="M3 16.5h4"/></svg>,
   Calendar: () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
   Star: () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z"/></svg>,
-  Logout: () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2"/><path d="M9 12h12l-3 -3"/><path d="M18 15l3 -3"/></svg>,
   Menu: () => <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>,
-  Bell: () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>,
 };
 
 export const AgentDashboard = ({
@@ -35,7 +33,7 @@ export const AgentDashboard = ({
 }: {
   student: Student; onLogout: () => void; lesson: Lesson | null;
 }) => {
-  void onLogout; // Kullanılmayan uyarılarını engellemek için eklendi
+  void onLogout; 
 
   const [activeTab, setActiveTab] = useState<AgentTab>('home');
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -98,18 +96,15 @@ export const AgentDashboard = ({
 
   return (
     <div className="h-[100dvh] bg-[#050505] text-white flex flex-col md:flex-row font-['Rajdhani',sans-serif] selection:bg-[#00F0FF]/30 overflow-hidden">
-      {/* BG */}
       <div className="fixed inset-0 pointer-events-none z-0 opacity-20">
         <div className="absolute inset-0 bg-[linear-gradient(rgba(0,240,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,240,255,0.03)_1px,transparent_1px)] bg-[length:40px_40px]" />
         <div className="scanlines absolute inset-0" />
       </div>
 
-      {/* Drawer */}
       <OperationDrawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)}
         lesson={lesson} trailer={trailer} isAdmin={false}
         studentName={student.name} zoomLink={lesson?.zoomLink || LESSON_CONFIG.zoomLink} />
 
-      {/* Feedback */}
       {showFeedback && (
         <FeedbackForm lessonDate={autoZoomState.lessonDate} studentId={student.id}
           onClose={() => { setShowFeedback(false); sessionStorage.setItem(`feedback_${autoZoomState.lessonDate}`, 'true'); }} />
@@ -127,7 +122,6 @@ export const AgentDashboard = ({
         </button>
       </div>
 
-      {/* Mobil Nav Dropdown */}
       {mobileNavOpen && (
         <div className="md:hidden fixed inset-0 top-[52px] bg-black/80 z-20" onClick={() => setMobileNavOpen(false)}>
           <div className="bg-[#0A1128] border-b border-[#00F0FF]/20 p-4 space-y-2">
@@ -171,70 +165,61 @@ export const AgentDashboard = ({
         </nav>
       </aside>
 
-      {/* Main */}
-      <main className="flex-1 p-4 md:p-8 z-10 overflow-y-auto pb-24 md:pb-8">
-        <header className="flex items-center justify-between mb-6 md:mb-8">
+      {/* Main Content */}
+      <main className="flex-1 flex flex-col p-4 md:p-8 z-10 h-[100dvh] overflow-hidden pb-24 md:pb-8">
+        <header className="flex items-center justify-between mb-4 md:mb-6 shrink-0">
           <div>
             <h2 className="text-xs sm:text-sm tracking-[0.2em] uppercase mb-1 flex items-center gap-2 text-[#00F0FF]">
               <span className="inline-block w-2 h-2 animate-pulse rounded-full bg-[#00F0FF]" /> Ajan
             </h2>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold uppercase tracking-wider text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">
+            <h1 className="text-2xl sm:text-3xl font-bold uppercase tracking-wider text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">
               {tabTitles[activeTab]}
             </h1>
           </div>
-          {/* Bildirim, Yükle Butonu ve Profil */}
           <TopBar student={student} unreadCount={unreadCount} theme={theme} onThemeChange={handleThemeChange} />
         </header>
 
-        <div className="max-w-7xl mx-auto">
-          {activeTab === 'home' && (
-            <div className="space-y-6 sm:space-y-8 animate-fade-in">
-              <ProfileSection student={student} />
+        <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar">
+          <div className="max-w-7xl mx-auto h-full">
+            {activeTab === 'home' && (
+              <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 h-full items-start">
+                
+                {/* SOL TARAF: Profil ve Envanter */}
+                <div className="xl:col-span-7 flex flex-col gap-6">
+                  <ProfileSection student={student} />
 
-              {/* Minimal XP Progress Bar */}
-              {(() => {
-                const THRESHOLDS = [0, 200, 500, 1000, 2000, 3500, 5500, 8000, 12000, 18000, 25000];
-                const lvl = student.level || 1;
-                const xp = student.xp || 0;
-                const curr = THRESHOLDS[lvl - 1] || 0;
-                const next = THRESHOLDS[lvl] || THRESHOLDS[THRESHOLDS.length - 1];
-                const pct = Math.min(((xp - curr) / (next - curr)) * 100, 100);
-                return (
-                  <div className="bg-[#0A1128]/80 border border-[#00F0FF]/20 p-4 rounded-lg">
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[#00F0FF] text-xs font-bold">LVL {lvl}</span>
-                        <span className="text-gray-500 text-xs font-mono">{xp} XP</span>
-                      </div>
-                      <span className="text-gray-600 text-[10px] font-mono">{next - xp} XP kaldı</span>
-                    </div>
-                    <div className="h-2 bg-[#050505] rounded-full overflow-hidden border border-gray-800">
-                      <div
-                        className="h-full bg-gradient-to-r from-[#00F0FF] to-[#6358cc] rounded-full transition-all duration-1000 ease-out shadow-[0_0_8px_rgba(0,240,255,0.4)]"
-                        style={{ width: `${pct}%` }}
-                      />
-                    </div>
+                  {/* Dinamik Feedback Butonu */}
+                  {autoZoomState.status === 'feedback' && !showFeedback && (
+                    <button
+                      onClick={() => setShowFeedback(true)}
+                      className="w-full bg-gradient-to-r from-[#FF9F43]/20 to-[#FF4500]/20 border border-[#FF9F43]/40 text-[#FF9F43] py-4 rounded-lg font-bold uppercase tracking-wider text-sm hover:from-[#FF9F43]/30 hover:to-[#FF4500]/30 transition-all animate-pulse"
+                    >
+                      📝 Ders Hakkında Geri Bildirim Ver
+                    </button>
+                  )}
+                </div>
+
+                {/* SAĞ TARAF: İletişim / Mesajlar (Sabit yükseklikte kaydırılabilir) */}
+                <div className="xl:col-span-5 bg-[#0A1128]/80 border border-[#00F0FF]/20 rounded-2xl h-[500px] xl:h-full flex flex-col overflow-hidden">
+                  <div className="bg-[#00F0FF]/10 px-4 py-3 border-b border-[#00F0FF]/20 shrink-0">
+                    <h3 className="text-[#00F0FF] font-bold text-sm uppercase tracking-widest flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-[#00F0FF] animate-pulse" />
+                      Gelen Kutusu
+                    </h3>
                   </div>
-                );
-              })()}
+                  <div className="flex-1 overflow-y-auto custom-scrollbar p-2">
+                    <MessageFeed />
+                  </div>
+                </div>
 
-              {/* Dinamik Feedback Butonu — Ders bittikten sonra */}
-              {autoZoomState.status === 'feedback' && !showFeedback && (
-                <button
-                  onClick={() => setShowFeedback(true)}
-                  className="w-full bg-gradient-to-r from-[#FF9F43]/20 to-[#FF4500]/20 border border-[#FF9F43]/40 text-[#FF9F43] py-4 rounded-lg font-bold uppercase tracking-wider text-sm hover:from-[#FF9F43]/30 hover:to-[#FF4500]/30 transition-all animate-pulse"
-                >
-                  📝 Ders Hakkında Geri Bildirim Ver
-                </button>
-              )}
-
-              <MessageFeed />
-            </div>
-          )}
-          {activeTab === 'levels' && <LevelProgress student={student} />}
-          {activeTab === 'archive' && <ArchivePage />}
-          {activeTab === 'activity' && <ActivityPage student={student} />}
-          {activeTab === 'feedback' && <FeedbackHistory studentId={student.id} />}
+              </div>
+            )}
+            
+            {activeTab === 'levels' && <LevelProgress student={student} />}
+            {activeTab === 'archive' && <ArchivePage />}
+            {activeTab === 'activity' && <ActivityPage student={student} />}
+            {activeTab === 'feedback' && <FeedbackHistory studentId={student.id} />}
+          </div>
         </div>
       </main>
 
