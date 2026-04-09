@@ -42,10 +42,10 @@ export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps
     }
   };
 
-  // HATA ÇÖZÜMÜ: Eski 'hero_1' gibi verileri temizleyip, geçerli bir URL oluşturur.
+  // %100 ERKEK ÇOCUĞU / ERKEK AJAN FİLTRESİ
   const getAvatarUrl = () => {
-    const validStyles = ['avataaars', 'adventurer', 'bottts', 'micah'];
-    let style = 'avataaars'; // En gerçekçi insan stili varsayılan yapıldı
+    const validStyles = ['avataaars', 'bottts', 'pixel-art', 'identicon'];
+    let style = 'avataaars'; 
     let seed = student.id;
 
     if (student.avatar && student.avatar.includes(':')) {
@@ -54,7 +54,18 @@ export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps
       seed = parts[1] || student.id;
     }
 
-    return `https://api.dicebear.com/9.x/${style}/svg?seed=${seed}&backgroundColor=transparent`;
+    let url = `https://api.dicebear.com/9.x/${style}/svg?seed=${seed}&backgroundColor=transparent`;
+
+    // Eğer İnsan (Ajan) stili seçiliyse, kız/kadın özelliklerini YASAKLA:
+    if (style === 'avataaars') {
+      // Sadece kısa erkek saçları ve ajan maskeleri/şapkaları
+      url += '&top=shortHairDreads01,shortHairDreads02,shortHairFrizzle,shortHairShaggyMullet,shortHairShortCurly,shortHairShortFlat,shortHairShortRound,shortHairShortWaved,shortHairSides,shortHairTheCaesar,shortHairTheCaesarSidePart,eyepatch';
+      url += '&accessoriesProbability=0'; // Kadınsı gözlük, küpe vb. iptal
+      url += '&facialHairProbability=0'; // 10 yaşında oldukları için sakal iptal
+      url += '&clothing=blazerAndShirt,blazerAndSweater,collarAndSweater,graphicShirt,hoodie,overall,shirtCrewNeck,shirtScoopNeck,shirtVNeck'; // Sadece maskülen kıyafetler
+    }
+
+    return url;
   };
 
   const dicebearUrl = getAvatarUrl();
