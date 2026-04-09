@@ -43,13 +43,11 @@ export const TopBar = ({ student, unreadCount, theme, onThemeChange }: TopBarPro
   const [showManualPrompt, setShowManualPrompt] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
 
-  // Cihaz/Tarayıcı Algılama
+  // Cihaz/Tarayıcı Algılama (Nokta atışı metinler için)
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-  const isFirefox = /Firefox/i.test(navigator.userAgent);
   const isDesktop = !/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
   useEffect(() => {
-    // Uygulama zaten yüklü mü kontrol et
     const checkStandalone = () => {
       return window.matchMedia('(display-mode: standalone)').matches || 
              (window.navigator as any).standalone === true;
@@ -66,7 +64,6 @@ export const TopBar = ({ student, unreadCount, theme, onThemeChange }: TopBarPro
   }, []);
 
   const handleInstallClick = async () => {
-    // Eğer Chrome destekliyorsa ve butonu verdiyse direkt kur
     if (deferredPrompt) {
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
@@ -74,7 +71,6 @@ export const TopBar = ({ student, unreadCount, theme, onThemeChange }: TopBarPro
         setDeferredPrompt(null);
       }
     } else {
-      // Desteklemiyorsa (iOS, Firefox veya Chrome PC gizlediyse) akıllı menüyü aç
       setShowManualPrompt(true);
     }
   };
@@ -83,7 +79,6 @@ export const TopBar = ({ student, unreadCount, theme, onThemeChange }: TopBarPro
     <>
       <div className="flex items-center gap-2 sm:gap-3 relative">
         
-        {/* Uygulama yüklenmemişse "YÜKLE" butonu HER ZAMAN çıksın */}
         {!isStandalone && (
           <div className="relative">
             <button
@@ -95,7 +90,7 @@ export const TopBar = ({ student, unreadCount, theme, onThemeChange }: TopBarPro
               <span className="hidden sm:inline tracking-wider">YÜKLE</span>
             </button>
 
-            {/* Akıllı Kılavuz Modal'ı */}
+            {/* Bilgisayar, iPhone ve Android için ayrı ayrı akıllı kılavuz */}
             {showManualPrompt && (
               <div className="absolute top-12 right-0 w-72 bg-[#0A1128] border border-[#00F0FF]/40 p-4 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] z-50">
                 <p className="text-[#00F0FF] font-bold text-sm mb-2 border-b border-[#00F0FF]/20 pb-1">
@@ -107,19 +102,15 @@ export const TopBar = ({ student, unreadCount, theme, onThemeChange }: TopBarPro
                       <p>1. Tarayıcının altındaki <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Paylaş 🔗</span> ikonuna dokunun.</p>
                       <p>2. <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Ana Ekrana Ekle ➕</span> seçeneğine dokunun.</p>
                     </>
-                  ) : isFirefox ? (
-                    <>
-                      <p>1. Sağ üstteki <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Üç Nokta ⋮</span> menüsüne dokunun.</p>
-                      <p>2. <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Uygulamayı Yükle ⬇️</span> veya <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Ana Ekrana Ekle</span> seçeneğine dokunun.</p>
-                    </>
                   ) : isDesktop ? (
                     <>
-                      <p>1. Adres çubuğunun en sağındaki <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Yükle ⬇️</span> veya <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Ekran 💻</span> ikonuna tıklayın.</p>
-                      <p>2. Veya sağ üstteki <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Üç Nokta ⋮</span> ikonuna basıp <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Ana Ekrana Ekle</span> seçeneğine tıklayabilirsiniz.</p>
+                      <p>1. Adres çubuğunun en sağındaki <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Yükle ⬇️</span> (veya monitör) ikonuna tıklayın.</p>
+                      <p>2. İkon yoksa sağ üstteki tarayıcı menüsüne girip <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Uygulamayı Yükle</span> veya <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Kaydet ve Paylaş &gt; Yükle</span> seçeneğine tıklayın.</p>
                     </>
                   ) : (
                     <>
-                      <p>Sağ üstteki <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Üç Nokta ⋮</span> menüsüne basıp <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Ana Ekrana Ekle</span> seçeneğine tıklayarak kurulum yapabilirsiniz.</p>
+                      <p>1. Tarayıcının <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Menü ⋮</span> ikonuna dokunun.</p>
+                      <p>2. <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Uygulamayı Yükle ⬇️</span> veya <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Ana Ekrana Ekle</span> seçeneğine dokunun.</p>
                     </>
                   )}
                 </div>
