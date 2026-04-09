@@ -162,10 +162,9 @@ export const AgentDashboard = ({
         </nav>
       </aside>
 
-      {/* ANA EKRAN İÇERİĞİ (SCROLL YOK) */}
+      {/* ANA EKRAN İÇERİĞİ (TAMAMEN SCROLL'SUZ) */}
       <main className="flex-1 flex flex-col h-[calc(100dvh-48px)] md:h-[100dvh] z-10 overflow-hidden relative">
         
-        {/* Üst Başlık Kısmı */}
         <header className="flex-none flex items-center justify-between p-4 md:p-6 shrink-0">
           <div>
             <h2 className="text-[10px] sm:text-xs tracking-[0.2em] uppercase mb-0.5 flex items-center gap-2 text-[#00F0FF]">
@@ -178,17 +177,15 @@ export const AgentDashboard = ({
           <TopBar student={student} unreadCount={unreadCount} theme={theme} onThemeChange={handleThemeChange} />
         </header>
 
-        {/* İÇERİK KISMI (Tam Ekrana Sığdırıldı) */}
-        <div className="flex-1 flex flex-col p-4 pt-0 overflow-hidden">
-          <div className="w-full max-w-5xl mx-auto flex-1 flex flex-col justify-center">
+        {/* PROFIL KARTI MERKEZLEME ALANI */}
+        <div className="flex-1 flex flex-col p-4 md:p-6 pt-0 overflow-hidden">
+          <div className="w-full max-w-6xl mx-auto flex-1 flex flex-col justify-center h-full">
             
             {activeTab === 'home' && (
-              <div className="flex flex-col gap-4 animate-fade-in w-full">
+              <div className="flex flex-col gap-4 animate-fade-in w-full h-full pb-2 md:pb-6">
                 
-                {/* PROFIL KARTI: Tek Ekrana Sığacak Şekilde Boyutları Sıkıştırıldı */}
                 <ProfileSection student={student} />
 
-                {/* Dinamik Feedback Butonu */}
                 {autoZoomState.status === 'feedback' && !showFeedback && (
                   <button
                     onClick={() => setShowFeedback(true)}
