@@ -34,6 +34,8 @@ export const AgentDashboard = ({
 }: {
   student: Student; onLogout: () => void; lesson: Lesson | null;
 }) => {
+  void onLogout; // Çıkış yap butonu kaldırıldığı için "unused variable" hatası vermesini engeller
+
   const [activeTab, setActiveTab] = useState<AgentTab>('home');
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
@@ -95,24 +97,20 @@ export const AgentDashboard = ({
 
   return (
     <div className="h-[100dvh] bg-[#050505] text-white flex flex-col md:flex-row font-['Rajdhani',sans-serif] selection:bg-[#00F0FF]/30 overflow-hidden">
-      {/* BG */}
       <div className="fixed inset-0 pointer-events-none z-0 opacity-20">
         <div className="absolute inset-0 bg-[linear-gradient(rgba(0,240,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,240,255,0.03)_1px,transparent_1px)] bg-[length:40px_40px]" />
         <div className="scanlines absolute inset-0" />
       </div>
 
-      {/* Drawer */}
       <OperationDrawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)}
         lesson={lesson} trailer={trailer} isAdmin={false}
         studentName={student.name} zoomLink={lesson?.zoomLink || LESSON_CONFIG.zoomLink} />
 
-      {/* Feedback */}
       {showFeedback && (
         <FeedbackForm lessonDate={autoZoomState.lessonDate} studentId={student.id}
           onClose={() => { setShowFeedback(false); sessionStorage.setItem(`feedback_${autoZoomState.lessonDate}`, 'true'); }} />
       )}
 
-      {/* Mobil Üst Bar */}
       <div className="md:hidden sticky top-0 z-30 bg-[#0A1128] border-b border-[#00F0FF]/20 flex items-center justify-between px-4 py-3">
         <button onClick={() => setDrawerOpen(true)} className="text-[#00F0FF] p-2 min-w-[44px] min-h-[44px] flex items-center justify-center">
           <Icons.Swords />
@@ -124,7 +122,6 @@ export const AgentDashboard = ({
         </button>
       </div>
 
-      {/* Mobil Nav Dropdown */}
       {mobileNavOpen && (
         <div className="md:hidden fixed inset-0 top-[52px] bg-black/80 z-20" onClick={() => setMobileNavOpen(false)}>
           <div className="bg-[#0A1128] border-b border-[#00F0FF]/20 p-4 space-y-2">
@@ -141,7 +138,6 @@ export const AgentDashboard = ({
         </div>
       )}
 
-      {/* Desktop Sidebar */}
       <aside className="hidden md:flex w-64 bg-[#0A1128] border-r border-[#00F0FF]/20 z-10 flex-col h-screen sticky top-0">
         <div className="p-6 border-b border-[#00F0FF]/20 flex items-center justify-center">
           <img src={`${import.meta.env.BASE_URL}nep-logo.png`} alt="NEP" className="h-10 brightness-0 invert opacity-80" />
@@ -168,7 +164,6 @@ export const AgentDashboard = ({
         </nav>
       </aside>
 
-      {/* Main */}
       <main className="flex-1 p-4 md:p-8 z-10 overflow-y-auto pb-24 md:pb-8">
         <header className="flex items-center justify-between mb-6 md:mb-8">
           <div>
@@ -179,7 +174,6 @@ export const AgentDashboard = ({
               {tabTitles[activeTab]}
             </h1>
           </div>
-          {/* Bildirim + Profil */}
           <TopBar student={student} unreadCount={unreadCount} theme={theme} onThemeChange={handleThemeChange} />
         </header>
 
@@ -188,7 +182,6 @@ export const AgentDashboard = ({
             <div className="space-y-6 sm:space-y-8 animate-fade-in">
               <ProfileSection student={student} />
 
-              {/* Minimal XP Progress Bar (Modül 4.1) */}
               {(() => {
                 const THRESHOLDS = [0, 200, 500, 1000, 2000, 3500, 5500, 8000, 12000, 18000, 25000];
                 const lvl = student.level || 1;
@@ -215,7 +208,6 @@ export const AgentDashboard = ({
                 );
               })()}
 
-              {/* Dinamik Feedback Butonu (Modül 4.2) — Ders bittikten sonra */}
               {autoZoomState.status === 'feedback' && !showFeedback && (
                 <button
                   onClick={() => setShowFeedback(true)}
@@ -225,7 +217,6 @@ export const AgentDashboard = ({
                 </button>
               )}
 
-              {/* Derse Katıl Butonu */}
               <button
                 onClick={() => setDrawerOpen(true)}
                 className="w-full bg-[#6358cc]/10 border border-[#6358cc]/30 text-[#8b7fd8] py-4 rounded-lg font-bold uppercase tracking-wider text-sm hover:bg-[#6358cc]/20 transition-all flex items-center justify-center gap-2"
@@ -243,7 +234,6 @@ export const AgentDashboard = ({
         </div>
       </main>
 
-      {/* Mobil Alt Bar */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-[#0A1128] border-t border-[#00F0FF]/20 z-20 flex items-center justify-around px-1 py-2 safe-area-bottom">
         {[
           { id: 'home' as AgentTab, icon: <Icons.Home />, label: 'ANA SAYFA' },
