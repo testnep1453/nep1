@@ -109,17 +109,17 @@ export const TopBar = ({ student, unreadCount, theme, onThemeChange }: TopBarPro
                     </>
                   ) : isFirefox ? (
                     <>
-                      <p>1. Tarayıcı menüsünden <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Üç Nokta ⋮</span> ikonuna dokunun.</p>
+                      <p>1. Sağ üstteki <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Üç Nokta ⋮</span> menüsüne dokunun.</p>
                       <p>2. <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Uygulamayı Yükle ⬇️</span> veya <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Ana Ekrana Ekle</span> seçeneğine dokunun.</p>
                     </>
                   ) : isDesktop ? (
                     <>
                       <p>1. Adres çubuğunun en sağındaki <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Yükle ⬇️</span> veya <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Ekran 💻</span> ikonuna tıklayın.</p>
-                      <p>2. Tarayıcı menüsünden de yükleme yapabilirsiniz.</p>
+                      <p>2. Veya sağ üstteki <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Üç Nokta ⋮</span> ikonuna basıp <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Ana Ekrana Ekle</span> seçeneğine tıklayabilirsiniz.</p>
                     </>
                   ) : (
                     <>
-                      <p>Tarayıcı ayarlarından <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Ana Ekrana Ekle</span> seçeneğini bularak kurulum yapabilirsiniz.</p>
+                      <p>Sağ üstteki <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Üç Nokta ⋮</span> menüsüne basıp <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Ana Ekrana Ekle</span> seçeneğine tıklayarak kurulum yapabilirsiniz.</p>
                     </>
                   )}
                 </div>
