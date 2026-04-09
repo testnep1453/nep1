@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { getStudents } from '../../services/db';
-import { signInWithGoogle, findStudentByEmail, saveStudentEmail, mapGoogleUserToStudent } from '../../services/authService';
+import { useAuth } from '../../hooks/useAuth';
 
 interface StudentLoginProps {
   onLogin: (id: string) => Promise<boolean>;
@@ -9,15 +9,16 @@ interface StudentLoginProps {
 
 export const StudentLogin = ({
   onLogin,
-  onLoginWithGoogle,
 }: StudentLoginProps) => {
   const [studentId, setStudentId] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [placeholderId, setPlaceholderId] = useState('');
   const [googleLoading, setGoogleLoading] = useState(false);
+  
+  // hook üzerinden yönlendirmeyi ve hatayı çek
+  const { loginWithGoogle, googleError } = useAuth();
 
-  // Cache
   const studentsCacheRef = useRef<{ id: string; name: string; nickname?: string }[] | null>(null);
 
   const getStudentsCached = () => {
@@ -27,7 +28,6 @@ export const StudentLogin = ({
     return studentsCacheRef.current;
   };
 
-  // Rate limiting
   const attemptCountRef = useRef(0);
   const lockoutTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isLockedRef = useRef(false);
@@ -43,7 +43,6 @@ export const StudentLogin = ({
 
     if (!success) {
       attemptCountRef.current += 1;
-
       if (attemptCountRef.current >= 5) {
         isLockedRef.current = true;
         setError('Çok fazla hatalı deneme! 30 saniye bekleyin.');
@@ -62,55 +61,33 @@ export const StudentLogin = ({
     }
   }, [onLogin]);
 
-  // Google ile giriş
+  // Google hatasını dinle
+  useEffect(() => {
+    if (googleError) {
+      setError(googleError);
+      setGoogleLoading(false);
+    }
+  }, [googleError]);
+
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
     setError('');
     try {
-      const result = await signInWithGoogle();
-      if (!result) {
-        setGoogleLoading(false);
-        return;
-      }
-
-      const matchedStudentId = await findStudentByEmail(result.email);
-      if (matchedStudentId) {
-        await mapGoogleUserToStudent(result.user, matchedStudentId);
-        await saveStudentEmail(matchedStudentId, result.email);
-        if (onLoginWithGoogle) {
-          await onLoginWithGoogle(matchedStudentId, result.email);
-        } else {
-          await onLogin(matchedStudentId);
-        }
-      } else {
-        const localStudents = getStudentsCached();
-        const localMatch = localStudents.find(s => (s as { email?: string }).email === result.email);
-        if (localMatch) {
-          await mapGoogleUserToStudent(result.user, localMatch.id);
-          await saveStudentEmail(localMatch.id, result.email);
-          if (onLoginWithGoogle) {
-            await onLoginWithGoogle(localMatch.id, result.email);
-          } else {
-            await onLogin(localMatch.id);
-          }
-        } else {
-setError("Önce numaranla giriş yap.");        }
-      }
+      await loginWithGoogle(); 
+      // Supabase sayfadan ayrılıp geri döneceği için burada loading'i kapatmıyoruz
     } catch {
-      setError('Google girişi sırasında hata oluştu.');
+      setError('Google girişi başlatılamadı.');
+      setGoogleLoading(false);
     }
-    setGoogleLoading(false);
   };
 
   void lockoutTimerRef;
 
-  // Otomatik giriş
   useEffect(() => {
     if (studentId.length < 3) {
       setError('');
       return;
     }
-
     const dbData = getStudentsCached();
     const exactMatch = dbData.find((s) => s.id === studentId);
 
@@ -127,10 +104,8 @@ setError("Önce numaranla giriş yap.");        }
     }
   };
 
-  // Placeholder animasyonu
   useEffect(() => {
     const dbIds = getStudentsCached().map((s) => s.id);
-
     const generateSafeId = () => {
       let safeId = '';
       let isDuplicate = true;
@@ -148,10 +123,8 @@ setError("Önce numaranla giriş yap.");        }
     };
 
     let typingTimer: ReturnType<typeof setTimeout>;
-
     const runPlaceholderCycle = () => {
       if (studentId || loading) return;
-
       const newId = generateSafeId();
       let currentStr = '';
       let charIdx = 0;
@@ -171,7 +144,6 @@ setError("Önce numaranla giriş yap.");        }
           }, 1500);
         }
       };
-
       typeChar();
     };
 
@@ -188,27 +160,23 @@ setError("Önce numaranla giriş yap.");        }
 
   return (
     <div className="min-h-[100dvh] w-full bg-[#050505] flex flex-col items-center justify-center p-4 overflow-hidden relative">
-      {/* Background */}
       <div className="absolute inset-0 pointer-events-none z-0 opacity-20">
         <div className="absolute inset-0 bg-[linear-gradient(rgba(57,255,20,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(57,255,20,0.03)_1px,transparent_1px)] bg-[length:40px_40px]" />
       </div>
 
       <div className="w-full max-w-sm flex flex-col items-center justify-center z-10 relative">
-        {/* Logo */}
         <img
           src={`${import.meta.env.BASE_URL}nep-logo.png`}
           alt="NEP Logo"
           className="h-24 sm:h-28 object-contain mb-8 brightness-0 invert drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]"
         />
 
-        {/* Başlık */}
         <div className="mb-10 sm:mb-12 inline-block">
           <h2 className="text-lg sm:text-xl font-medium text-[#39FF14] tracking-[0.3em] uppercase overflow-hidden whitespace-nowrap animate-typing border-r-2 border-[#39FF14]">
             SİSTEM GİRİŞİ
           </h2>
         </div>
 
-        {/* Form — Sayısal ID */}
         <form id="loginForm" onSubmit={handleSubmit} className="w-full flex flex-col items-center">
           <input
             id="studentIdInput"
@@ -237,14 +205,12 @@ setError("Önce numaranla giriş yap.");        }
           </div>
         </form>
 
-        {/* Ayırıcı */}
         <div className="flex items-center gap-4 w-full mt-10 mb-6">
           <div className="flex-1 h-px bg-gray-700" />
           <span className="text-gray-600 text-xs uppercase tracking-wider">veya</span>
           <div className="flex-1 h-px bg-gray-700" />
         </div>
 
-        {/* Google ile Giriş Butonu */}
         <button
           id="googleLoginBtn"
           onClick={handleGoogleLogin}
