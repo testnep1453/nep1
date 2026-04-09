@@ -42,9 +42,22 @@ export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps
     }
   };
 
-  const avatarData = student.avatar || `bottts:${student.id}`;
-  const [style, seed] = avatarData.split(':');
-  const dicebearUrl = `https://api.dicebear.com/9.x/${style}/svg?seed=${seed}&backgroundColor=transparent`;
+  // HATA ÇÖZÜMÜ: Eski 'hero_1' gibi verileri temizleyip, geçerli bir URL oluşturur.
+  const getAvatarUrl = () => {
+    const validStyles = ['avataaars', 'adventurer', 'bottts', 'micah'];
+    let style = 'avataaars'; // En gerçekçi insan stili varsayılan yapıldı
+    let seed = student.id;
+
+    if (student.avatar && student.avatar.includes(':')) {
+      const parts = student.avatar.split(':');
+      style = validStyles.includes(parts[0]) ? parts[0] : 'avataaars';
+      seed = parts[1] || student.id;
+    }
+
+    return `https://api.dicebear.com/9.x/${style}/svg?seed=${seed}&backgroundColor=transparent`;
+  };
+
+  const dicebearUrl = getAvatarUrl();
 
   return (
     <div className="bg-gradient-to-br from-[#1a1d2e] to-[#0A1128] rounded-3xl p-5 md:p-10 border border-[#00F0FF]/30 shadow-[0_0_40px_rgba(0,240,255,0.05)] w-full h-full flex flex-col lg:flex-row items-center justify-center gap-6 lg:gap-16 overflow-hidden">
@@ -86,7 +99,6 @@ export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps
       {!isAdmin && (
         <div className="w-full lg:w-2/3 flex flex-col gap-4 md:gap-6 justify-center">
           
-          {/* XP Bar */}
           <div className="bg-black/40 p-4 md:p-5 rounded-2xl border border-gray-800">
             <div className="flex justify-between items-end mb-2">
               <span className="text-gray-500 text-[10px] md:text-xs font-mono tracking-widest uppercase">Sonraki Level Hedefi</span>
@@ -99,7 +111,6 @@ export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps
             </div>
           </div>
 
-          {/* Envanter */}
           <div>
             <h3 className="text-gray-400 font-bold mb-3 uppercase tracking-widest flex items-center gap-2 text-[10px] md:text-xs border-b border-gray-800 pb-2">
               <Shield className="w-4 h-4 text-[#00F0FF]" /> KİLİDİ AÇILAN TEÇHİZATLAR
