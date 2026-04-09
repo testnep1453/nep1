@@ -77,13 +77,11 @@ export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps
 
     let url = `https://api.dicebear.com/9.x/${style}/svg?seed=${seed}&backgroundColor=transparent`;
 
+    // 404 HATASINI ÇÖZEN, GÜVENLİ VE %100 ERKEK FİLTRESİ
     if (style === 'avataaars') {
-      url += '&top=shortHairDreads01,shortHairDreads02,shortHairFrizzle,shortHairShaggyMullet,shortHairShortCurly,shortHairShortFlat,shortHairShortRound,shortHairShortWaved,shortHairSides,shortHairTheCaesar,shortHairTheCaesarSidePart,eyepatch';
-      url += '&accessoriesProbability=0'; 
+      url += '&top=shortHairShortFlat,shortHairShortRound,shortHairShortWaved,shortHairSides';
       url += '&facialHairProbability=0';
-      url += '&clothing=blazerAndShirt,blazerAndSweater,collarAndSweater,graphicShirt,hoodie,overall,shirtCrewNeck,shirtScoopNeck,shirtVNeck';
-      
-      // KARANLIK/SİYAH TEN RENGİ VE ARKA PLAN YASAKLANDI
+      url += '&clothing=hoodie,shirtCrewNeck,blazerAndShirt';
       url += '&skinColor=light,pale,tanned'; 
     }
     return url;
@@ -102,7 +100,6 @@ export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps
           onClick={handleRandomizeAvatar}
           title={!isAdmin ? "Karakteri Değiştirmek İçin Tıkla!" : ""}
         >
-          {/* AVATAR ARKA PLANI BEMBEYAZ/GÜMÜŞ YAPILDI */}
           <div className="w-24 h-24 md:w-40 md:h-40 rounded-3xl bg-gradient-to-b from-slate-100 to-slate-300 border-4 border-[#00F0FF] p-2 shadow-[0_0_30px_rgba(0,240,255,0.4)] relative overflow-hidden">
             <img 
               src={dicebearUrl} 
