@@ -4,8 +4,6 @@ import { db } from '../../config/firebase';
 import { Student } from '../../types/student';
 import { checkRateLimit, recordAction, formatCooldown } from '../../services/rateLimitService';
 import { sendVerificationLink } from '../../services/authService';
-// İŞTE SİSTEMİ ÇÖKERTEN O EKSİK İKONLAR BURAYA EKLENDİ (Shield ve Zap)
-import { Glasses, Dices, Headset, Crown, Bot, ExternalLink, Shield, Zap } from 'lucide-react';
 
 interface ProfileModalProps {
   student: Student;
@@ -15,199 +13,183 @@ interface ProfileModalProps {
   onThemeChange: (theme: 'dark' | 'light') => void;
 }
 
-// 1. YASAL VE AÇIK KAYNAKLI ALGORİTMA STİLLERİ
-const AVATAR_STYLES = [
-  { id: 'bottts', name: 'Robot Class', icon: <Bot className="w-4 h-4" /> },
-  { id: 'adventurer', name: 'Agent Class', icon: <Shield className="w-4 h-4 text-[#00F0FF]" /> },
-  { id: 'pixel-art', name: 'Retro Class', icon: <Zap className="w-4 h-4 text-[#39FF14]" /> },
-  { id: 'micah', name: 'Comic Class', icon: <Crown className="w-4 h-4 text-[#FF9F43]" /> },
-];
-
-// 2. NEP'E ÖZEL, YEREL AKSESUAR KİTİ (Giydirme Simülasyonu)
-const LOCAL_ACCESSORIES = [
-  { id: 'acc_1', name: 'Taktik Gözlük', style: 'adventurer', icon: <Glasses /> },
-  { id: 'acc_2', name: 'Siber Kulaklık', style: 'bottts', icon: <Headset /> },
-];
+const AVAILABLE_AVATARS = ['hero_1', 'hero_2', 'hero_3', 'hero_4', 'hero_5', 'hero_6', 'hero_7', 'hero_8'];
 
 export const ProfileModal = ({ student, isOpen, onClose, theme, onThemeChange }: ProfileModalProps) => {
   const [nickname, setNickname] = useState(student.nickname || '');
   const [savingNickname, setSavingNickname] = useState(false);
   const [nickMsg, setNickMsg] = useState('');
-
-  // Avatar Stüdyosu State'leri (Firebase formatı -> style:seed:acc1,acc2)
-  const parseAvatarData = (data: string | undefined) => {
-    if (!data) return { style: 'bottts', seed: student.id, accs: [] };
-    const parts = data.split(':');
-    return {
-      style: parts[0] || 'bottts',
-      seed: parts[1] || student.id,
-      accs: parts[2] ? parts[2].split(',') : []
-    };
-  };
-
-  const initialAvatarData = parseAvatarData(student.avatar);
-  const [selectedStyle, setSelectedStyle] = useState(initialAvatarData.style);
-  const [selectedSeed, setSelectedSeed] = useState(initialAvatarData.seed);
-  const [selectedAccs, setSelectedAccs] = useState<string[]>(initialAvatarData.accs);
+  
   const [savingAvatar, setSavingAvatar] = useState(false);
 
   const [showEmailChange, setShowEmailChange] = useState(false);
   const [newEmail, setNewEmail] = useState('');
   const [emailStep, setEmailStep] = useState<'input' | 'verify'>('input');
   const [emailMsg, setEmailMsg] = useState('');
+  const [emailCooldown, setEmailCooldown] = useState('');
   const [savingEmail, setSavingEmail] = useState(false);
 
   const handleSaveNickname = async () => {
     if (!nickname.trim() || nickname === student.nickname) return;
     const { allowed, remainingMs } = await checkRateLimit('nicknameChange');
-    if (!allowed) { setNickMsg(`Çok sık değiştirilemez. ${formatCooldown(remainingMs)} bekleyin.`); return; }
-    
+    if (!allowed) {
+      setNickMsg(`Çok sık değiştirilemez. ${formatCooldown(remainingMs)} bekleyin.`);
+      return;
+    }
+
     setSavingNickname(true);
     try {
       await updateDoc(doc(db, 'students', student.id), { nickname: nickname.trim() });
       await recordAction('nicknameChange');
       setNickMsg('Nickname güncellendi! ✅');
       setTimeout(() => setNickMsg(''), 3000);
-    } catch { setNickMsg('Güncelleme başarısız.'); }
+    } catch {
+      setNickMsg('Güncelleme başarısız.');
+    }
     setSavingNickname(false);
   };
 
-  const handleRandomize = () => {
-    const randomSeed = Math.random().toString(36).substring(2, 10);
-    setSelectedSeed(randomSeed);
-  };
-
-  const handleToggleAccessory = (accId: string) => {
-    setSelectedAccs(prev => 
-      prev.includes(accId) ? prev.filter(id => id !== accId) : [...prev, accId]
-    );
-  };
-
-  const handleSaveAvatar = async () => {
-    const accPart = selectedAccs.length > 0 ? `:${selectedAccs.join(',')}` : '';
-    const newAvatar = `${selectedStyle}:${selectedSeed}${accPart}`;
-    if (newAvatar === student.avatar) return;
-
+  const handleAvatarSelect = async (avatarId: string) => {
+    if (avatarId === student.avatar) return;
+    
     setSavingAvatar(true);
     try {
-      await updateDoc(doc(db, 'students', student.id), { avatar: newAvatar });
-      student.avatar = newAvatar; // Local update
+      await updateDoc(doc(db, 'students', student.id), { avatar: avatarId });
+      student.avatar = avatarId; 
     } catch (err) {
       console.error("Avatar kaydedilemedi", err);
     }
     setSavingAvatar(false);
   };
 
-  if (!isOpen) return null;
+  const handleSendEmailCode = async () => {
+    if (!newEmail.trim() || !newEmail.includes('@')) {
+      setEmailMsg('Geçerli bir e-posta girin.');
+      return;
+    }
+    const { allowed, remainingMs } = await checkRateLimit('emailChange');
+    if (!allowed) {
+      setEmailCooldown(formatCooldown(remainingMs));
+      setEmailMsg(`E-posta değiştirme cooldown'da. ${formatCooldown(remainingMs)} bekleyin.`);
+      return;
+    }
 
-  const dicebearUrl = `https://api.dicebear.com/9.x/${selectedStyle}/svg?seed=${selectedSeed}&backgroundColor=transparent`;
+    setSavingEmail(true);
+    try {
+      await sendVerificationLink(newEmail, student.id);
+      setEmailStep('verify');
+      setEmailMsg('Doğrulama linki gönderildi!');
+      await recordAction('emailChange');
+    } catch {
+      setEmailMsg('E-posta gönderilemedi.');
+    }
+    setSavingEmail(false);
+  };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center">
-      <div className="absolute inset-0 bg-black/80 backdrop-blur-md" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="relative w-full max-w-2xl mx-4 bg-[#0A1128] border-2 border-[#00F0FF]/40 rounded-3xl shadow-[0_0_50px_rgba(0,240,255,0.15)] p-6 sm:p-8 z-10 animate-fade-in max-h-[95vh] overflow-y-auto custom-scrollbar">
+      <div className="relative w-full max-w-md mx-4 bg-[#0A1128] border border-[#00F0FF]/40 rounded-2xl shadow-xl p-6 sm:p-8 z-10 animate-fade-in max-h-[90vh] overflow-y-auto custom-scrollbar">
         
-        <div className="flex items-center justify-between mb-6 border-b border-gray-800 pb-4 shrink-0">
-          <h2 className="text-xl font-black text-[#00F0FF] uppercase tracking-widest drop-shadow-[0_0_5px_rgba(0,240,255,0.5)]">AJAN STÜDYOSU</h2>
+        <div className="flex items-center justify-between mb-6 border-b border-gray-800 pb-4">
+          <h2 className="text-lg font-bold text-[#00F0FF] uppercase tracking-widest">Ajan Ayarları</h2>
           <button onClick={onClose} className="w-8 h-8 rounded-full bg-white/5 text-white/50 hover:text-white hover:bg-[#FF4500] flex items-center justify-center transition-colors">✕</button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
-          
-          {/* 🎮 CANLI ÖNİZLEME VE KAYDET (SOL TARAF) */}
-          <div className="lg:col-span-5 flex flex-col items-center bg-black/40 p-5 rounded-2xl border border-white/5 relative">
-            
-            <div className="w-40 h-40 sm:w-48 sm:h-48 rounded-2xl border-4 border-[#00F0FF]/60 bg-gradient-to-b from-[#00F0FF]/20 to-black shadow-[0_0_30px_rgba(0,0,0,0.5)] mb-6 p-2 relative group flex items-center justify-center">
-              <img src={dicebearUrl} alt="Preview" className="w-full h-full object-contain drop-shadow-[0_0_10px_rgba(0,240,255,0.8)]" />
-              
-              {/* YEREL GİYDİRME SİMÜLASYONU */}
-              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                {selectedAccs.includes('acc_1') && <Glasses className="w-16 h-16 text-white absolute top-10" />}
-                {selectedAccs.includes('acc_2') && <Headset className="w-20 h-20 text-white absolute" />}
-              </div>
-
-              <button 
-                onClick={handleRandomize} 
-                className="absolute -bottom-4 -right-4 bg-[#FF9F43] hover:bg-[#FF4500] text-black w-14 h-14 rounded-full flex items-center justify-center border-4 border-[#0A1128] transition-transform hover:scale-110 hover:rotate-180 shadow-lg z-10"
-                title="Yüzü Rastgele Değiştir!"
+        {/* Profil Fotoğrafı (Avatar) Seçimi */}
+        <div className="mb-8">
+          <label className="text-gray-400 text-xs uppercase tracking-wider block mb-3">Kimlik Fotoğrafı (Avatar)</label>
+          <div className="grid grid-cols-4 gap-2">
+            {AVAILABLE_AVATARS.map(avatar => (
+              <button
+                key={avatar}
+                onClick={() => handleAvatarSelect(avatar)}
+                disabled={savingAvatar}
+                className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all bg-[#050505] ${
+                  student.avatar === avatar || (!student.avatar && avatar === 'hero_1')
+                    ? 'border-[#39FF14] shadow-[0_0_10px_rgba(57,255,20,0.3)] scale-105'
+                    : 'border-transparent opacity-60 hover:opacity-100 hover:border-gray-500'
+                }`}
               >
-                <Dices className="w-7 h-7" />
+                <img 
+                  src={`${import.meta.env.BASE_URL}avatars/${avatar}.jpg`} 
+                  alt={avatar}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="%23333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
+                  }}
+                />
+                {(student.avatar === avatar || (!student.avatar && avatar === 'hero_1')) && (
+                  <div className="absolute bottom-0 right-0 bg-[#39FF14] text-black text-[8px] font-bold px-1 rounded-tl">AKTİF</div>
+                )}
               </button>
-            </div>
+            ))}
+          </div>
+        </div>
 
+        {/* Nickname */}
+        <div className="space-y-2 mb-6">
+          <label className="text-gray-400 text-xs uppercase tracking-wider block">Takma Ad (Nickname)</label>
+          <div className="flex gap-2">
+            <input
+              type="text"
+              value={nickname}
+              onChange={(e) => setNickname(e.target.value)}
+              maxLength={20}
+              className="flex-1 bg-[#050505] border border-gray-700 text-white px-3 py-2 rounded-lg text-sm focus:outline-none focus:border-[#00F0FF] transition-colors font-mono"
+            />
             <button
-              onClick={handleSaveAvatar}
-              disabled={savingAvatar || `${selectedStyle}:${selectedSeed}${selectedAccs.length > 0 ? `:${selectedAccs.join(',')}` : ''}` === student.avatar}
-              className="w-full py-4 bg-[#39FF14]/20 hover:bg-[#39FF14]/30 text-[#39FF14] border-2 border-[#39FF14]/40 font-black tracking-widest uppercase rounded-xl transition-all disabled:opacity-30 disabled:cursor-not-allowed text-sm shadow-[0_0_15px_rgba(57,255,20,0.2)]"
+              onClick={handleSaveNickname}
+              disabled={savingNickname || !nickname.trim()}
+              className="px-4 py-2 bg-[#00F0FF]/10 text-[#00F0FF] border border-[#00F0FF]/40 rounded-lg text-sm font-semibold hover:bg-[#00F0FF]/30 transition-all disabled:opacity-40"
             >
-              {savingAvatar ? 'KİMLİK KAYDEDİLİYOR...' : 'KİMLİĞİ ONAYLA'}
+              {savingNickname ? '...' : 'Kaydet'}
             </button>
           </div>
+          {nickMsg && <p className="text-xs text-[#39FF14]">{nickMsg}</p>}
+        </div>
 
-          {/* 🛠️ GİYDİRME KİTİ VE AYARLAR (SAĞ TARAF) */}
-          <div className="lg:col-span-7 flex flex-col gap-6">
-            
-            {/* YÖNLENDİRME BUTONU (Dış Editörü Aç) */}
-            <div className="bg-[#FF9F43]/5 border border-[#FF9F43]/30 p-4 rounded-xl flex items-center justify-between gap-3 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-r from-[#FF9F43]/10 to-transparent"></div>
-                <div className="flex-1 z-10 relative">
-                    <p className="text-[#FF9F43] font-bold text-sm mb-0.5">Daha Fazla Kıyafet İster Misin?</p>
-                    <p className="text-gray-400 text-[10px] leading-snug">"Avatar Maker Dress up" uygulamasının resmi web sitesini yeni sekmede açarak tam giydirme özelliğini kullanabilirsin.</p>
-                </div>
-                <a href="https://pazugames.com/" target="_blank" rel="noopener noreferrer" className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#FF9F43]/20 text-[#FF9F43] font-bold text-xs border border-[#FF9F43]/40 hover:bg-[#FF9F43]/30 transition-colors z-10">
-                    DIŞ EDİTÖR <ExternalLink className="w-3.5 h-3.5" />
-                </a>
-            </div>
-
-            {/* Sınıf Seçici */}
-            <div className="bg-black/40 p-4 rounded-xl border border-gray-800">
-              <label className="text-gray-400 text-xs uppercase tracking-wider block mb-3 font-bold">Ajan Sınıfı Seç</label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full">
-                {AVATAR_STYLES.map(style => (
-                  <button key={style.id} onClick={() => setSelectedStyle(style.id)} className={`flex items-center justify-center gap-2 text-[10px] font-bold py-2.5 rounded-lg border transition-all ${selectedStyle === style.id ? 'bg-[#00F0FF]/20 border-[#00F0FF] text-[#00F0FF] shadow-[0_0_10px_rgba(0,240,255,0.3)] scale-105' : 'bg-black/50 border-gray-800 text-gray-500 hover:border-gray-500 hover:text-gray-300'}`}>
-                    {style.icon} {style.name}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* YEREL AKSESUAR KİTİ */}
-            <div className="bg-black/40 p-4 rounded-xl border border-gray-800">
-                <label className="text-gray-400 text-xs uppercase tracking-wider block mb-3 font-bold">NEP Aksesuar Kiti</label>
-                <div className="grid grid-cols-4 gap-2 w-full">
-                    {LOCAL_ACCESSORIES.map(acc => {
-                        const isSelected = selectedAccs.includes(acc.id);
-                        return (
-                            <button key={acc.id} onClick={() => handleToggleAccessory(acc.id)} className={`aspect-square flex items-center justify-center py-2.5 rounded-lg border transition-all ${isSelected ? 'bg-[#39FF14]/20 border-[#39FF14] text-[#39FF14] shadow-[0_0_10px_rgba(57,255,20,0.3)] scale-105' : 'bg-black/50 border-gray-800 text-gray-500 hover:border-gray-500 hover:text-gray-300'}`}>
-                                <div className="text-3xl text-white opacity-90">{acc.icon}</div>
-                            </button>
-                        );
-                    })}
-                </div>
-            </div>
-
-            {/* NICKNAME VE TEMA */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="bg-black/40 p-4 rounded-xl border border-gray-800 space-y-2">
-                    <label className="text-gray-400 text-xs uppercase tracking-wider block font-bold">Takma Ad (Nickname)</label>
-                    <div className="flex gap-2">
-                        <input type="text" value={nickname} onChange={(e) => setNickname(e.target.value)} maxLength={20} className="flex-1 bg-[#050505] border border-gray-700 text-white px-3 py-2 rounded-lg text-sm focus:outline-none focus:border-[#00F0FF] transition-colors font-mono" />
-                        <button onClick={handleSaveNickname} disabled={savingNickname || !nickname.trim()} className="px-4 py-2 bg-[#00F0FF]/10 text-[#00F0FF] border border-[#00F0FF]/40 rounded-lg text-sm font-semibold hover:bg-[#00F0FF]/30 transition-all disabled:opacity-40">
-                        {savingNickname ? '...' : 'Kaydet'}
-                        </button>
-                    </div>
-                </div>
-                <div className="bg-black/40 p-4 rounded-xl border border-gray-800 space-y-2">
-                    <label className="text-gray-400 text-xs uppercase tracking-wider block font-bold">Sistem Teması</label>
-                    <div className="flex gap-2">
-                        <button onClick={() => onThemeChange('dark')} className={`flex-1 py-2.5 rounded-lg text-xs font-semibold transition-all ${theme === 'dark' ? 'bg-[#00F0FF]/20 text-[#00F0FF] border border-[#00F0FF]/50' : 'bg-white/5 text-gray-500 border border-gray-700 hover:bg-white/10'}`}>🌙 Gece Ops</button>
-                        <button onClick={() => onThemeChange('light')} className={`flex-1 py-2.5 rounded-lg text-xs font-semibold transition-all ${theme === 'light' ? 'bg-[#00F0FF]/20 text-[#00F0FF] border border-[#00F0FF]/50' : 'bg-white/5 text-gray-500 border border-gray-700 hover:bg-white/10'}`}>☀️ Gündüz</button>
-                    </div>
-                </div>
-            </div>
-
+        {/* Tema Seçimi */}
+        <div className="space-y-2 mb-6">
+          <label className="text-gray-400 text-xs uppercase tracking-wider block">Sistem Arayüzü (Tema)</label>
+          <div className="flex gap-2">
+            <button onClick={() => onThemeChange('dark')} className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all ${theme === 'dark' ? 'bg-[#00F0FF]/20 text-[#00F0FF] border border-[#00F0FF]/50' : 'bg-white/5 text-gray-500 border border-gray-700 hover:bg-white/10'}`}>
+              🌙 Gece Modu
+            </button>
+            <button onClick={() => onThemeChange('light')} className={`flex-1 py-2.5 rounded-lg text-sm font-semibold transition-all ${theme === 'light' ? 'bg-[#00F0FF]/20 text-[#00F0FF] border border-[#00F0FF]/50' : 'bg-white/5 text-gray-500 border border-gray-700 hover:bg-white/10'}`}>
+              ☀️ Gündüz Modu
+            </button>
           </div>
+        </div>
+
+        {/* E-posta */}
+        <div className="space-y-2 border-t border-gray-800 pt-4">
+          <label className="text-gray-400 text-xs uppercase tracking-wider block">Güvenlik (E-posta)</label>
+          <p className="text-white/70 text-sm font-mono mb-2">{student.email || 'Kayıtlı e-posta yok'}</p>
+
+          {!showEmailChange ? (
+            <button onClick={() => setShowEmailChange(true)} className="text-xs text-gray-500 hover:text-white transition-colors underline">
+              E-postayı güncelle
+            </button>
+          ) : (
+            <div className="space-y-2 mt-2">
+              {emailStep === 'input' ? (
+                <div className="flex gap-2">
+                  <input type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="yeni@eposta.com" className="flex-1 bg-[#050505] border border-gray-700 text-white px-3 py-2 rounded-lg text-sm focus:outline-none focus:border-[#FF4500] transition-colors" />
+                  <button onClick={handleSendEmailCode} disabled={savingEmail} className="px-4 py-2 bg-[#FF4500]/10 text-[#FF4500] border border-[#FF4500]/30 rounded-lg text-sm font-semibold hover:bg-[#FF4500]/20 transition-all disabled:opacity-40">
+                    {savingEmail ? '...' : 'İste'}
+                  </button>
+                </div>
+              ) : (
+                <div className="bg-[#39FF14]/5 border border-[#39FF14]/20 rounded-lg p-3">
+                  <p className="text-xs text-[#39FF14]">✅ {emailMsg}</p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
       </div>
