@@ -12,18 +12,18 @@ interface ProfileModalProps {
   onThemeChange: (theme: 'dark' | 'light') => void;
 }
 
+// Tamamen Erkek, Robot ve Ajan Uyumlu Stiller
 const STYLES = [
-  { id: 'avataaars', name: 'İnsan' },
-  { id: 'adventurer', name: 'Ajan' },
-  { id: 'bottts', name: 'Robot' },
-  { id: 'micah', name: 'Çizim' }
+  { id: 'avataaars', name: 'Ajan' },
+  { id: 'bottts', name: 'Siber' },
+  { id: 'pixel-art', name: 'Retro' },
+  { id: 'identicon', name: 'Kod' }
 ];
 
 export const ProfileModal = ({ student, isOpen, onClose, theme, onThemeChange }: ProfileModalProps) => {
   const [nickname, setNickname] = useState(student.nickname || '');
   const [saving, setSaving] = useState(false);
 
-  // Eski verileri temizleyen parser mantığı
   const getInitialAvatar = () => {
     if (student.avatar && student.avatar.includes(':')) {
       const parts = student.avatar.split(':');
@@ -60,7 +60,15 @@ export const ProfileModal = ({ student, isOpen, onClose, theme, onThemeChange }:
 
   if (!isOpen) return null;
 
-  const previewUrl = `https://api.dicebear.com/9.x/${selectedStyle}/svg?seed=${selectedSeed}&backgroundColor=transparent`;
+  // %100 ERKEK ÇOCUĞU / ERKEK AJAN FİLTRESİ (Zar atıldığında da çalışır)
+  let previewUrl = `https://api.dicebear.com/9.x/${selectedStyle}/svg?seed=${selectedSeed}&backgroundColor=transparent`;
+  
+  if (selectedStyle === 'avataaars') {
+    previewUrl += '&top=shortHairDreads01,shortHairDreads02,shortHairFrizzle,shortHairShaggyMullet,shortHairShortCurly,shortHairShortFlat,shortHairShortRound,shortHairShortWaved,shortHairSides,shortHairTheCaesar,shortHairTheCaesarSidePart,eyepatch';
+    previewUrl += '&accessoriesProbability=0'; 
+    previewUrl += '&facialHairProbability=0';
+    previewUrl += '&clothing=blazerAndShirt,blazerAndSweater,collarAndSweater,graphicShirt,hoodie,overall,shirtCrewNeck,shirtScoopNeck,shirtVNeck';
+  }
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
