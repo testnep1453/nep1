@@ -117,11 +117,13 @@ export const useAuth = () => {
   };
 
   // YENİ: Sadece Google'a yönlendirir, anında hata vermez!
-  const loginWithGoogle = async () => {
-    setLoading(true);
+const loginWithGoogle = async () => {
     await supabase.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: window.location.origin }
+      options: { 
+        // GitHub Pages alt klasör yapısı (/nep1/) ve localhost için kurşungeçirmez yönlendirme
+        redirectTo: window.location.origin + import.meta.env.BASE_URL 
+      }
     });
     return true; 
   };
