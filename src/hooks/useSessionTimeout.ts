@@ -1,70 +1,35 @@
-/**
- * Session Timeout Hook
- * 
- * Kullanıcı belirli bir süre işlem yapmazsa otomatik çıkış yapar.
- * Admin için daha uzun (60dk), ajan için daha kısa (30dk).
- */
+import { useEffect, useRef } from 'react';
+import { useAuth } from './useAuth';
 
-import { useEffect, useRef, useCallback } from 'react';
-
-interface UseSessionTimeoutOptions {
-  /** Timeout süresi (ms) */
-  timeoutMs: number;
-  /** Timeout olunca çağrılacak fonksiyon */
-  onTimeout: () => void;
-  /** aktif mi? */
-  enabled: boolean;
-}
-
-// Varsayılan süreler
-export const SESSION_TIMEOUT = {
-  ADMIN: 60 * 60 * 1000,   // 60 dakika
-  AGENT: 30 * 60 * 1000,   // 30 dakika
-} as const;
-
-const ACTIVITY_EVENTS = [
-  'mousedown', 'mousemove', 'keydown',
-  'scroll', 'touchstart', 'click', 'focus',
-] as const;
-
-export const useSessionTimeout = ({ timeoutMs, onTimeout, enabled }: UseSessionTimeoutOptions) => {
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const onTimeoutRef = useRef(onTimeout);
-
-  // Callback'i güncel tut
-  useEffect(() => {
-    onTimeoutRef.current = onTimeout;
-  }, [onTimeout]);
-
-  const resetTimer = useCallback(() => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current);
-    }
-    timerRef.current = setTimeout(() => {
-      onTimeoutRef.current();
-    }, timeoutMs);
-  }, [timeoutMs]);
+export const useSessionTimeout = () => {
+  const { student, logout } = useAuth();
+  const timeoutRef = useRef<NodeJS.Timeout>();
 
   useEffect(() => {
-    if (!enabled) return;
+    // Sadece Admin (1002) için oturum zaman aşımı kalkanını açıyoruz. Öğrenciler serbest!
+    if (!student || student.id !== '1002') return;
 
-    // İlk timer'ı başlat
-    resetTimer();
+    const ONE_HOUR = 60 * 60 * 1000; // 1 Saat (Milisaniye cinsinden)
 
-    // Aktivite dinleyicileri
+    const resetTimer = () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      timeoutRef.current = setTimeout(() => {
+        logout(); // 1 saat hiçbir şeye dokunulmazsa çıkış yap
+        window.location.reload();
+      }, ONE_HOUR);
+    };
+
+    resetTimer(); // Sistemi başlat
+
+    // Ekranda en ufak bir hareket olduğunda (fare, klavye, dokunma) 1 saati sıfırdan başlat
+    const events = ['mousedown', 'mousemove', 'keydown', 'scroll', 'touchstart'];
     const handleActivity = () => resetTimer();
 
-    for (const event of ACTIVITY_EVENTS) {
-      window.addEventListener(event, handleActivity, { passive: true });
-    }
+    events.forEach(event => document.addEventListener(event, handleActivity));
 
     return () => {
-      if (timerRef.current) {
-        clearTimeout(timerRef.current);
-      }
-      for (const event of ACTIVITY_EVENTS) {
-        window.removeEventListener(event, handleActivity);
-      }
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+      events.forEach(event => document.removeEventListener(event, handleActivity));
     };
-  }, [enabled, resetTimer]);
+  }, [student, logout]);
 };
