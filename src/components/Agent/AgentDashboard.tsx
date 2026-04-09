@@ -2,14 +2,12 @@ import { useState, useEffect, useRef } from 'react';
 import { Student, Lesson, Trailer } from '../../types/student';
 import { ProfileSection } from '../Dashboard/ProfileSection';
 import { TopBar } from '../Dashboard/TopBar';
-import { MessageFeed } from '../Dashboard/MessageFeed';
 import { OperationDrawer } from '../Drawer/OperationDrawer';
 import { FeedbackForm } from '../Feedback/FeedbackForm';
 import { ArchivePage } from '../Archive/ArchivePage';
 import { LevelProgress } from './LevelProgress';
 import { ActivityPage } from './ActivityPage';
 import { FeedbackHistory } from '../Feedback/FeedbackHistory';
-import { useAutoMessages } from '../../hooks/useAutoMessages';
 import { useAutoZoom } from '../../hooks/useAutoZoom';
 import { useNotifications } from '../../hooks/useNotifications';
 import { subscribeToTrailer } from '../../services/dbFirebase';
@@ -54,12 +52,8 @@ export const AgentDashboard = ({
     else document.body.classList.remove('theme-light');
   };
 
-  useAutoMessages(false);
   const { unreadCount } = useNotifications(student.id);
-
-  const autoZoomState = useAutoZoom(
-    student.id, student.name, lesson?.zoomLink || LESSON_CONFIG.zoomLink
-  );
+  const autoZoomState = useAutoZoom(student.id, student.name, lesson?.zoomLink || LESSON_CONFIG.zoomLink);
 
   useEffect(() => {
     if (autoZoomState.status === 'feedback') {
@@ -90,7 +84,7 @@ export const AgentDashboard = ({
   ];
 
   const tabTitles: Record<AgentTab, string> = {
-    home: 'ANA SAYFA', operation: 'OPERASYON', levels: 'LEVEL & ROZETLER',
+    home: 'KARARGAH LOBİSİ', operation: 'OPERASYON', levels: 'LEVEL & ROZETLER',
     archive: 'ARŞİV', activity: 'ETKİNLİK', feedback: 'GERİ BİLDİRİM',
   };
 
@@ -145,7 +139,7 @@ export const AgentDashboard = ({
         </div>
         <div className="p-4 border-b border-[#6358cc]/20">
           <button onClick={() => setDrawerOpen(true)}
-            className="flex items-center gap-3 w-full p-3 rounded-md bg-[#6358cc]/10 text-[#8b7fd8] hover:bg-[#6358cc]/20 border border-[#6358cc]/30 transition-all">
+            className="flex items-center gap-3 w-full p-3 rounded-md bg-[#6358cc]/10 text-[#8b7fd8] hover:bg-[#6358cc]/20 border border-[#6358cc]/30 transition-all shadow-[0_0_15px_rgba(99,88,204,0.2)]">
             <Icons.Swords />
             <span className="font-bold tracking-wide text-sm">DERSE KATIL</span>
           </button>
@@ -167,12 +161,12 @@ export const AgentDashboard = ({
 
       {/* Main Content */}
       <main className="flex-1 flex flex-col p-4 md:p-8 z-10 h-[100dvh] overflow-hidden pb-24 md:pb-8">
-        <header className="flex items-center justify-between mb-4 md:mb-6 shrink-0">
+        <header className="flex items-center justify-between mb-6 md:mb-8 shrink-0">
           <div>
             <h2 className="text-xs sm:text-sm tracking-[0.2em] uppercase mb-1 flex items-center gap-2 text-[#00F0FF]">
-              <span className="inline-block w-2 h-2 animate-pulse rounded-full bg-[#00F0FF]" /> Ajan
+              <span className="inline-block w-2 h-2 animate-pulse rounded-full bg-[#00F0FF]" /> Ajan Sistemi
             </h2>
-            <h1 className="text-2xl sm:text-3xl font-bold uppercase tracking-wider text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold uppercase tracking-wider text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">
               {tabTitles[activeTab]}
             </h1>
           </div>
@@ -180,38 +174,22 @@ export const AgentDashboard = ({
         </header>
 
         <div className="flex-1 overflow-y-auto pr-1 custom-scrollbar">
-          <div className="max-w-7xl mx-auto h-full">
+          <div className="max-w-5xl mx-auto h-full pb-8">
             {activeTab === 'home' && (
-              <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 h-full items-start">
+              <div className="flex flex-col gap-6 lg:gap-8 animate-fade-in w-full">
                 
-                {/* SOL TARAF: Profil ve Envanter */}
-                <div className="xl:col-span-7 flex flex-col gap-6">
-                  <ProfileSection student={student} />
+                {/* Gelen Kutusu kaldırıldı, Profil ekranın tam hakimi oldu */}
+                <ProfileSection student={student} />
 
-                  {/* Dinamik Feedback Butonu */}
-                  {autoZoomState.status === 'feedback' && !showFeedback && (
-                    <button
-                      onClick={() => setShowFeedback(true)}
-                      className="w-full bg-gradient-to-r from-[#FF9F43]/20 to-[#FF4500]/20 border border-[#FF9F43]/40 text-[#FF9F43] py-4 rounded-lg font-bold uppercase tracking-wider text-sm hover:from-[#FF9F43]/30 hover:to-[#FF4500]/30 transition-all animate-pulse"
-                    >
-                      📝 Ders Hakkında Geri Bildirim Ver
-                    </button>
-                  )}
-                </div>
-
-                {/* SAĞ TARAF: İletişim / Mesajlar (Sabit yükseklikte kaydırılabilir) */}
-                <div className="xl:col-span-5 bg-[#0A1128]/80 border border-[#00F0FF]/20 rounded-2xl h-[500px] xl:h-full flex flex-col overflow-hidden">
-                  <div className="bg-[#00F0FF]/10 px-4 py-3 border-b border-[#00F0FF]/20 shrink-0">
-                    <h3 className="text-[#00F0FF] font-bold text-sm uppercase tracking-widest flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-[#00F0FF] animate-pulse" />
-                      Gelen Kutusu
-                    </h3>
-                  </div>
-                  <div className="flex-1 overflow-y-auto custom-scrollbar p-2">
-                    <MessageFeed />
-                  </div>
-                </div>
-
+                {/* Dinamik Feedback Butonu */}
+                {autoZoomState.status === 'feedback' && !showFeedback && (
+                  <button
+                    onClick={() => setShowFeedback(true)}
+                    className="w-full bg-gradient-to-r from-[#FF9F43]/20 to-[#FF4500]/20 border border-[#FF9F43]/40 text-[#FF9F43] py-4 rounded-xl font-bold uppercase tracking-wider text-sm hover:from-[#FF9F43]/30 hover:to-[#FF4500]/30 transition-all animate-pulse shadow-[0_0_20px_rgba(255,69,0,0.2)]"
+                  >
+                    📝 Ders Hakkında Geri Bildirim Ver
+                  </button>
+                )}
               </div>
             )}
             
@@ -226,7 +204,7 @@ export const AgentDashboard = ({
       {/* Mobil Alt Bar */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-[#0A1128] border-t border-[#00F0FF]/20 z-20 flex items-center justify-around px-1 py-2 safe-area-bottom">
         {[
-          { id: 'home' as AgentTab, icon: <Icons.Home />, label: 'ANA SAYFA' },
+          { id: 'home' as AgentTab, icon: <Icons.Home />, label: 'LOBİ' },
           { id: 'operation' as AgentTab, icon: <Icons.Swords />, label: 'OPERASYON', action: () => setDrawerOpen(true) },
           { id: 'levels' as AgentTab, icon: <Icons.Trophy />, label: 'LEVEL' },
           { id: 'archive' as AgentTab, icon: <Icons.Film />, label: 'ARŞİV' },
