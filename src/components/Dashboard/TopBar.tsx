@@ -38,46 +38,53 @@ export const TopBar = ({ student, unreadCount, theme, onThemeChange }: TopBarPro
   const isAdmin = student.id === '1002';
   const accentColor = isAdmin ? '#39FF14' : '#00F0FF';
 
-  // PWA & iOS Kurulum State'leri
+  // PWA & Kurulum State'leri
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
-  const [isInstallable, setIsInstallable] = useState(false);
-  const [showIOSPrompt, setShowIOSPrompt] = useState(false);
+  const [showManualPrompt, setShowManualPrompt] = useState(false);
+  const [isStandalone, setIsStandalone] = useState(false);
 
-  // iOS Cihaz ve Uygulama zaten yüklü mü kontrolü
+  // Cihaz/Tarayıcı Algılama
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
+  const isFirefox = /Firefox/i.test(navigator.userAgent);
+  const isDesktop = !/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
   useEffect(() => {
+    // Uygulama zaten yüklü mü kontrol et
+    const checkStandalone = () => {
+      return window.matchMedia('(display-mode: standalone)').matches || 
+             (window.navigator as any).standalone === true;
+    };
+    setIsStandalone(checkStandalone());
+
     const handleBeforeInstallPrompt = (e: any) => {
       e.preventDefault(); 
       setDeferredPrompt(e);
-      setIsInstallable(true);
     };
+
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
     return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
   }, []);
 
   const handleInstallClick = async () => {
+    // Eğer Chrome destekliyorsa ve butonu verdiyse direkt kur
     if (deferredPrompt) {
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === 'accepted') setIsInstallable(false);
-      setDeferredPrompt(null);
-    } else if (isIOS && !isStandalone) {
-      // iOS ise özel bilgilendirme menüsünü aç
-      setShowIOSPrompt(true);
+      if (outcome === 'accepted') {
+        setDeferredPrompt(null);
+      }
+    } else {
+      // Desteklemiyorsa (iOS, Firefox veya Chrome PC gizlediyse) akıllı menüyü aç
+      setShowManualPrompt(true);
     }
   };
-
-  // Eğer Android/PC ise isInstallable'a bak, eğer iOS ise kendi kontrolüne bak (Zaten yüklü değilse göster)
-  const showInstallButton = isInstallable || (isIOS && !isStandalone);
 
   return (
     <>
       <div className="flex items-center gap-2 sm:gap-3 relative">
         
-        {/* Akıllı Uygulamayı Yükle Butonu */}
-        {showInstallButton && (
+        {/* Uygulama yüklenmemişse "YÜKLE" butonu HER ZAMAN çıksın */}
+        {!isStandalone && (
           <div className="relative">
             <button
               onClick={handleInstallClick}
@@ -88,15 +95,35 @@ export const TopBar = ({ student, unreadCount, theme, onThemeChange }: TopBarPro
               <span className="hidden sm:inline tracking-wider">YÜKLE</span>
             </button>
 
-            {/* iOS Özel Yükleme Kılavuzu Modal'ı */}
-            {showIOSPrompt && (
-              <div className="absolute top-12 right-0 w-64 bg-[#0A1128] border border-[#00F0FF]/40 p-4 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] z-50">
-                <p className="text-[#00F0FF] font-bold text-sm mb-2 border-b border-[#00F0FF]/20 pb-1">iOS Cihaza Kurulum:</p>
+            {/* Akıllı Kılavuz Modal'ı */}
+            {showManualPrompt && (
+              <div className="absolute top-12 right-0 w-72 bg-[#0A1128] border border-[#00F0FF]/40 p-4 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] z-50">
+                <p className="text-[#00F0FF] font-bold text-sm mb-2 border-b border-[#00F0FF]/20 pb-1">
+                  Kurulum Kılavuzu:
+                </p>
                 <div className="text-gray-300 text-xs space-y-2 leading-relaxed">
-                  <p>1. Tarayıcının alt menüsündeki <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Paylaş 🔗</span> ikonuna dokunun.</p>
-                  <p>2. Menüden <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Ana Ekrana Ekle ➕</span> seçeneğine dokunun.</p>
+                  {isIOS ? (
+                    <>
+                      <p>1. Tarayıcının altındaki <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Paylaş 🔗</span> ikonuna dokunun.</p>
+                      <p>2. <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Ana Ekrana Ekle ➕</span> seçeneğine dokunun.</p>
+                    </>
+                  ) : isFirefox ? (
+                    <>
+                      <p>1. Tarayıcı menüsünden <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Üç Nokta ⋮</span> ikonuna dokunun.</p>
+                      <p>2. <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Uygulamayı Yükle ⬇️</span> veya <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Ana Ekrana Ekle</span> seçeneğine dokunun.</p>
+                    </>
+                  ) : isDesktop ? (
+                    <>
+                      <p>1. Adres çubuğunun en sağındaki <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Yükle ⬇️</span> veya <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Ekran 💻</span> ikonuna tıklayın.</p>
+                      <p>2. Tarayıcı menüsünden de yükleme yapabilirsiniz.</p>
+                    </>
+                  ) : (
+                    <>
+                      <p>Tarayıcı ayarlarından <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Ana Ekrana Ekle</span> seçeneğini bularak kurulum yapabilirsiniz.</p>
+                    </>
+                  )}
                 </div>
-                <button onClick={() => setShowIOSPrompt(false)} className="mt-3 w-full bg-[#00F0FF]/20 text-[#00F0FF] hover:bg-[#00F0FF]/30 py-2 rounded-lg font-bold transition-colors">
+                <button onClick={() => setShowManualPrompt(false)} className="mt-4 w-full bg-[#00F0FF]/20 text-[#00F0FF] hover:bg-[#00F0FF]/30 py-2 rounded-lg font-bold transition-colors">
                   Anladım
                 </button>
               </div>
@@ -105,7 +132,7 @@ export const TopBar = ({ student, unreadCount, theme, onThemeChange }: TopBarPro
         )}
 
         <button
-          onClick={() => { setShowNotifications(!showNotifications); setShowProfile(false); setShowIOSPrompt(false); }}
+          onClick={() => { setShowNotifications(!showNotifications); setShowProfile(false); setShowManualPrompt(false); }}
           className="relative w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-all"
         >
           <BellIcon />
@@ -117,7 +144,7 @@ export const TopBar = ({ student, unreadCount, theme, onThemeChange }: TopBarPro
         </button>
 
         <button
-          onClick={() => { setShowProfile(!showProfile); setShowNotifications(false); setShowIOSPrompt(false); }}
+          onClick={() => { setShowProfile(!showProfile); setShowNotifications(false); setShowManualPrompt(false); }}
           className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 transition-all"
         >
           <div
