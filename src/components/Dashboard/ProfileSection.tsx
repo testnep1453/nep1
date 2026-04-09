@@ -1,9 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Student } from '../../types/student';
 import { Shield, Lock, Zap } from 'lucide-react';
-import { updateNickname } from '../../services/dbFirebase';
-import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '../../config/firebase';
+import { updateNickname, updateStudentInFirebase } from '../../services/dbFirebase';
 
 interface ProfileSectionProps {
   student: Student;
@@ -21,9 +19,24 @@ const INVENTORY_ITEMS = [
 
 const AVATAR_IDS = Array.from({ length: 30 }, (_, i) => `av${i + 1}`);
 
+const normalizeAvatarId = (avatarId: string): string => {
+  if (!avatarId) return 'av1';
+  // Eski 'hero_1' formatını 'av1'e çevir
+  if (avatarId.startsWith('hero_')) {
+    const num = parseInt(avatarId.replace('hero_', ''), 10);
+    return `av${isNaN(num) ? 1 : Math.min(num, 30)}`;
+  }
+  // URL veya bilinmeyen format - fallback
+  if (avatarId.includes(':') || avatarId.includes('/')) return 'av1';
+  // Geçerli av{n} formatı
+  if (/^av\d+$/.test(avatarId)) return avatarId;
+  return 'av1';
+};
+
 const getAvatarUrl = (avatarId: string) => {
-  if (!avatarId || avatarId.includes(':')) return `${import.meta.env.BASE_URL}avatars/av1.svg`;
-  return `${import.meta.env.BASE_URL}avatars/${avatarId}.svg`;
+  const normalized = normalizeAvatarId(avatarId);
+  const base = import.meta.env.BASE_URL || '/';
+  return `${base.endsWith('/') ? base : base + '/'}avatars/${normalized}.svg`;
 };
 
 export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps) => {
@@ -31,16 +44,10 @@ export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps
   const [nicknameValue, setNicknameValue] = useState(student.nickname || '');
   const [saving, setSaving] = useState(false);
   const [showPicker, setShowPicker] = useState(false);
-  const [localAvatar, setLocalAvatar] = useState(() => {
-    const av = student.avatar || '';
-    if (!av || av.includes(':')) return 'av1';
-    return av;
-  });
+  const [localAvatar, setLocalAvatar] = useState(() => normalizeAvatarId(student.avatar || ''));
 
   useEffect(() => {
-    if (student.avatar && !student.avatar.includes(':')) {
-      setLocalAvatar(student.avatar);
-    }
+    setLocalAvatar(normalizeAvatarId(student.avatar || ''));
   }, [student.avatar]);
 
   const xpForNextLevel = student.level * 200;
@@ -65,14 +72,16 @@ export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps
 
   const handleSelectAvatar = async (avatarId: string) => {
     if (isAdmin) return;
+    setLocalAvatar(avatarId); // Optimistic update
+    setShowPicker(false);
     try {
-      await updateDoc(doc(db, 'students', student.id), { avatar: avatarId });
+      await updateStudentInFirebase(student.id, { avatar: avatarId });
       student.avatar = avatarId;
-      setLocalAvatar(avatarId);
     } catch (error) {
       console.error('Karakter güncellenemedi', error);
+      // Hata durumunda eski avatara dön
+      setLocalAvatar(normalizeAvatarId(student.avatar || ''));
     }
-    setShowPicker(false);
   };
 
   return (
