@@ -24,11 +24,9 @@ export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps
   const [nicknameValue, setNicknameValue] = useState(student.nickname || '');
   const [saving, setSaving] = useState(false);
 
-  // ANA SAYFA AVATAR YÖNETİMİ
   const [localAvatar, setLocalAvatar] = useState(student.avatar || `avataaars:${student.id}`);
   const [isRandomizing, setIsRandomizing] = useState(false);
 
-  // Profil başka yerden güncellenirse eşleşmeyi sağlar
   useEffect(() => {
     if (student.avatar) setLocalAvatar(student.avatar);
   }, [student.avatar]);
@@ -53,7 +51,6 @@ export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps
     }
   };
 
-  // RESME TIKLANINCA ÇALIŞACAK ZAR ATMA FONKSİYONU
   const handleRandomizeAvatar = async () => {
     if (isRandomizing || isAdmin) return;
     setIsRandomizing(true);
@@ -80,12 +77,14 @@ export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps
 
     let url = `https://api.dicebear.com/9.x/${style}/svg?seed=${seed}&backgroundColor=transparent`;
 
-    // Sadece maskülen / erkek çocuk filtresi
     if (style === 'avataaars') {
       url += '&top=shortHairDreads01,shortHairDreads02,shortHairFrizzle,shortHairShaggyMullet,shortHairShortCurly,shortHairShortFlat,shortHairShortRound,shortHairShortWaved,shortHairSides,shortHairTheCaesar,shortHairTheCaesarSidePart,eyepatch';
       url += '&accessoriesProbability=0'; 
       url += '&facialHairProbability=0';
       url += '&clothing=blazerAndShirt,blazerAndSweater,collarAndSweater,graphicShirt,hoodie,overall,shirtCrewNeck,shirtScoopNeck,shirtVNeck';
+      
+      // KARANLIK/SİYAH TEN RENGİ VE ARKA PLAN YASAKLANDI
+      url += '&skinColor=light,pale,tanned'; 
     }
     return url;
   };
@@ -98,22 +97,21 @@ export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps
       {/* SOL: AVATAR VE KİMLİK */}
       <div className="flex flex-col items-center text-center w-full lg:w-1/3 shrink-0">
         
-        {/* AVATAR KUTUSU - TIKLANABİLİR ZAR ATMA ALANI */}
         <div 
           className={`relative mb-4 ${!isAdmin ? 'cursor-pointer group' : ''}`} 
           onClick={handleRandomizeAvatar}
           title={!isAdmin ? "Karakteri Değiştirmek İçin Tıkla!" : ""}
         >
-          <div className="w-24 h-24 md:w-40 md:h-40 rounded-3xl bg-[#050505] border-2 border-[#00F0FF]/50 p-2 shadow-[0_0_20px_rgba(0,240,255,0.2)] relative overflow-hidden">
+          {/* AVATAR ARKA PLANI BEMBEYAZ/GÜMÜŞ YAPILDI */}
+          <div className="w-24 h-24 md:w-40 md:h-40 rounded-3xl bg-gradient-to-b from-slate-100 to-slate-300 border-4 border-[#00F0FF] p-2 shadow-[0_0_30px_rgba(0,240,255,0.4)] relative overflow-hidden">
             <img 
               src={dicebearUrl} 
               alt="Avatar" 
-              className={`w-full h-full object-contain drop-shadow-md transition-all duration-300 ${isRandomizing ? 'opacity-30 scale-90' : 'opacity-100 scale-100'}`} 
+              className={`w-full h-full object-contain drop-shadow-xl transition-all duration-300 ${isRandomizing ? 'opacity-30 scale-90' : 'opacity-100 scale-100'}`} 
             />
             
-            {/* Üzerine gelince çıkan Zar İkonu */}
             {!isAdmin && (
-              <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+              <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                 <Dices className="w-8 h-8 text-[#39FF14] mb-1 animate-pulse" />
                 <span className="text-[#39FF14] text-[10px] font-black tracking-widest">DEĞİŞTİR</span>
               </div>
