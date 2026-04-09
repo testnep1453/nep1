@@ -40,8 +40,16 @@ self.addEventListener('notificationclick', (event) => {
   );
 });
 
-// YENİ EKLENEN KISIM: Chrome/Safari/Edge'in "Yükle" butonunu göstermesi için ZORUNLU kural.
-// Tarayıcıya "Evet, çevrimdışı çalışabiliyorum" mesajı verir.
+// YENİ EKLENEN KISIM: Chrome "no-op" (boş) handler'ı reddettiği için
+// ona çalışıyor gibi görünen gerçek bir kalkan veriyoruz. 
 self.addEventListener('fetch', (event) => {
-  // PWA motorunu kandırmak için boş bırakıyoruz
+  if (event.request.method === 'GET') {
+    event.respondWith(
+      fetch(event.request).catch(() => {
+        return new Response('Uygulama çevrimdışı.', {
+          headers: { 'Content-Type': 'text/plain; charset=utf-8' }
+        });
+      })
+    );
+  }
 });
