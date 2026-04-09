@@ -1,5 +1,4 @@
-import { collection, addDoc, getDocs, deleteDoc, doc, query, orderBy } from 'firebase/firestore';
-import { db } from '../config/firebase';
+import { supabase } from '../config/supabase';
 
 export interface ArchiveVideo {
   id: string;
@@ -20,12 +19,11 @@ const extractYoutubeId = (url: string): string => {
 
 export const getArchiveVideos = async (): Promise<ArchiveVideo[]> => {
   try {
-    const q = query(collection(db, 'archive'), orderBy('addedAt', 'desc'));
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(d => ({
-      id: d.id,
-      ...d.data(),
-    })) as ArchiveVideo[];
+    const { data } = await supabase
+      .from('archive')
+      .select('*')
+      .order('addedAt', { ascending: false });
+    return (data as ArchiveVideo[]) || [];
   } catch {
     return [];
   }
@@ -40,7 +38,7 @@ export const addArchiveVideo = async (
   const youtubeId = extractYoutubeId(youtubeUrl);
   if (!youtubeId) throw new Error('Geçersiz YouTube URL');
 
-  await addDoc(collection(db, 'archive'), {
+  await supabase.from('archive').insert([{
     title,
     youtubeUrl,
     youtubeId,
@@ -48,9 +46,9 @@ export const addArchiveVideo = async (
     addedAt: Date.now(),
     addedBy,
     lessonDate: lessonDate || '',
-  });
+  }]);
 };
 
 export const removeArchiveVideo = async (id: string): Promise<void> => {
-  await deleteDoc(doc(db, 'archive', id));
+  await supabase.from('archive').delete().eq('id', id);
 };

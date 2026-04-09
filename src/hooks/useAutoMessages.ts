@@ -1,13 +1,10 @@
 /**
- * Otomatik Mesaj Sistemi
+ * Otomatik Mesaj Sistemi - Supabase tabanlı
  * - Çarşamba 19:00 → "Yarın ders var!" hatırlatması
  * - Perşembe 19:00 → "Ders başladı!" bildirimi
- * Mesajlar Firestore messages koleksiyonuna otomatik yazılır
  */
 
 import { useEffect, useRef } from 'react';
-import { doc, getDoc, setDoc } from 'firebase/firestore';
-import { db } from '../config/firebase';
 import { addMessageToFirebase } from '../services/dbFirebase';
 import { isReminderTime, isLessonStartTime } from '../config/lessonSchedule';
 
@@ -29,8 +26,6 @@ export const useAutoMessages = (isAdmin: boolean) => {
   const checkInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    // Sadece admin girişinde kontrol et (duplikasyon önlemi)
-    // Aslında herkes tetikleyebilir ama merkezi kontrol admin'de
     if (!isAdmin) return;
 
     const checkAndSendMessages = async () => {
@@ -40,12 +35,11 @@ export const useAutoMessages = (isAdmin: boolean) => {
       // Çarşamba 19:00 hatırlatması
       if (isReminderTime() && !reminderSentRef.current) {
         const sentKey = `autoMsg_reminder_${today}`;
-        const alreadySent = await checkMessageSent(sentKey);
-        
+        const alreadySent = localStorage.getItem(sentKey);
         if (!alreadySent) {
           const msg = REMINDER_MESSAGES[Math.floor(Math.random() * REMINDER_MESSAGES.length)];
           await addMessageToFirebase(msg);
-          await markMessageSent(sentKey);
+          localStorage.setItem(sentKey, '1');
           reminderSentRef.current = true;
         }
       }
@@ -53,12 +47,11 @@ export const useAutoMessages = (isAdmin: boolean) => {
       // Perşembe 19:00 ders başlangıcı
       if (isLessonStartTime() && !lessonStartSentRef.current) {
         const sentKey = `autoMsg_start_${today}`;
-        const alreadySent = await checkMessageSent(sentKey);
-        
+        const alreadySent = localStorage.getItem(sentKey);
         if (!alreadySent) {
           const msg = LESSON_START_MESSAGES[Math.floor(Math.random() * LESSON_START_MESSAGES.length)];
           await addMessageToFirebase(msg);
-          await markMessageSent(sentKey);
+          localStorage.setItem(sentKey, '1');
           lessonStartSentRef.current = true;
         }
       }
@@ -70,38 +63,11 @@ export const useAutoMessages = (isAdmin: boolean) => {
       }
     };
 
-    // Her 30 saniyede bir kontrol
     checkAndSendMessages();
     checkInterval.current = setInterval(checkAndSendMessages, 30000);
 
     return () => {
-      if (checkInterval.current) {
-        clearInterval(checkInterval.current);
-      }
+      if (checkInterval.current) clearInterval(checkInterval.current);
     };
   }, [isAdmin]);
-};
-
-// Mesajın zaten gönderilip gönderilmediğini kontrol et
-const checkMessageSent = async (key: string): Promise<boolean> => {
-  try {
-    const ref = doc(db, 'system', 'autoMessages');
-    const snap = await getDoc(ref);
-    if (snap.exists()) {
-      return !!snap.data()[key];
-    }
-    return false;
-  } catch {
-    return false;
-  }
-};
-
-// Mesaj gönderildi olarak işaretle
-const markMessageSent = async (key: string): Promise<void> => {
-  try {
-    const ref = doc(db, 'system', 'autoMessages');
-    await setDoc(ref, { [key]: true }, { merge: true });
-  } catch (error) {
-    console.error('Auto message flag kayıt hatası:', error);
-  }
 };

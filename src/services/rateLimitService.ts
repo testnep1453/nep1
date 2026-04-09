@@ -1,93 +1,47 @@
 /**
- * Rate Limiting Service
- * 
- * Firestore timestamp tabanlı sunucu taraflı frekans kontrolü.
- * Arayüzde buton gizlemek yetmez — Firestore'da da timestamp kontrolü var.
+ * Rate Limiting Service - Supabase tabanlı
+ * localStorage fallback ile çalışır
  */
 
-import { doc, getDoc, setDoc, serverTimestamp } from 'firebase/firestore';
-import { db, auth } from '../config/firebase';
-
 interface RateLimitConfig {
-  /** Minimum bekleme süresi (ms) */
   cooldownMs: number;
-  /** Firestore alan adı */
   field: string;
 }
 
-// Rate limit konfigürasyonları
 export const RATE_LIMITS: Record<string, RateLimitConfig> = {
-  emailVerification: { cooldownMs: 60_000, field: 'lastEmailVerification' },      // 1 dakika
-  emailChange: { cooldownMs: 24 * 60 * 60 * 1000, field: 'lastEmailChange' },     // 24 saat
-  feedback: { cooldownMs: 5 * 60 * 1000, field: 'lastFeedback' },                 // 5 dakika
-  nicknameChange: { cooldownMs: 60 * 60 * 1000, field: 'lastNicknameChange' },    // 1 saat
+  emailVerification: { cooldownMs: 60_000, field: 'lastEmailVerification' },
+  emailChange: { cooldownMs: 24 * 60 * 60 * 1000, field: 'lastEmailChange' },
+  feedback: { cooldownMs: 5 * 60 * 1000, field: 'lastFeedback' },
+  nicknameChange: { cooldownMs: 60 * 60 * 1000, field: 'lastNicknameChange' },
 };
 
-/**
- * Rate limit kontrolü yap
- * @returns { allowed: boolean, remainingMs: number }
- */
 export const checkRateLimit = async (action: string): Promise<{ allowed: boolean; remainingMs: number }> => {
-  const user = auth.currentUser;
-  if (!user) return { allowed: false, remainingMs: 0 };
-
   const config = RATE_LIMITS[action];
   if (!config) return { allowed: true, remainingMs: 0 };
 
   try {
-    const rateLimitRef = doc(db, 'rateLimits', user.uid);
-    const snap = await getDoc(rateLimitRef);
+    const stored = localStorage.getItem(`rateLimit_${action}`);
+    if (!stored) return { allowed: true, remainingMs: 0 };
 
-    if (!snap.exists()) {
-      return { allowed: true, remainingMs: 0 };
-    }
-
-    const data = snap.data();
-    const lastAction = data[config.field];
-
-    if (!lastAction) {
-      return { allowed: true, remainingMs: 0 };
-    }
-
-    // Firestore Timestamp → ms
-    const lastMs = lastAction.toMillis ? lastAction.toMillis() : lastAction;
+    const lastMs = parseInt(stored, 10);
     const elapsed = Date.now() - lastMs;
     const remaining = config.cooldownMs - elapsed;
 
-    if (remaining > 0) {
-      return { allowed: false, remainingMs: remaining };
-    }
-
+    if (remaining > 0) return { allowed: false, remainingMs: remaining };
     return { allowed: true, remainingMs: 0 };
   } catch {
-    // Hata durumunda izin ver (defensive)
     return { allowed: true, remainingMs: 0 };
   }
 };
 
-/**
- * Rate limit kaydını güncelle (işlem yapıldıktan sonra çağır)
- */
 export const recordAction = async (action: string): Promise<void> => {
-  const user = auth.currentUser;
-  if (!user) return;
-
-  const config = RATE_LIMITS[action];
-  if (!config) return;
-
   try {
-    const rateLimitRef = doc(db, 'rateLimits', user.uid);
-    await setDoc(rateLimitRef, {
-      [config.field]: serverTimestamp(),
-    }, { merge: true });
+    localStorage.setItem(`rateLimit_${action}`, Date.now().toString());
   } catch {
-    // Sessiz
+    // sessiz
   }
 };
 
-/**
- * Kalan süreyi insan-okunabilir formata çevir
- */
 export const formatCooldown = (ms: number): string => {
   if (ms <= 0) return '';
   const seconds = Math.ceil(ms / 1000);

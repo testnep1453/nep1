@@ -1,11 +1,9 @@
 /**
- * Anonim Geri Bildirim Formu
- * Ders bittikten sonra (20:00) öğrencilere gösterilir
+ * Anonim Geri Bildirim Formu - Supabase tabanlı
  */
 
 import { useState } from 'react';
-import { collection, addDoc } from 'firebase/firestore';
-import { db } from '../../config/firebase';
+import { supabase } from '../../config/supabase';
 
 interface FeedbackFormProps {
   lessonDate: string;
@@ -24,14 +22,14 @@ export const FeedbackForm = ({ lessonDate, onClose }: FeedbackFormProps) => {
     setSubmitting(true);
 
     try {
-      await addDoc(collection(db, 'feedback'), {
+      await supabase.from('feedback').insert([{
         studentId: 'anonymous',
         lessonDate,
         rating,
         comment: comment.trim(),
         createdAt: Date.now(),
         anonymous: true,
-      });
+      }]);
       setSubmitted(true);
     } catch (error) {
       console.error('Geri bildirim gönderme hatası:', error);
@@ -68,7 +66,6 @@ export const FeedbackForm = ({ lessonDate, onClose }: FeedbackFormProps) => {
           Bu form tamamen anonimdir. Düşüncelerini paylaş!
         </p>
 
-        {/* Yıldız Puanlama */}
         <div className="mb-6">
           <p className="text-white/70 text-sm mb-3 text-center">Dersi nasıl buldun?</p>
           <div className="flex justify-center gap-2">
@@ -88,7 +85,6 @@ export const FeedbackForm = ({ lessonDate, onClose }: FeedbackFormProps) => {
           </div>
         </div>
 
-        {/* Yorum */}
         <div className="mb-6">
           <textarea
             value={comment}
@@ -99,7 +95,6 @@ export const FeedbackForm = ({ lessonDate, onClose }: FeedbackFormProps) => {
           />
         </div>
 
-        {/* Butonlar */}
         <div className="flex gap-3">
           <button
             onClick={onClose}
