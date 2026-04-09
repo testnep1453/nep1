@@ -24,11 +24,11 @@ const UserIcon = () => (
   </svg>
 );
 
+// SENİN GETİRDİĞİN EFSANE WHATSAPP İNDİRME İKONU
 const InstallIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-    <polyline points="7 10 12 15 17 10" />
-    <line x1="12" y1="15" x2="12" y2="3" />
+  <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="w-4 h-4 sm:w-5 sm:h-5">
+    <path fillRule="evenodd" clipRule="evenodd" d="M13.75 13.75C13.75 14.1642 13.4142 14.5 13 14.5L3 14.5C2.58579 14.5 2.25 14.1642 2.25 13.75C2.25 13.3358 2.58579 13 3 13L13 13C13.4142 13 13.75 13.3358 13.75 13.75Z" fill="currentColor"></path>
+    <path fillRule="evenodd" clipRule="evenodd" d="M8.7487 2C8.7487 1.58579 8.41291 1.25 7.9987 1.25C7.58448 1.25 7.2487 1.58579 7.2487 2L7.2487 9.53955L3.19233 5.51449C2.89831 5.22274 2.42344 5.22458 2.13168 5.5186C1.83993 5.81263 1.84177 6.2875 2.13579 6.57925L7.46912 11.8714C7.76154 12.1616 8.23325 12.1616 8.52567 11.8714L13.859 6.57926C14.153 6.2875 14.1549 5.81263 13.8631 5.5186C13.5714 5.22458 13.0965 5.22274 12.8025 5.51449L8.7487 9.53697L8.7487 2Z" fill="currentColor"></path>
   </svg>
 );
 
@@ -43,7 +43,7 @@ export const TopBar = ({ student, unreadCount, theme, onThemeChange }: TopBarPro
   const [showManualPrompt, setShowManualPrompt] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
 
-  // Cihaz/Tarayıcı Algılama (Nokta atışı metinler için)
+  // Cihaz/Tarayıcı Algılama
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
   const isDesktop = !/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
@@ -90,7 +90,6 @@ export const TopBar = ({ student, unreadCount, theme, onThemeChange }: TopBarPro
               <span className="hidden sm:inline tracking-wider">YÜKLE</span>
             </button>
 
-            {/* Bilgisayar, iPhone ve Android için ayrı ayrı akıllı kılavuz */}
             {showManualPrompt && (
               <div className="absolute top-12 right-0 w-72 bg-[#0A1128] border border-[#00F0FF]/40 p-4 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] z-50">
                 <p className="text-[#00F0FF] font-bold text-sm mb-2 border-b border-[#00F0FF]/20 pb-1">
@@ -104,8 +103,8 @@ export const TopBar = ({ student, unreadCount, theme, onThemeChange }: TopBarPro
                     </>
                   ) : isDesktop ? (
                     <>
-                      <p>1. Adres çubuğunun en sağındaki <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Yükle ⬇️</span> (veya monitör) ikonuna tıklayın.</p>
-                      <p>2. İkon yoksa sağ üstteki tarayıcı menüsüne girip <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Uygulamayı Yükle</span> veya <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Kaydet ve Paylaş &gt; Yükle</span> seçeneğine tıklayın.</p>
+                      <p>1. Adres çubuğunun sağındaki <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Yükle ⬇️</span> ikonuna tıklayın.</p>
+                      <p>2. Veya tarayıcı menüsüne girip <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Uygulamayı Yükle</span> / <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Kaydet ve Paylaş &gt; Yükle</span> seçeneğine tıklayın.</p>
                     </>
                   ) : (
                     <>
