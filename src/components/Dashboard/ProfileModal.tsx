@@ -4,7 +4,8 @@ import { db } from '../../config/firebase';
 import { Student } from '../../types/student';
 import { checkRateLimit, recordAction, formatCooldown } from '../../services/rateLimitService';
 import { sendVerificationLink } from '../../services/authService';
-import { Glasses, Dices, Headset, Crown, Bot, ExternalLink } from 'lucide-react';
+// İŞTE SİSTEMİ ÇÖKERTEN O EKSİK İKONLAR BURAYA EKLENDİ (Shield ve Zap)
+import { Glasses, Dices, Headset, Crown, Bot, ExternalLink, Shield, Zap } from 'lucide-react';
 
 interface ProfileModalProps {
   student: Student;
@@ -26,7 +27,6 @@ const AVATAR_STYLES = [
 const LOCAL_ACCESSORIES = [
   { id: 'acc_1', name: 'Taktik Gözlük', style: 'adventurer', icon: <Glasses /> },
   { id: 'acc_2', name: 'Siber Kulaklık', style: 'bottts', icon: <Headset /> },
-  // Buraya ileride daha fazla YASAL aksesuar eklenebilir.
 ];
 
 export const ProfileModal = ({ student, isOpen, onClose, theme, onThemeChange }: ProfileModalProps) => {
@@ -100,8 +100,6 @@ export const ProfileModal = ({ student, isOpen, onClose, theme, onThemeChange }:
 
   if (!isOpen) return null;
 
-  // Canlı SVG URL'si (Açıklama: Aksesuarlar henüz api.dicebear tarafından desteklenmiyor,
-  // bu yüzden yerel 'giydirme' simülasyonunu sadece önizlemede SVG'nin üzerine giydireceğiz).
   const dicebearUrl = `https://api.dicebear.com/9.x/${selectedStyle}/svg?seed=${selectedSeed}&backgroundColor=transparent`;
 
   return (
@@ -123,7 +121,7 @@ export const ProfileModal = ({ student, isOpen, onClose, theme, onThemeChange }:
             <div className="w-40 h-40 sm:w-48 sm:h-48 rounded-2xl border-4 border-[#00F0FF]/60 bg-gradient-to-b from-[#00F0FF]/20 to-black shadow-[0_0_30px_rgba(0,0,0,0.5)] mb-6 p-2 relative group flex items-center justify-center">
               <img src={dicebearUrl} alt="Preview" className="w-full h-full object-contain drop-shadow-[0_0_10px_rgba(0,240,255,0.8)]" />
               
-              {/* YEREL GİYDİRME SİMÜLASYONU (Açıklama: SVG'nin üzerine yerel kıyafetleri yerleştirme kodu buraya gelecek) */}
+              {/* YEREL GİYDİRME SİMÜLASYONU */}
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                 {selectedAccs.includes('acc_1') && <Glasses className="w-16 h-16 text-white absolute top-10" />}
                 {selectedAccs.includes('acc_2') && <Headset className="w-20 h-20 text-white absolute" />}
@@ -157,7 +155,7 @@ export const ProfileModal = ({ student, isOpen, onClose, theme, onThemeChange }:
                     <p className="text-[#FF9F43] font-bold text-sm mb-0.5">Daha Fazla Kıyafet İster Misin?</p>
                     <p className="text-gray-400 text-[10px] leading-snug">"Avatar Maker Dress up" uygulamasının resmi web sitesini yeni sekmede açarak tam giydirme özelliğini kullanabilirsin.</p>
                 </div>
-                <a href="https://www.pazugames.com/" target="_blank" rel="noopener noreferrer" className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#FF9F43]/20 text-[#FF9F43] font-bold text-xs border border-[#FF9F43]/40 hover:bg-[#FF9F43]/30 transition-colors z-10">
+                <a href="https://pazugames.com/" target="_blank" rel="noopener noreferrer" className="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#FF9F43]/20 text-[#FF9F43] font-bold text-xs border border-[#FF9F43]/40 hover:bg-[#FF9F43]/30 transition-colors z-10">
                     DIŞ EDİTÖR <ExternalLink className="w-3.5 h-3.5" />
                 </a>
             </div>
@@ -167,16 +165,16 @@ export const ProfileModal = ({ student, isOpen, onClose, theme, onThemeChange }:
               <label className="text-gray-400 text-xs uppercase tracking-wider block mb-3 font-bold">Ajan Sınıfı Seç</label>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 w-full">
                 {AVATAR_STYLES.map(style => (
-                  <button key={style.id} onClick={() => setSelectedStyle(style.id)} className={`flex items-center justify-center gap-2 text-xs font-bold py-2.5 rounded-lg border transition-all ${selectedStyle === style.id ? 'bg-[#00F0FF]/20 border-[#00F0FF] text-[#00F0FF] shadow-[0_0_10px_rgba(0,240,255,0.3)] scale-105' : 'bg-black/50 border-gray-800 text-gray-500 hover:border-gray-500 hover:text-gray-300'}`}>
+                  <button key={style.id} onClick={() => setSelectedStyle(style.id)} className={`flex items-center justify-center gap-2 text-[10px] font-bold py-2.5 rounded-lg border transition-all ${selectedStyle === style.id ? 'bg-[#00F0FF]/20 border-[#00F0FF] text-[#00F0FF] shadow-[0_0_10px_rgba(0,240,255,0.3)] scale-105' : 'bg-black/50 border-gray-800 text-gray-500 hover:border-gray-500 hover:text-gray-300'}`}>
                     {style.icon} {style.name}
                   </button>
                 ))}
               </div>
             </div>
 
-            {/* YEREL AKSESUAR KİTİ (Giydirme Simülasyonu) */}
+            {/* YEREL AKSESUAR KİTİ */}
             <div className="bg-black/40 p-4 rounded-xl border border-gray-800">
-                <label className="text-gray-400 text-xs uppercase tracking-wider block mb-3 font-bold">NEP Aksesuar Kiti (Giydirme)</label>
+                <label className="text-gray-400 text-xs uppercase tracking-wider block mb-3 font-bold">NEP Aksesuar Kiti</label>
                 <div className="grid grid-cols-4 gap-2 w-full">
                     {LOCAL_ACCESSORIES.map(acc => {
                         const isSelected = selectedAccs.includes(acc.id);
@@ -189,7 +187,7 @@ export const ProfileModal = ({ student, isOpen, onClose, theme, onThemeChange }:
                 </div>
             </div>
 
-            {/* NICKNAME VE TEMA (Alt Kısma Taşındı) */}
+            {/* NICKNAME VE TEMA */}
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="bg-black/40 p-4 rounded-xl border border-gray-800 space-y-2">
                     <label className="text-gray-400 text-xs uppercase tracking-wider block font-bold">Takma Ad (Nickname)</label>
