@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, CheckCircle, XCircle, Loader2 } from 'lucide-react';
+import { Mail, CheckCircle, XCircle, Loader2, ArrowLeft } from 'lucide-react';
 import { sendVerificationCode, verifyEmailCode } from '../../services/authService';
 
 interface Props {
@@ -26,7 +26,7 @@ export const EmailVerificationModal: React.FC<Props> = ({ studentId, onVerified,
       setErrorMessage('');
     } else {
       setStatus('error');
-      setErrorMessage('Kod gönderilemedi. E-postayı kontrol edin veya biraz bekleyin.');
+      setErrorMessage('Kod gönderilemedi. Lütfen geçerli bir adres girin.');
     }
   };
 
@@ -50,8 +50,7 @@ export const EmailVerificationModal: React.FC<Props> = ({ studentId, onVerified,
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
-      {/* framer-motion tamamen kaldırıldı, standart HTML ve Tailwind eklendi */}
-      <div className="bg-slate-900 border border-slate-700 p-8 rounded-2xl w-full max-w-md shadow-2xl relative transform transition-all duration-300">
+      <div className="bg-slate-900 border border-slate-700 p-8 rounded-2xl w-full max-w-md shadow-2xl relative">
         <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-3">
           <Mail className="text-blue-400 w-6 h-6" />
           Kimlik Doğrulama
@@ -63,6 +62,8 @@ export const EmailVerificationModal: React.FC<Props> = ({ studentId, onVerified,
               Güvenliğiniz için lütfen e-posta adresinizi girin. Size <b>6 haneli</b> bir onay kodu göndereceğiz.
             </p>
             <input
+              id="email-input"
+              name="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -72,7 +73,9 @@ export const EmailVerificationModal: React.FC<Props> = ({ studentId, onVerified,
             />
             {status === 'error' && <p className="text-red-400 text-sm">{errorMessage}</p>}
             <div className="flex gap-3 pt-2">
-              <button type="button" onClick={onCancel} className="flex-1 px-4 py-3 rounded-xl font-bold text-slate-300 bg-slate-800 hover:bg-slate-700 transition-colors">İptal</button>
+              <button type="button" onClick={onCancel} className="flex-1 px-4 py-3 rounded-xl font-bold text-slate-300 bg-slate-800 hover:bg-slate-700 transition-colors flex items-center justify-center gap-2">
+                <ArrowLeft className="w-4 h-4" /> Geri Dön
+              </button>
               <button type="submit" disabled={status === 'sending'} className="flex-1 px-4 py-3 rounded-xl font-bold text-white bg-blue-600 hover:bg-blue-500 transition-colors flex items-center justify-center gap-2">
                 {status === 'sending' ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Kod Gönder'}
               </button>
@@ -84,6 +87,8 @@ export const EmailVerificationModal: React.FC<Props> = ({ studentId, onVerified,
               <b>{email}</b> adresine 6 haneli bir kod gönderdik. Lütfen aşağıya girin.
             </p>
             <input
+              id="code-input"
+              name="code"
               type="text"
               maxLength={6}
               value={code}
