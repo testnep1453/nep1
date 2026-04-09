@@ -1,8 +1,7 @@
 import { useState } from 'react';
-import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '../../config/firebase';
 import { Student } from '../../types/student';
 import { Dices } from 'lucide-react';
+import { updateStudentInFirebase } from '../../services/dbFirebase';
 
 interface ProfileModalProps {
   student: Student;
@@ -43,9 +42,9 @@ export const ProfileModal = ({ student, isOpen, onClose, theme, onThemeChange }:
     setSaving(true);
     try {
       const newAvatar = `${selectedStyle}:${selectedSeed}`;
-      await updateDoc(doc(db, 'students', student.id), { 
+      await updateStudentInFirebase(student.id, {
         avatar: newAvatar,
-        nickname: nickname.trim() 
+        nickname: nickname.trim()
       });
       student.avatar = newAvatar;
       student.nickname = nickname.trim();
@@ -59,7 +58,6 @@ export const ProfileModal = ({ student, isOpen, onClose, theme, onThemeChange }:
 
   if (!isOpen) return null;
 
-  // 404 HATASINI ÇÖZEN, GÜVENLİ VE %100 ERKEK FİLTRESİ
   let previewUrl = `https://api.dicebear.com/9.x/${selectedStyle}/svg?seed=${selectedSeed}&backgroundColor=transparent`;
   
   if (selectedStyle === 'avataaars') {

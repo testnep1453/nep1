@@ -1,7 +1,6 @@
 import { getMessagingInstance } from '../config/firebase';
 import { getToken, onMessage, MessagePayload } from 'firebase/messaging';
-import { doc, setDoc } from 'firebase/firestore';
-import { db } from '../config/firebase';
+import { supabase } from '../config/supabase';
 
 /**
  * FCM Push Notification Service (Modül 2)
@@ -55,11 +54,12 @@ export const requestNotificationPermission = async (studentId?: string): Promise
  */
 const saveTokenToFirestore = async (studentId: string, token: string) => {
   try {
-    await setDoc(doc(db, 'fcmTokens', studentId), {
+    await supabase.from('fcmTokens').upsert({
+      id: studentId,
       token,
       updatedAt: Date.now(),
       platform: navigator.userAgent.includes('Mobile') ? 'mobile' : 'desktop',
-    }, { merge: true });
+    });
   } catch {
     // Token kaydedilemedi — sessiz
   }
