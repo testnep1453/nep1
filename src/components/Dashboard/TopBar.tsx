@@ -1,10 +1,4 @@
-/**
- * TopBar — Bildirim + Profil (Modül 1.2)
- * NEP logosu yok, sadece çan + kullanıcı adı + profil ikonu
- * Main content header'ın sağ tarafında inline olarak render edilir
- */
-
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Student } from '../../types/student';
 import { NotificationPanel } from './NotificationPanel';
 import { ProfileModal } from './ProfileModal';
@@ -30,15 +24,64 @@ const UserIcon = () => (
   </svg>
 );
 
+const InstallIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4 sm:w-5 sm:h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+    <polyline points="7 10 12 15 17 10" />
+    <line x1="12" y1="15" x2="12" y2="3" />
+  </svg>
+);
+
 export const TopBar = ({ student, unreadCount, theme, onThemeChange }: TopBarProps) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const isAdmin = student.id === '1002';
   const accentColor = isAdmin ? '#39FF14' : '#00F0FF';
 
+  // PWA (Uygulamayı Yükle) State
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isInstallable, setIsInstallable] = useState(false);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault(); // Varsayılan tarayıcı uyarısını engelle, kendi butonumuzla yapacağız
+      setDeferredPrompt(e);
+      setIsInstallable(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setIsInstallable(false);
+    }
+    setDeferredPrompt(null);
+  };
+
   return (
     <>
-      <div className="flex items-center gap-3 relative">
+      <div className="flex items-center gap-2 sm:gap-3 relative">
+        
+        {/* Uygulamayı Yükle Butonu (Sadece destekleyen tarayıcılarda ve yüklenmemişse çıkar) */}
+        {isInstallable && (
+          <button
+            onClick={handleInstallClick}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#39FF14]/10 hover:bg-[#39FF14]/20 text-[#39FF14] border border-[#39FF14]/30 transition-all font-bold text-xs shadow-[0_0_10px_rgba(57,255,20,0.2)] animate-pulse"
+            title="Sistemi Cihaza Yükle"
+          >
+            <InstallIcon />
+            <span className="hidden sm:inline tracking-wider">YÜKLE</span>
+          </button>
+        )}
+
         {/* Bildirim çanı */}
         <button
           onClick={() => { setShowNotifications(!showNotifications); setShowProfile(false); }}
@@ -46,7 +89,7 @@ export const TopBar = ({ student, unreadCount, theme, onThemeChange }: TopBarPro
         >
           <BellIcon />
           {unreadCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-[#FF4500] rounded-full flex items-center justify-center text-[10px] text-white font-bold px-1">
+            <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-[#FF4500] rounded-full flex items-center justify-center text-[10px] text-white font-bold px-1 shadow-[0_0_8px_rgba(255,69,0,0.6)]">
               {unreadCount > 9 ? '9+' : unreadCount}
             </span>
           )}
