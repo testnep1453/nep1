@@ -20,7 +20,7 @@ export const CircularCountdown: React.FC<CircularCountdownProps> = ({ targetDate
     // 00 olanları gizle
     if (value === 0) return null;
 
-    const radius = 35; // Biraz daha kompakt yaptık
+    const radius = 35;
     const circumference = 2 * Math.PI * radius;
     const strokeDashoffset = circumference - (value / maxValue) * circumference;
 
@@ -63,11 +63,6 @@ export const CircularCountdown: React.FC<CircularCountdownProps> = ({ targetDate
 
   return (
     <div className="flex flex-col items-center justify-center w-full bg-transparent">
-      {/* Yazı Boyutu Büyük ve Sade */}
-      <h2 className="text-2xl font-black text-slate-800 dark:text-white mb-4 flex items-center gap-2 tracking-tight">
-        <span>⏰</span> SONRAKİ DERSE
-      </h2>
-
       {/* Sayaçlar - Kutu yok, direkt yan yana */}
       <div className="flex flex-wrap justify-center items-center gap-2">
         {renderCircle(days, 'Gün', 30, 'text-blue-500')}

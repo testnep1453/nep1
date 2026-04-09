@@ -1,8 +1,6 @@
 /**
- * Operasyon Çekmecesi — Tam Ekran (Modül 1.5)
+ * Operasyon Çekmecesi — Tam Ekran
  * Geri Sayım → Fragman → Zoom → Tam ekran açılır
- * "Güncel Operasyon" / "Arşiv" sekmeleri yok
- * "BEKLEME" ibaresi yok
  */
 
 import { useState, useEffect, useCallback } from 'react';
@@ -29,19 +27,21 @@ export const OperationDrawer = ({
   isAdmin,
 }: OperationDrawerProps) => {
   const [currentView, setCurrentView] = useState<'countdown' | 'trailer' | 'lesson_active' | 'lesson_ended'>('countdown');
+  const [now, setNow] = useState(new Date());
 
   const isTrailerTime = useCallback((t: Trailer | null): boolean => {
     if (!t || !t.isActive || !t.youtubeId || !t.showDate || !t.showTime) return false;
-    const now = new Date();
-    const current = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-    const hours = now.getHours().toString().padStart(2, '0');
-    const minutes = now.getMinutes().toString().padStart(2, '0');
+    const d = new Date();
+    const current = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const hours = d.getHours().toString().padStart(2, '0');
+    const minutes = d.getMinutes().toString().padStart(2, '0');
     const currentTime = `${hours}:${minutes}`;
     return t.showDate === current && currentTime >= t.showTime;
   }, []);
 
   useEffect(() => {
     const checkStatus = () => {
+      setNow(new Date());
       if (isLessonActive()) {
         setCurrentView('lesson_active');
       } else if (isLessonEnded()) {
@@ -59,6 +59,9 @@ export const OperationDrawer = ({
   }, [trailer, isTrailerTime]);
 
   if (!isOpen) return null;
+
+  // Sonraki ders (lesson_ended durumunda)
+  const nextLesson = getNextLesson();
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center">
@@ -84,17 +87,14 @@ export const OperationDrawer = ({
           </button>
         </div>
 
-        {/* İçerik — Tek ekran, sekme yok */}
+        {/* İçerik */}
         <div className="flex-1 overflow-y-auto p-6 sm:p-10 flex items-center justify-center">
           <div className="w-full max-w-lg mx-auto">
+
             {/* Geri Sayım */}
             {currentView === 'countdown' && lesson && (
               <div className="animate-fade-in text-center space-y-6">
-                <span className="text-xs text-[#00F0FF] font-mono tracking-widest">⏰ SONRAKİ DERSE</span>
-                <CircularCountdown
-                  targetTime={lesson.startTime}
-                  onComplete={() => {}}
-                />
+                <CircularCountdown targetDate={lesson.startTime} />
               </div>
             )}
 
@@ -126,51 +126,27 @@ export const OperationDrawer = ({
               </div>
             )}
 
-            {/* Ders Bitti */}
+            {/* Ders Bitti → Sonraki ders sayacı */}
             {currentView === 'lesson_ended' && (
               <div className="animate-fade-in text-center space-y-6">
                 <div className="text-5xl">✅</div>
                 <h3 className="text-xl font-bold text-gray-400 uppercase tracking-wider">
                   DERS TAMAMLANDI
                 </h3>
-                <p className="text-gray-500 text-sm">
-                  Sonraki ders için geri sayım başladı.
-                </p>
-                {(() => {
-                  const nextLesson = getNextLesson();
-                  return (
-                    <div className="mt-4">
-                      <CircularCountdown
-                        targetTime={nextLesson.startTime}
-                        onComplete={() => {}}
-                      />
-                      <p className="text-white/40 text-xs mt-3">{nextLesson.title}</p>
-                    </div>
-                  );
-                })()}
+                <div className="mt-4">
+                  <CircularCountdown targetDate={nextLesson.startTime} />
+                  <p className="text-white/40 text-xs mt-3">{nextLesson.title}</p>
+                </div>
               </div>
             )}
           </div>
         </div>
 
-        {/* Footer */}
+        {/* Footer — sadece saat */}
         <div className="p-4 border-t border-[#6358cc]/20 bg-[#050505]/80 shrink-0">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${
-                currentView === 'lesson_active' ? 'bg-[#39FF14] animate-pulse' :
-                currentView === 'trailer' ? 'bg-[#F5D32E] animate-pulse' :
-                'bg-gray-600'
-              }`} />
-              <span className="text-gray-500 text-xs font-mono">
-                {currentView === 'lesson_active' ? 'DERS AKTİF' :
-                 currentView === 'trailer' ? 'FRAGMAN' :
-                 currentView === 'lesson_ended' ? 'DERS TAMAMLANDI' :
-                 'HAZIRLIK'}
-              </span>
-            </div>
+          <div className="flex items-center justify-end">
             <span className="text-gray-600 text-xs font-mono">
-              {new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+              {now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
             </span>
           </div>
         </div>
