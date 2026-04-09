@@ -25,6 +25,7 @@ const Icons = {
   Film: () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 3v18"/><path d="M3 7.5h4"/><path d="M3 12h18"/><path d="M3 16.5h4"/></svg>,
   Calendar: () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
   Star: () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z"/></svg>,
+  Logout: () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2"/><path d="M9 12h12l-3 -3"/><path d="M18 15l3 -3"/></svg>,
   Menu: () => <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>,
   Bell: () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>,
 };
@@ -34,7 +35,7 @@ export const AgentDashboard = ({
 }: {
   student: Student; onLogout: () => void; lesson: Lesson | null;
 }) => {
-  void onLogout; // Çıkış yap butonu kaldırıldığı için "unused variable" hatası vermesini engeller
+  void onLogout; // Kullanılmayan uyarılarını engellemek için eklendi
 
   const [activeTab, setActiveTab] = useState<AgentTab>('home');
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -97,20 +98,24 @@ export const AgentDashboard = ({
 
   return (
     <div className="h-[100dvh] bg-[#050505] text-white flex flex-col md:flex-row font-['Rajdhani',sans-serif] selection:bg-[#00F0FF]/30 overflow-hidden">
+      {/* BG */}
       <div className="fixed inset-0 pointer-events-none z-0 opacity-20">
         <div className="absolute inset-0 bg-[linear-gradient(rgba(0,240,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,240,255,0.03)_1px,transparent_1px)] bg-[length:40px_40px]" />
         <div className="scanlines absolute inset-0" />
       </div>
 
+      {/* Drawer */}
       <OperationDrawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)}
         lesson={lesson} trailer={trailer} isAdmin={false}
         studentName={student.name} zoomLink={lesson?.zoomLink || LESSON_CONFIG.zoomLink} />
 
+      {/* Feedback */}
       {showFeedback && (
         <FeedbackForm lessonDate={autoZoomState.lessonDate} studentId={student.id}
           onClose={() => { setShowFeedback(false); sessionStorage.setItem(`feedback_${autoZoomState.lessonDate}`, 'true'); }} />
       )}
 
+      {/* Mobil Üst Bar */}
       <div className="md:hidden sticky top-0 z-30 bg-[#0A1128] border-b border-[#00F0FF]/20 flex items-center justify-between px-4 py-3">
         <button onClick={() => setDrawerOpen(true)} className="text-[#00F0FF] p-2 min-w-[44px] min-h-[44px] flex items-center justify-center">
           <Icons.Swords />
@@ -122,6 +127,7 @@ export const AgentDashboard = ({
         </button>
       </div>
 
+      {/* Mobil Nav Dropdown */}
       {mobileNavOpen && (
         <div className="md:hidden fixed inset-0 top-[52px] bg-black/80 z-20" onClick={() => setMobileNavOpen(false)}>
           <div className="bg-[#0A1128] border-b border-[#00F0FF]/20 p-4 space-y-2">
@@ -138,6 +144,7 @@ export const AgentDashboard = ({
         </div>
       )}
 
+      {/* Desktop Sidebar */}
       <aside className="hidden md:flex w-64 bg-[#0A1128] border-r border-[#00F0FF]/20 z-10 flex-col h-screen sticky top-0">
         <div className="p-6 border-b border-[#00F0FF]/20 flex items-center justify-center">
           <img src={`${import.meta.env.BASE_URL}nep-logo.png`} alt="NEP" className="h-10 brightness-0 invert opacity-80" />
@@ -164,6 +171,7 @@ export const AgentDashboard = ({
         </nav>
       </aside>
 
+      {/* Main */}
       <main className="flex-1 p-4 md:p-8 z-10 overflow-y-auto pb-24 md:pb-8">
         <header className="flex items-center justify-between mb-6 md:mb-8">
           <div>
@@ -174,6 +182,7 @@ export const AgentDashboard = ({
               {tabTitles[activeTab]}
             </h1>
           </div>
+          {/* Bildirim, Yükle Butonu ve Profil */}
           <TopBar student={student} unreadCount={unreadCount} theme={theme} onThemeChange={handleThemeChange} />
         </header>
 
@@ -182,6 +191,7 @@ export const AgentDashboard = ({
             <div className="space-y-6 sm:space-y-8 animate-fade-in">
               <ProfileSection student={student} />
 
+              {/* Minimal XP Progress Bar */}
               {(() => {
                 const THRESHOLDS = [0, 200, 500, 1000, 2000, 3500, 5500, 8000, 12000, 18000, 25000];
                 const lvl = student.level || 1;
@@ -208,6 +218,7 @@ export const AgentDashboard = ({
                 );
               })()}
 
+              {/* Dinamik Feedback Butonu — Ders bittikten sonra */}
               {autoZoomState.status === 'feedback' && !showFeedback && (
                 <button
                   onClick={() => setShowFeedback(true)}
@@ -216,13 +227,6 @@ export const AgentDashboard = ({
                   📝 Ders Hakkında Geri Bildirim Ver
                 </button>
               )}
-
-              <button
-                onClick={() => setDrawerOpen(true)}
-                className="w-full bg-[#6358cc]/10 border border-[#6358cc]/30 text-[#8b7fd8] py-4 rounded-lg font-bold uppercase tracking-wider text-sm hover:bg-[#6358cc]/20 transition-all flex items-center justify-center gap-2"
-              >
-                <Icons.Swords /> DERSE KATIL
-              </button>
 
               <MessageFeed />
             </div>
@@ -234,6 +238,7 @@ export const AgentDashboard = ({
         </div>
       </main>
 
+      {/* Mobil Alt Bar */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-[#0A1128] border-t border-[#00F0FF]/20 z-20 flex items-center justify-around px-1 py-2 safe-area-bottom">
         {[
           { id: 'home' as AgentTab, icon: <Icons.Home />, label: 'ANA SAYFA' },
