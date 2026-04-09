@@ -41,7 +41,7 @@ export const removeStudentFromFirebase = async (id: string) => {
 
 export const subscribeToTrailer = (callback: (trailer: Trailer | null) => void) => {
    const fetchTrailer = async () => {
-     const { data } = await supabase.from('settings').select('data').eq('id', 'trailer').single();
+     const { data } = await supabase.from('settings').select('data').eq('id', 'trailer').maybeSingle();
      callback(data ? data.data as Trailer : null);
    };
    fetchTrailer();
