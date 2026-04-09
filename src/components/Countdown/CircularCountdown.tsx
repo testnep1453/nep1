@@ -137,7 +137,7 @@ export const CircularCountdown: React.FC<CircularCountdownProps> = ({ targetDate
     { value: hours,   max: 24, label: 'SAAT',   color: isFinal ? '#ef4444' : '#ea5455', track: '#3a1a1a' },
     { value: minutes, max: 60, label: 'DAKİKA', color: isFinal ? '#ef4444' : '#ff9f43', track: '#3a2a1a' },
     { value: seconds, max: 60, label: 'SANİYE', color: isFinal ? '#ef4444' : '#00cfe8', track: '#1a2f35' },
-  ].filter((r, i) => {
+  ].filter((_r, i) => {
     // days=0 ise gün kutusunu gizle
     if (i === 0 && days === 0) return false;
     // hours=0 VE days=0 ise saat kutusunu gizle
