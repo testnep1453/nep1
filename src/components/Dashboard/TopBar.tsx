@@ -38,53 +38,74 @@ export const TopBar = ({ student, unreadCount, theme, onThemeChange }: TopBarPro
   const isAdmin = student.id === '1002';
   const accentColor = isAdmin ? '#39FF14' : '#00F0FF';
 
-  // PWA (Uygulamayı Yükle) State
+  // PWA & iOS Kurulum State'leri
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isInstallable, setIsInstallable] = useState(false);
+  const [showIOSPrompt, setShowIOSPrompt] = useState(false);
+
+  // iOS Cihaz ve Uygulama zaten yüklü mü kontrolü
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone === true;
 
   useEffect(() => {
     const handleBeforeInstallPrompt = (e: any) => {
-      e.preventDefault(); // Varsayılan tarayıcı uyarısını engelle, kendi butonumuzla yapacağız
+      e.preventDefault(); 
       setDeferredPrompt(e);
       setIsInstallable(true);
     };
-
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
-    return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-    };
+    return () => window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
   }, []);
 
   const handleInstallClick = async () => {
-    if (!deferredPrompt) return;
-    deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === 'accepted') {
-      setIsInstallable(false);
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') setIsInstallable(false);
+      setDeferredPrompt(null);
+    } else if (isIOS && !isStandalone) {
+      // iOS ise özel bilgilendirme menüsünü aç
+      setShowIOSPrompt(true);
     }
-    setDeferredPrompt(null);
   };
+
+  // Eğer Android/PC ise isInstallable'a bak, eğer iOS ise kendi kontrolüne bak (Zaten yüklü değilse göster)
+  const showInstallButton = isInstallable || (isIOS && !isStandalone);
 
   return (
     <>
       <div className="flex items-center gap-2 sm:gap-3 relative">
         
-        {/* Uygulamayı Yükle Butonu (Sadece destekleyen tarayıcılarda ve yüklenmemişse çıkar) */}
-        {isInstallable && (
-          <button
-            onClick={handleInstallClick}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#39FF14]/10 hover:bg-[#39FF14]/20 text-[#39FF14] border border-[#39FF14]/30 transition-all font-bold text-xs shadow-[0_0_10px_rgba(57,255,20,0.2)] animate-pulse"
-            title="Sistemi Cihaza Yükle"
-          >
-            <InstallIcon />
-            <span className="hidden sm:inline tracking-wider">YÜKLE</span>
-          </button>
+        {/* Akıllı Uygulamayı Yükle Butonu */}
+        {showInstallButton && (
+          <div className="relative">
+            <button
+              onClick={handleInstallClick}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#39FF14]/10 hover:bg-[#39FF14]/20 text-[#39FF14] border border-[#39FF14]/30 transition-all font-bold text-xs shadow-[0_0_10px_rgba(57,255,20,0.2)] animate-pulse"
+              title="Sistemi Cihaza Yükle"
+            >
+              <InstallIcon />
+              <span className="hidden sm:inline tracking-wider">YÜKLE</span>
+            </button>
+
+            {/* iOS Özel Yükleme Kılavuzu Modal'ı */}
+            {showIOSPrompt && (
+              <div className="absolute top-12 right-0 w-64 bg-[#0A1128] border border-[#00F0FF]/40 p-4 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] z-50">
+                <p className="text-[#00F0FF] font-bold text-sm mb-2 border-b border-[#00F0FF]/20 pb-1">iOS Cihaza Kurulum:</p>
+                <div className="text-gray-300 text-xs space-y-2 leading-relaxed">
+                  <p>1. Tarayıcının alt menüsündeki <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Paylaş 🔗</span> ikonuna dokunun.</p>
+                  <p>2. Menüden <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Ana Ekrana Ekle ➕</span> seçeneğine dokunun.</p>
+                </div>
+                <button onClick={() => setShowIOSPrompt(false)} className="mt-3 w-full bg-[#00F0FF]/20 text-[#00F0FF] hover:bg-[#00F0FF]/30 py-2 rounded-lg font-bold transition-colors">
+                  Anladım
+                </button>
+              </div>
+            )}
+          </div>
         )}
 
-        {/* Bildirim çanı */}
         <button
-          onClick={() => { setShowNotifications(!showNotifications); setShowProfile(false); }}
+          onClick={() => { setShowNotifications(!showNotifications); setShowProfile(false); setShowIOSPrompt(false); }}
           className="relative w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-all"
         >
           <BellIcon />
@@ -95,9 +116,8 @@ export const TopBar = ({ student, unreadCount, theme, onThemeChange }: TopBarPro
           )}
         </button>
 
-        {/* Profil */}
         <button
-          onClick={() => { setShowProfile(!showProfile); setShowNotifications(false); }}
+          onClick={() => { setShowProfile(!showProfile); setShowNotifications(false); setShowIOSPrompt(false); }}
           className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 transition-all"
         >
           <div
@@ -112,25 +132,12 @@ export const TopBar = ({ student, unreadCount, theme, onThemeChange }: TopBarPro
           <UserIcon />
         </button>
 
-        {/* Bildirim Paneli */}
         {showNotifications && (
-          <NotificationPanel
-            studentId={student.id}
-            isOpen={showNotifications}
-            onClose={() => setShowNotifications(false)}
-            unreadCount={unreadCount}
-          />
+          <NotificationPanel studentId={student.id} isOpen={showNotifications} onClose={() => setShowNotifications(false)} unreadCount={unreadCount} />
         )}
       </div>
 
-      {/* Profil Modal */}
-      <ProfileModal
-        student={student}
-        isOpen={showProfile}
-        onClose={() => setShowProfile(false)}
-        theme={theme}
-        onThemeChange={onThemeChange}
-      />
+      <ProfileModal student={student} isOpen={showProfile} onClose={() => setShowProfile(false)} theme={theme} onThemeChange={onThemeChange} />
     </>
   );
 };
