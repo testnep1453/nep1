@@ -14,7 +14,7 @@ import { TopBar } from './TopBar';
 import { MessageFeed } from './MessageFeed';
 import { YouTubePlayer } from '../VideoTheater/YouTubePlayer';
 import { OperationDrawer } from '../Drawer/OperationDrawer';
-import { FeedbackForm } from '../Feedback/FeedbackForm';
+import { FeedbackForm, isFeedbackTime } from '../Feedback/FeedbackForm';
 import { AttendancePage } from '../Admin/AttendancePage';
 import { ArchiveManager } from '../Admin/ArchiveManager';
 import { useAutoMessages } from '../../hooks/useAutoMessages';
@@ -73,9 +73,9 @@ export const UnifiedDashboard = ({
     lesson?.zoomLink || LESSON_CONFIG.zoomLink
   );
 
-  // Ders bittikten sonra feedback göster
+  // Ders bittikten 15 dakika sonra feedback göster
   useEffect(() => {
-    if (autoZoomState.status === 'feedback' && !isAdmin) {
+    if (autoZoomState.status === 'feedback' && !isAdmin && isFeedbackTime(autoZoomState.lessonDate)) {
       const feedbackShown = sessionStorage.getItem(`feedback_${autoZoomState.lessonDate}`);
       if (!feedbackShown) {
         setShowFeedback(true);
@@ -584,25 +584,103 @@ export const UnifiedDashboard = ({
 
           {isAdmin && activeTab === 'geribildirim' && (
             <div className="space-y-6 animate-fade-in">
-              {feedbackLoading ? <div className="text-center py-12"><div className="text-gray-500 animate-pulse text-lg">Yükleniyor...</div></div> : feedbackList.length === 0 ? <div className="text-center py-12"><div className="text-4xl mb-4">📋</div><p className="text-gray-500">Henüz geri bildirim yok.</p></div> : Object.entries(groupedFeedback).map(([date, entries]) => (
-                  <div key={date} className="bg-[#0A1128]/80 border border-[#6358cc]/30 rounded-lg overflow-hidden">
-                    <div className="bg-[#6358cc]/10 px-4 sm:px-6 py-3 border-b border-[#6358cc]/20">
-                      <h3 className="text-[#8b7fd8] font-bold text-sm uppercase tracking-wider">📅 {formatLessonDate(date)} — {entries.length} geri bildirim</h3>
-                    </div>
-                    <div className="divide-y divide-gray-800">
-                      {entries.map((fb) => (
-                        <div key={fb.id} className="p-4 sm:p-6 hover:bg-white/5 transition-colors">
-                          <div className="flex items-center justify-between mb-2">
-                            <div className="flex gap-1">{[1, 2, 3, 4, 5].map(s => <span key={s} className={`text-lg ${s <= fb.rating ? '' : 'opacity-20'}`}>⭐</span>)}</div>
-                            <span className="text-gray-600 text-xs font-mono">{new Date(fb.createdAt).toLocaleString('tr-TR')}</span>
+              {feedbackLoading ? (
+                <div className="text-center py-12">
+                  <div className="text-gray-500 animate-pulse text-lg">Yükleniyor...</div>
+                </div>
+              ) : feedbackList.length === 0 ? (
+                <div className="text-center py-16">
+                  <div className="text-5xl mb-4">📋</div>
+                  <p className="text-gray-500">Henüz geri bildirim yok.</p>
+                  <p className="text-gray-600 text-xs mt-2">Ders bittikten 15 dakika sonra öğrenciler formu doldurabiliyor.</p>
+                </div>
+              ) : (
+                Object.entries(groupedFeedback)
+                  .sort(([a], [b]) => b.localeCompare(a)) // En yeni ders önce
+                  .map(([date, entries]) => {
+                    const avgRating = entries.reduce((s, e) => s + e.rating, 0) / entries.length;
+                    const lessonNo = entries[0]?.lessonNo;
+                    return (
+                      <div key={date} className="bg-[#0A1128]/80 border border-[#6358cc]/30 rounded-xl overflow-hidden">
+                        {/* Ders başlık satırı */}
+                        <div className="bg-[#6358cc]/10 px-5 py-4 border-b border-[#6358cc]/20 flex flex-wrap items-center gap-4">
+                          <div>
+                            <h3 className="text-[#8b7fd8] font-black text-base uppercase tracking-widest">
+                              {lessonNo ? `Ders ${lessonNo}` : formatLessonDate(date)}
+                            </h3>
+                            <p className="text-gray-600 text-xs font-mono">{formatLessonDate(date)}</p>
                           </div>
-                          {fb.comment && <p className="text-gray-300 text-sm leading-relaxed">"{fb.comment}"</p>}
+                          <div className="ml-auto flex items-center gap-6 text-sm">
+                            <div className="text-center">
+                              <div className="font-bold text-white">{entries.length}</div>
+                              <div className="text-gray-600 text-xs">form</div>
+                            </div>
+                            <div className="text-center">
+                              <div className="font-bold text-yellow-400 flex items-center gap-1">
+                                {avgRating.toFixed(1)} ⭐
+                              </div>
+                              <div className="text-gray-600 text-xs">ortalama</div>
+                            </div>
+                            {/* Yıldız dağılımı */}
+                            <div className="hidden sm:flex flex-col gap-0.5">
+                              {[5,4,3,2,1].map(star => {
+                                const count = entries.filter(e => e.rating === star).length;
+                                const pct = entries.length ? Math.round((count / entries.length) * 100) : 0;
+                                return (
+                                  <div key={star} className="flex items-center gap-1.5 text-[10px]">
+                                    <span className="text-gray-500 w-3 text-right">{star}</span>
+                                    <span className="text-yellow-500 text-[8px]">★</span>
+                                    <div className="w-16 h-1.5 bg-gray-800 rounded-full overflow-hidden">
+                                      <div className="h-full bg-yellow-400/70 rounded-full" style={{ width: `${pct}%` }} />
+                                    </div>
+                                    <span className="text-gray-600 w-4">{count}</span>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
                         </div>
-                      ))}
-                    </div>
-                  </div>
-                ))
-              }
+
+                        {/* Geri bildirim tablosu */}
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-left border-collapse">
+                            <thead>
+                              <tr className="border-b border-gray-800 text-[11px] font-mono text-gray-500 uppercase tracking-wider">
+                                <th className="px-4 py-2 font-normal">#</th>
+                                <th className="px-4 py-2 font-normal">Puan</th>
+                                <th className="px-4 py-2 font-normal">Yorum</th>
+                                <th className="px-4 py-2 font-normal hidden sm:table-cell text-right">Saat</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-800/60">
+                              {entries.map((fb, i) => (
+                                <tr key={fb.id} className="hover:bg-white/3 transition-colors">
+                                  <td className="px-4 py-3 text-gray-600 text-xs font-mono">{i + 1}</td>
+                                  <td className="px-4 py-3">
+                                    <div className="flex gap-0.5">
+                                      {[1,2,3,4,5].map(s => (
+                                        <span key={s} className={`text-base ${s <= fb.rating ? 'text-yellow-400' : 'text-gray-700'}`}>★</span>
+                                      ))}
+                                    </div>
+                                  </td>
+                                  <td className="px-4 py-3 text-gray-300 text-sm max-w-xs">
+                                    {fb.comment
+                                      ? <span className="italic">"{fb.comment}"</span>
+                                      : <span className="text-gray-700">—</span>
+                                    }
+                                  </td>
+                                  <td className="px-4 py-3 hidden sm:table-cell text-gray-600 text-xs font-mono text-right whitespace-nowrap">
+                                    {new Date(fb.createdAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      </div>
+                    );
+                  })
+              )}
             </div>
           )}
 

@@ -10,6 +10,19 @@ const BADGE_CONFIG = [
   { id: 'team', label: 'Takım', emoji: '💛', desc: 'Takım çalışmasında öne çık.' },
 ];
 
+const LEVEL_COLORS = [
+  '#6b7280', // 1
+  '#3b82f6', // 2
+  '#22c55e', // 3
+  '#84cc16', // 4
+  '#eab308', // 5
+  '#f97316', // 6
+  '#ef4444', // 7
+  '#a855f7', // 8
+  '#00F0FF', // 9
+  '#FFD700', // 10
+];
+
 export const LevelProgress = ({ student }: { student: Student }) => {
   const currentLevel = student.level || 1;
   const currentXP = student.xp || 0;
@@ -21,7 +34,7 @@ export const LevelProgress = ({ student }: { student: Student }) => {
     <div className="space-y-6 animate-fade-in">
       {/* Level Card */}
       <div className="bg-[#0A1128]/80 border border-[#00F0FF]/30 p-6 rounded-lg">
-        <div className="flex items-center gap-4 mb-6">
+        <div className="flex items-center gap-4 mb-4">
           <div className="w-16 h-16 bg-[#00F0FF]/10 border-2 border-[#00F0FF]/50 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(0,240,255,0.3)]">
             <span className="text-2xl font-bold text-[#00F0FF]">{currentLevel}</span>
           </div>
@@ -30,9 +43,7 @@ export const LevelProgress = ({ student }: { student: Student }) => {
             <p className="text-gray-400 text-sm font-mono">{currentXP} / {nextThreshold} XP</p>
           </div>
         </div>
-
-        {/* Progress Bar */}
-        <div className="mb-2">
+        <div className="mb-1">
           <div className="flex justify-between text-xs text-gray-500 mb-1">
             <span>LEVEL İLERLEMESİ</span>
             <span>{Math.round(progress)}%</span>
@@ -47,26 +58,82 @@ export const LevelProgress = ({ student }: { student: Student }) => {
         </p>
       </div>
 
-      {/* Level Yol Haritası */}
+      {/* LEVEL YOL HARİTASI — Dikey zincir görsel */}
       <div className="bg-[#0A1128]/80 border border-[#6358cc]/30 p-6 rounded-lg">
-        <h3 className="text-[#8b7fd8] font-bold text-sm uppercase tracking-wider mb-4">📊 Level Yol Haritası</h3>
-        <div className="space-y-2">
+        <h3 className="text-[#8b7fd8] font-bold text-sm uppercase tracking-wider mb-6">🗺️ Level Yol Haritası</h3>
+        
+        <div className="relative flex flex-col items-center gap-0">
           {LEVEL_THRESHOLDS.slice(0, 10).map((threshold, idx) => {
             const lvl = idx + 1;
-            const isCurrentOrBelow = lvl <= currentLevel;
+            const isUnlocked = lvl <= currentLevel;
             const isCurrent = lvl === currentLevel;
+            const color = LEVEL_COLORS[idx];
+            const isLast = lvl === 10;
+
             return (
-              <div key={lvl} className={`flex items-center gap-3 p-2 rounded ${isCurrent ? 'bg-[#00F0FF]/10 border border-[#00F0FF]/30' : ''}`}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold ${
-                  isCurrentOrBelow ? 'bg-[#00F0FF]/20 text-[#00F0FF]' : 'bg-gray-800 text-gray-600'
-                }`}>{lvl}</div>
-                <div className="flex-1">
-                  <div className={`text-sm ${isCurrentOrBelow ? 'text-white' : 'text-gray-600'}`}>
-                    Level {lvl} {isCurrent && <span className="text-[#00F0FF] text-xs ml-1">← şu an</span>}
+              <div key={lvl} className="relative flex flex-col items-center w-full">
+                {/* Konnektör çizgi (üst) */}
+                {idx > 0 && (
+                  <div
+                    className="w-0.5 h-6"
+                    style={{ background: isUnlocked ? `linear-gradient(to bottom, ${LEVEL_COLORS[idx - 1]}, ${color})` : '#1f2937' }}
+                  />
+                )}
+
+                {/* Level Düğümü */}
+                <div className={`relative flex items-center gap-4 w-full max-w-sm px-3 py-3 rounded-xl border transition-all duration-300 ${
+                  isCurrent
+                    ? 'bg-[#00F0FF]/10 border-[#00F0FF]/50 shadow-[0_0_20px_rgba(0,240,255,0.15)]'
+                    : isUnlocked
+                    ? 'bg-white/5 border-white/10'
+                    : 'bg-[#050505] border-gray-800/50 opacity-50'
+                }`}>
+
+                  {/* Daire */}
+                  <div
+                    className="w-10 h-10 rounded-full flex items-center justify-center font-black text-sm flex-shrink-0 border-2"
+                    style={{
+                      background: isUnlocked ? `${color}22` : '#111827',
+                      borderColor: isUnlocked ? color : '#374151',
+                      color: isUnlocked ? color : '#6b7280',
+                      boxShadow: isCurrent ? `0 0 16px ${color}66` : 'none',
+                    }}
+                  >
+                    {isUnlocked && !isCurrent ? '✓' : lvl}
                   </div>
-                  <div className="text-xs text-gray-600">{threshold} XP</div>
+
+                  {/* Metin */}
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-sm" style={{ color: isUnlocked ? color : '#6b7280' }}>
+                        Level {lvl}
+                        {isLast && <span className="ml-1 text-[10px] text-yellow-400">👑 MAX</span>}
+                      </span>
+                      {isCurrent && (
+                        <span className="text-[9px] bg-[#00F0FF]/20 text-[#00F0FF] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wider animate-pulse">
+                          ŞU AN
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-xs text-gray-600 font-mono">{threshold.toLocaleString()} XP</div>
+                  </div>
+
+                  {/* Sağ XP göstergesi (current) */}
+                  {isCurrent && (
+                    <div className="text-right flex-shrink-0">
+                      <div className="text-xs font-mono text-[#00F0FF]">{currentXP}</div>
+                      <div className="text-[10px] text-gray-600">/ {nextThreshold}</div>
+                    </div>
+                  )}
                 </div>
-                {isCurrentOrBelow && <span className="text-[#39FF14]">✓</span>}
+
+                {/* Konnektör (alt, son hariç) */}
+                {!isLast && (
+                  <div
+                    className="w-0.5 h-6"
+                    style={{ background: isUnlocked ? `linear-gradient(to bottom, ${color}, ${LEVEL_COLORS[idx + 1]})` : '#1f2937' }}
+                  />
+                )}
               </div>
             );
           })}
@@ -83,7 +150,7 @@ export const LevelProgress = ({ student }: { student: Student }) => {
               <div key={badge.id} className={`p-4 rounded-lg border text-center transition-all ${
                 earned
                   ? 'bg-[#FF9F43]/10 border-[#FF9F43]/30 hover:border-[#FF9F43]/60'
-                  : 'bg-gray-900/50 border-gray-800 opacity-50'
+                  : 'bg-gray-900/50 border-gray-800 opacity-40'
               }`}>
                 <div className="text-3xl mb-2">{badge.emoji}</div>
                 <div className={`text-xs font-bold ${earned ? 'text-[#FF9F43]' : 'text-gray-600'}`}>{badge.label}</div>

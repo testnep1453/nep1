@@ -8,7 +8,7 @@
 import { Lesson } from '../types/student';
 
 // Sabit Zoom linki
-const DEFAULT_ZOOM_LINK = 'https://us06web.zoom.us/j/81331199971?pwd=wEBSZPJcBJg3MbV4FqGMO7ggJ3onM8.1';
+const DEFAULT_ZOOM_LINK = 'https://us06web.zoom.us/j/4379624331?pwd=0FNDyMVqBM7FooqqiOz1zz3efzYDIJ.1';
 
 // Ders saatleri (Türkiye saati - UTC+3)
 const LESSON_HOUR_START = 19; // 19:00

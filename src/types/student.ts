@@ -73,6 +73,7 @@ export interface FeedbackEntry {
   id: string;
   studentId: string;
   lessonDate: string; // YYYY-MM-DD
+  lessonNo?: number;  // Ders numarası
   rating: number; // 1-5
   comment: string;
   createdAt: number;

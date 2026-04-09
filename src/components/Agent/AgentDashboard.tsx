@@ -3,7 +3,7 @@ import { Student, Lesson, Trailer } from '../../types/student';
 import { ProfileSection } from '../Dashboard/ProfileSection';
 import { TopBar } from '../Dashboard/TopBar';
 import { OperationDrawer } from '../Drawer/OperationDrawer';
-import { FeedbackForm } from '../Feedback/FeedbackForm';
+import { FeedbackForm, isFeedbackTime } from '../Feedback/FeedbackForm';
 import { ArchivePage } from '../Archive/ArchivePage';
 import { LevelProgress } from './LevelProgress';
 import { ActivityPage } from './ActivityPage';
@@ -38,25 +38,13 @@ export const AgentDashboard = ({
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [trailer, setTrailerState] = useState<Trailer | null>(null);
-  const [theme, setTheme] = useState<'dark' | 'light'>(() => {
-    const saved = (localStorage.getItem('nepTheme') as 'dark' | 'light') || 'dark';
-    if (saved === 'light') document.body.classList.add('theme-light');
-    else document.body.classList.remove('theme-light');
-    return saved;
-  });
-
-  const handleThemeChange = (t: 'dark' | 'light') => {
-    setTheme(t);
-    localStorage.setItem('nepTheme', t);
-    if (t === 'light') document.body.classList.add('theme-light');
-    else document.body.classList.remove('theme-light');
-  };
+  // Tema: sadece dark mod
 
   const { unreadCount } = useNotifications(student.id);
   const autoZoomState = useAutoZoom(student.id, student.name, lesson?.zoomLink || LESSON_CONFIG.zoomLink);
 
   useEffect(() => {
-    if (autoZoomState.status === 'feedback') {
+    if (autoZoomState.status === 'feedback' && isFeedbackTime(autoZoomState.lessonDate)) {
       const feedbackShown = sessionStorage.getItem(`feedback_${autoZoomState.lessonDate}`);
       if (!feedbackShown) setShowFeedback(true);
     }
@@ -174,7 +162,7 @@ export const AgentDashboard = ({
               {tabTitles[activeTab]}
             </h1>
           </div>
-          <TopBar student={student} unreadCount={unreadCount} theme={theme} onThemeChange={handleThemeChange} />
+          <TopBar student={student} unreadCount={unreadCount} />
         </header>
 
         {/* PROFIL KARTI MERKEZLEME ALANI */}

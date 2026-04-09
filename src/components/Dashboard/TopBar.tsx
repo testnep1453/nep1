@@ -6,8 +6,8 @@ import { ProfileModal } from './ProfileModal';
 interface TopBarProps {
   student: Student;
   unreadCount: number;
-  theme: 'dark' | 'light';
-  onThemeChange: (theme: 'dark' | 'light') => void;
+  theme?: 'dark' | 'light';
+  onThemeChange?: (theme: 'dark' | 'light') => void;
 }
 
 const BellIcon = () => (
@@ -31,7 +31,7 @@ const InstallIcon = () => (
   </svg>
 );
 
-export const TopBar = ({ student, unreadCount, theme, onThemeChange }: TopBarProps) => {
+export const TopBar = ({ student, unreadCount, theme = 'dark', onThemeChange }: TopBarProps) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
   const isAdmin = student.id === '1002';
@@ -153,7 +153,7 @@ export const TopBar = ({ student, unreadCount, theme, onThemeChange }: TopBarPro
         )}
       </div>
 
-      <ProfileModal student={student} isOpen={showProfile} onClose={() => setShowProfile(false)} theme={theme} onThemeChange={onThemeChange} />
+      <ProfileModal student={student} isOpen={showProfile} onClose={() => setShowProfile(false)} theme={theme ?? 'dark'} onThemeChange={onThemeChange ?? (() => {})} />
     </>
   );
 };
