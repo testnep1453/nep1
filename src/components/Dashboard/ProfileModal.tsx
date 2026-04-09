@@ -13,7 +13,17 @@ interface ProfileModalProps {
   onThemeChange: (theme: 'dark' | 'light') => void;
 }
 
-const AVAILABLE_AVATARS = ['hero_1', 'hero_2', 'hero_3', 'hero_4', 'hero_5', 'hero_6', 'hero_7', 'hero_8'];
+// AÇIK KAYNAKLI ALGORİTMA STİLLERİ (DiceBear)
+const AVATAR_STYLES = [
+  { id: 'bottts', name: 'Siber Robot' },
+  { id: 'adventurer', name: 'Gizli Ajan' },
+  { id: 'pixel-art', name: 'Retro 8-Bit' },
+  { id: 'avataaars', name: 'Sivil Görünüm' },
+  { id: 'micah', name: 'El Çizimi' },
+  { id: 'lorelei', name: 'Kozmik' },
+  { id: 'notionists', name: 'Karikatür' },
+  { id: 'rings', name: 'Hologram' }
+];
 
 export const ProfileModal = ({ student, isOpen, onClose, theme, onThemeChange }: ProfileModalProps) => {
   const [nickname, setNickname] = useState(student.nickname || '');
@@ -50,13 +60,13 @@ export const ProfileModal = ({ student, isOpen, onClose, theme, onThemeChange }:
     setSavingNickname(false);
   };
 
-  const handleAvatarSelect = async (avatarId: string) => {
-    if (avatarId === student.avatar) return;
+  const handleAvatarSelect = async (styleId: string) => {
+    if (styleId === student.avatar) return;
     
     setSavingAvatar(true);
     try {
-      await updateDoc(doc(db, 'students', student.id), { avatar: avatarId });
-      student.avatar = avatarId; // Local update
+      await updateDoc(doc(db, 'students', student.id), { avatar: styleId });
+      student.avatar = styleId; // Local update
     } catch (err) {
       console.error("Avatar kaydedilemedi", err);
     }
@@ -102,34 +112,43 @@ export const ProfileModal = ({ student, isOpen, onClose, theme, onThemeChange }:
           <button onClick={onClose} className="w-8 h-8 rounded-full bg-white/5 text-white/50 hover:text-white hover:bg-white/10 flex items-center justify-center transition-colors">✕</button>
         </div>
 
-        {/* Profil Fotoğrafı (Avatar) Seçimi */}
+        {/* Profil Fotoğrafı (Açık Kaynak Avatar) Seçimi */}
         <div className="mb-8">
-          <label className="text-gray-400 text-xs uppercase tracking-wider block mb-3">Kimlik Dosyası (Avatar)</label>
+          <label className="text-gray-400 text-xs uppercase tracking-wider block mb-3">
+            Algoritmik Avatar Tarzı
+            <span className="block text-[10px] text-gray-500 normal-case mt-1 tracking-normal">Kimliğine özel (ID: {student.id}) yüzün farklı evrenlerde nasıl görünür?</span>
+          </label>
           <div className="grid grid-cols-4 gap-2">
-            {AVAILABLE_AVATARS.map(avatar => (
-              <button
-                key={avatar}
-                onClick={() => handleAvatarSelect(avatar)}
-                disabled={savingAvatar}
-                className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all ${
-                  student.avatar === avatar || (!student.avatar && avatar === 'hero_1')
-                    ? 'border-[#39FF14] shadow-[0_0_10px_rgba(57,255,20,0.3)] scale-105'
-                    : 'border-transparent opacity-60 hover:opacity-100 hover:border-gray-500'
-                }`}
-              >
-                <img 
-                  src={`${import.meta.env.BASE_URL}avatars/${avatar}.jpg`} 
-                  alt={avatar}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    (e.target as HTMLImageElement).src = 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" viewBox="0 0 24 24" fill="none" stroke="%23333" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>';
-                  }}
-                />
-                {(student.avatar === avatar || (!student.avatar && avatar === 'hero_1')) && (
-                  <div className="absolute bottom-0 right-0 bg-[#39FF14] text-black text-[8px] font-bold px-1 rounded-tl">AKTİF</div>
-                )}
-              </button>
-            ))}
+            {AVATAR_STYLES.map(style => {
+              // Ajanın ID'sine göre sadece ona özel üretilen önizleme URL'si
+              const previewUrl = `https://api.dicebear.com/9.x/${style.id}/svg?seed=${student.id}&backgroundColor=transparent`;
+              const isActive = student.avatar === style.id || (!student.avatar && style.id === 'bottts');
+
+              return (
+                <button
+                  key={style.id}
+                  onClick={() => handleAvatarSelect(style.id)}
+                  disabled={savingAvatar}
+                  className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all bg-[#050505] flex items-center justify-center ${
+                    isActive
+                      ? 'border-[#39FF14] shadow-[0_0_10px_rgba(57,255,20,0.3)] scale-105'
+                      : 'border-gray-800 opacity-60 hover:opacity-100 hover:border-gray-500'
+                  }`}
+                  title={style.name}
+                >
+                  <img src={previewUrl} alt={style.name} className="w-full h-full object-contain p-1" />
+                  
+                  {/* Tarz İsim Etiketi */}
+                  <div className="absolute bottom-0 left-0 right-0 bg-black/80 text-white text-[8px] font-bold text-center py-0.5 truncate px-1">
+                    {style.name}
+                  </div>
+
+                  {isActive && (
+                    <div className="absolute top-0 right-0 bg-[#39FF14] text-black text-[8px] font-bold px-1 rounded-bl">✓</div>
+                  )}
+                </button>
+              );
+            })}
           </div>
         </div>
 
