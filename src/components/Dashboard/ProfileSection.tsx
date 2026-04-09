@@ -22,7 +22,6 @@ export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps
   const [isEditingNickname, setIsEditingNickname] = useState(false);
   const [nicknameValue, setNicknameValue] = useState(student.nickname || '');
   const [saving, setSaving] = useState(false);
-  const [imgError, setImgError] = useState(false);
 
   const xpForNextLevel = student.level * 200;
   const xpProgress = (student.xp % 200) / 200 * 100;
@@ -45,43 +44,47 @@ export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps
     }
   };
 
-  // Açık Kaynaklı Algoritmik Avatar URL'si
-  // Ajanın ID'sine göre her zaman aynı ama diğerlerinden tamamen farklı bir yüz üretir!
-  const avatarStyle = student.avatar || 'bottts'; // Varsayılan tarz: Siber Robot
-  const dicebearUrl = `https://api.dicebear.com/9.x/${avatarStyle}/svg?seed=${student.id}&backgroundColor=transparent`;
+  // Avatarı Ayrıştırma Mantığı (Style ve Rastgelelik Kodu)
+  let avatarStyle = 'bottts';
+  let avatarSeed = student.id;
+
+  if (student.avatar && student.avatar.includes(':')) {
+    const parts = student.avatar.split(':');
+    avatarStyle = parts[0];
+    avatarSeed = parts[1];
+  } else if (student.avatar) {
+    avatarStyle = student.avatar;
+  }
+
+  const dicebearUrl = `https://api.dicebear.com/9.x/${avatarStyle}/svg?seed=${avatarSeed}&backgroundColor=transparent`;
 
   return (
-    <div className="bg-gradient-to-br from-[#1a1d2e] to-[#0A1128] rounded-2xl p-5 border border-[#00F0FF]/30 shadow-[0_0_20px_rgba(0,240,255,0.1)]">
+    <div className="bg-gradient-to-br from-[#1a1d2e] to-[#0A1128] rounded-2xl p-6 sm:p-8 border border-[#00F0FF]/30 shadow-[0_0_30px_rgba(0,240,255,0.1)] w-full">
       
       {/* ÜST KISIM: Profil Bilgileri */}
-      <div className="flex items-center gap-5 mb-6">
+      <div className="flex flex-col sm:flex-row items-center sm:items-start gap-6 sm:gap-8 mb-8 text-center sm:text-left">
         <div className="relative shrink-0 group">
-          {/* Benzersiz Algoritmik Avatar */}
-          <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-[#00F0FF]/50 shadow-[0_0_15px_rgba(0,240,255,0.3)] bg-[#050505] flex items-center justify-center relative">
+          {/* Benzersiz Kahoot Tarzı Avatar */}
+          <div className="w-32 h-32 sm:w-36 sm:h-36 rounded-2xl overflow-hidden border-2 border-[#00F0FF]/50 shadow-[0_0_20px_rgba(0,240,255,0.4)] bg-[#050505] flex items-center justify-center relative">
             <div className="absolute inset-0 bg-gradient-to-t from-[#00F0FF]/20 to-transparent opacity-50"></div>
-            {!imgError ? (
-              <img 
-                src={dicebearUrl} 
-                alt="Ajan Avatar" 
-                className="w-full h-full object-contain p-1.5 drop-shadow-[0_0_8px_rgba(0,240,255,0.8)] transition-transform duration-500 group-hover:scale-110"
-                onError={() => setImgError(true)}
-              />
-            ) : (
-              <Shield className="w-12 h-12 text-[#00F0FF]/50" />
-            )}
+            <img 
+              src={dicebearUrl} 
+              alt="Ajan Avatar" 
+              className="w-full h-full object-contain p-2 drop-shadow-[0_0_8px_rgba(0,240,255,0.8)] transition-transform duration-500 group-hover:scale-110"
+            />
           </div>
-          <div className="absolute -bottom-3 -right-3 bg-[#00F0FF] rounded-lg px-2 py-1 flex items-center justify-center border border-[#0A1128] shadow-lg text-[#0A1128] font-black text-xs z-10">
+          <div className="absolute -bottom-4 -right-4 bg-[#00F0FF] rounded-lg px-3 py-1.5 flex items-center justify-center border-2 border-[#0A1128] shadow-lg text-[#0A1128] font-black text-sm z-10">
             LVL {student.level}
           </div>
         </div>
 
-        <div className="flex-1 min-w-0">
-          <h2 className="text-2xl font-bold text-white uppercase tracking-wider truncate mb-1">
+        <div className="flex-1 min-w-0 pt-2">
+          <h2 className="text-3xl sm:text-4xl font-black text-white uppercase tracking-wider truncate mb-2 drop-shadow-lg">
             {student.name}
           </h2>
 
           {isEditingNickname ? (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-center sm:justify-start gap-2">
               <input
                 type="text"
                 value={nicknameValue}
@@ -89,40 +92,36 @@ export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps
                 maxLength={20}
                 autoFocus
                 onKeyDown={(e) => e.key === 'Enter' && handleSaveNickname()}
-                className="bg-[#050505] border border-[#00F0FF] text-[#00F0FF] px-2 py-1.5 text-sm rounded font-mono focus:outline-none w-full max-w-[160px]"
+                className="bg-[#050505] border border-[#00F0FF] text-[#00F0FF] px-3 py-2 text-sm rounded font-mono focus:outline-none w-full max-w-[200px]"
                 placeholder="Takma adın..."
               />
-              <button onClick={handleSaveNickname} disabled={saving} className="text-[#39FF14] text-sm font-bold bg-[#39FF14]/10 px-2 py-1 rounded">
+              <button onClick={handleSaveNickname} disabled={saving} className="text-[#39FF14] text-lg font-bold bg-[#39FF14]/10 px-3 py-1.5 rounded">
                 {saving ? '...' : '✓'}
               </button>
-              <button onClick={() => { setIsEditingNickname(false); setNicknameValue(student.nickname || ''); }} className="text-[#FF4500] text-sm font-bold bg-[#FF4500]/10 px-2 py-1 rounded">
+              <button onClick={() => { setIsEditingNickname(false); setNicknameValue(student.nickname || ''); }} className="text-[#FF4500] text-lg font-bold bg-[#FF4500]/10 px-3 py-1.5 rounded">
                 ✕
               </button>
             </div>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center justify-center sm:justify-start gap-2">
               {student.nickname ? (
-                <div className="text-[#00F0FF] font-mono tracking-widest text-sm drop-shadow-[0_0_5px_rgba(0,240,255,0.5)]">
-                  » {student.nickname}
+                <div className="text-[#00F0FF] font-mono tracking-widest text-lg drop-shadow-[0_0_8px_rgba(0,240,255,0.6)] font-bold">
+                  » {student.nickname} «
                 </div>
               ) : (
-                <span className="text-gray-500 text-xs italic font-mono">Takma ad belirle</span>
+                <span className="text-gray-500 text-sm italic font-mono">Gizli Kod (Takma Ad) Belirle</span>
               )}
-              <button onClick={() => setIsEditingNickname(true)} className="text-gray-600 hover:text-[#00F0FF] transition-colors ml-2" title="Takma adını düzenle">
+              <button onClick={() => setIsEditingNickname(true)} className="text-gray-500 hover:text-[#00F0FF] transition-colors ml-3 text-lg" title="Takma adını düzenle">
                 ✏️
               </button>
             </div>
           )}
 
-          {isAdmin ? (
-            <div className="mt-3 px-3 py-1 bg-[#39FF14]/10 border border-[#39FF14]/30 rounded inline-flex items-center gap-2 text-[#39FF14] text-xs font-bold tracking-widest uppercase">
-              👑 Sistem Yöneticisi
-            </div>
-          ) : (
-            <div className="flex items-center gap-2 mt-3">
-              <Zap className="w-4 h-4 text-[#00F0FF]" fill="#00F0FF" />
-              <span className="text-gray-300 text-sm font-mono">
-                Toplam XP: <span className="text-[#00F0FF] font-bold">{student.xp}</span>
+          {!isAdmin && (
+            <div className="flex items-center justify-center sm:justify-start gap-2 mt-4 bg-white/5 inline-flex px-4 py-2 rounded-lg border border-white/10">
+              <Zap className="w-5 h-5 text-[#39FF14]" fill="#39FF14" />
+              <span className="text-gray-300 text-base font-mono">
+                Kazanılan XP: <span className="text-[#39FF14] font-bold text-xl">{student.xp}</span>
               </span>
             </div>
           )}
@@ -131,19 +130,19 @@ export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps
 
       {/* ORTA KISIM: İlerleme Çubuğu */}
       {!isAdmin && (
-        <div className="mb-8">
-          <div className="flex justify-between items-center mb-2">
-            <span className="text-gray-500 text-xs font-mono tracking-widest">SONRAKİ SEVİYE İÇİN</span>
-            <span className="text-[#00F0FF] text-xs font-mono font-bold">
+        <div className="mb-10 bg-black/40 p-4 rounded-xl border border-gray-800">
+          <div className="flex justify-between items-center mb-3">
+            <span className="text-gray-400 text-xs font-mono tracking-widest">SONRAKİ SEVİYE HEDEFİ</span>
+            <span className="text-[#00F0FF] text-sm font-mono font-bold">
               {student.xp % 200} / {xpForNextLevel} XP
             </span>
           </div>
-          <div className="h-2 bg-[#050505] rounded-full overflow-hidden border border-gray-800">
+          <div className="h-3 bg-[#050505] rounded-full overflow-hidden border border-gray-800 shadow-inner">
             <div
               className="h-full bg-gradient-to-r from-[#00F0FF] to-[#39FF14] rounded-full transition-all duration-1000 relative"
               style={{ width: `${xpProgress}%` }}
             >
-              <div className="absolute top-0 right-0 bottom-0 left-0 bg-[linear-gradient(45deg,rgba(255,255,255,0.2)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.2)_50%,rgba(255,255,255,0.2)_75%,transparent_75%,transparent)] bg-[length:1rem_1rem] animate-[pan_1s_linear_infinite]" />
+              <div className="absolute top-0 right-0 bottom-0 left-0 bg-[linear-gradient(45deg,rgba(255,255,255,0.2)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.2)_50%,rgba(255,255,255,0.2)_75%,transparent_75%,transparent)] bg-[length:1.5rem_1.5rem] animate-[pan_1s_linear_infinite]" />
             </div>
           </div>
         </div>
@@ -152,45 +151,45 @@ export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps
       {/* ALT KISIM: Ajan Envanteri */}
       {!isAdmin && (
         <div>
-          <h3 className="text-gray-400 font-bold mb-3 uppercase tracking-widest flex items-center gap-2 text-sm border-b border-gray-800 pb-2">
-            <Shield className="w-4 h-4" />
-            AJAN ENVANTERİ
+          <h3 className="text-gray-300 font-bold mb-4 uppercase tracking-widest flex items-center justify-center sm:justify-start gap-2 text-base border-b border-gray-800 pb-3">
+            <Shield className="w-5 h-5 text-[#00F0FF]" />
+            KİLİDİ AÇILAN TEÇHİZATLAR
           </h3>
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-4">
             {INVENTORY_ITEMS.map((item) => {
               const isUnlocked = student.level >= item.reqLevel;
               return (
                 <div
                   key={item.id}
-                  className={`group relative aspect-square rounded-xl border transition-all flex items-center justify-center cursor-help
+                  className={`group relative aspect-square rounded-xl border-2 transition-all flex items-center justify-center cursor-help
                     ${isUnlocked 
-                      ? 'bg-[#00F0FF]/10 border-[#00F0FF]/50 shadow-[0_0_10px_rgba(0,240,255,0.2)] hover:bg-[#00F0FF]/20' 
+                      ? 'bg-[#00F0FF]/10 border-[#00F0FF]/50 shadow-[0_0_15px_rgba(0,240,255,0.2)] hover:bg-[#00F0FF]/30 hover:scale-105' 
                       : 'bg-black/50 border-gray-800 opacity-50 hover:opacity-80'}`}
                 >
-                  <div className={`text-2xl transition-transform ${isUnlocked ? 'group-hover:scale-110 drop-shadow-[0_0_8px_rgba(255,255,255,0.5)]' : 'grayscale'}`}>
+                  <div className={`text-4xl sm:text-3xl md:text-4xl transition-transform ${isUnlocked ? 'drop-shadow-[0_0_10px_rgba(255,255,255,0.6)]' : 'grayscale'}`}>
                     {item.icon}
                   </div>
                   
                   {!isUnlocked && (
-                    <div className="absolute top-1 right-1 text-gray-500">
+                    <div className="absolute top-2 right-2 text-gray-500 bg-black/80 rounded-full p-1">
                       <Lock className="w-3 h-3" />
                     </div>
                   )}
                   {isUnlocked && (
-                    <div className="absolute top-1 right-1 text-[#39FF14]">
+                    <div className="absolute top-2 right-2 text-[#39FF14] bg-black/80 rounded-full p-1">
                       <Unlock className="w-3 h-3" />
                     </div>
                   )}
 
-                  <div className="absolute w-48 bottom-full left-1/2 -translate-x-1/2 mb-2 p-3 bg-[#0A1128] border border-[#00F0FF]/40 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-20 shadow-2xl pointer-events-none">
-                    <div className={`font-bold mb-1 text-sm ${isUnlocked ? 'text-[#00F0FF]' : 'text-gray-400'}`}>
+                  <div className="absolute w-56 bottom-full left-1/2 -translate-x-1/2 mb-3 p-4 bg-[#0A1128] border-2 border-[#00F0FF]/60 text-white text-xs rounded-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-20 shadow-2xl pointer-events-none">
+                    <div className={`font-bold mb-2 text-base ${isUnlocked ? 'text-[#00F0FF]' : 'text-gray-400'}`}>
                       {item.name}
                     </div>
-                    <div className="text-gray-300 mb-2 leading-relaxed">
+                    <div className="text-gray-300 mb-3 leading-relaxed text-sm">
                       {item.desc}
                     </div>
-                    <div className={`font-mono text-[10px] uppercase tracking-widest mt-2 ${isUnlocked ? 'text-[#39FF14]' : 'text-[#FF4500]'}`}>
-                      {isUnlocked ? '✓ KULLANIMA AÇIK' : `🔒 AÇMAK İÇİN LEVEL ${item.reqLevel} GEREKİR`}
+                    <div className={`font-mono text-xs font-bold uppercase tracking-widest bg-black/50 p-2 rounded ${isUnlocked ? 'text-[#39FF14]' : 'text-[#FF4500]'}`}>
+                      {isUnlocked ? '✓ ENVANTERE EKLENDİ' : `🔒 LEVEL ${item.reqLevel} GEREKLİ`}
                     </div>
                   </div>
                 </div>
