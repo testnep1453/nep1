@@ -94,8 +94,7 @@ export const StudentLogin = ({
             await onLogin(localMatch.id);
           }
         } else {
-          setError('Bu Google hesabı hiçbir ajan ile eşleşmiyor. Önce numaranla giriş yap.');
-        }
+setError("Önce numaranla giriş yap.");        }
       }
     } catch {
       setError('Google girişi sırasında hata oluştu.');
