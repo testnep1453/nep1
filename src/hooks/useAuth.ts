@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Student } from '../types/student';
-import { getStudents } from '../services/db';
+import { getStudents } from '../services/db'; 
 import { getStudentById, upsertStudent, signOutUser, saveStudentEmail, signInAndMapStudent } from '../services/authService';
 import { registerDevice } from '../services/deviceService';
+import { supabase } from '../config/supabase';
 
 const ADMIN_ID = '1002';
 
@@ -12,21 +13,47 @@ export const useAuth = () => {
   const [pendingStudent, setPendingStudent] = useState<Student | null>(null);
   const [needsAdminAuth, setNeedsAdminAuth] = useState(false);
   const [needsEmailVerification, setNeedsEmailVerification] = useState(false);
+  const [googleError, setGoogleError] = useState(''); 
 
   useEffect(() => {
-    const storedId = localStorage.getItem('studentId');
-    const emailVerified = sessionStorage.getItem('emailVerified') === 'true';
+    const initAuth = async () => {
+      // 1. Google'dan siteye geri dönüşü yakala!
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session?.user?.email) {
+        const email = session.user.email;
+        // Supabase'de bu mailde bir öğrenci var mı bak
+        const { data: matchedStudent } = await supabase.from('students').select('id').eq('email', email).single();
+        
+        if (matchedStudent) {
+          // Öğrenci bulunduysa direkt içeri al
+          localStorage.setItem('studentId', matchedStudent.id);
+          sessionStorage.setItem('emailVerified', 'true');
+          await loadStudent(matchedStudent.id, true);
+          return;
+        } else {
+          // Bulunamadıysa oturumu kapat ve uyar
+          await supabase.auth.signOut();
+          setGoogleError('Önce numaranla giriş yap.');
+        }
+      }
 
-    if (storedId) {
-      loadStudent(storedId, emailVerified);
-    } else {
-      setLoading(false);
-    }
+      // 2. Normal giriş kontrolü
+      const storedId = localStorage.getItem('studentId');
+      const emailVerified = sessionStorage.getItem('emailVerified') === 'true';
+
+      if (storedId) {
+        loadStudent(storedId, emailVerified);
+      } else {
+        setLoading(false);
+      }
+    };
+
+    initAuth();
   }, []);
 
   const loadStudent = async (id: string, hasVerifiedEmail: boolean = false) => {
     setLoading(true);
-
     const jsonStudent = getStudents().find(s => s.id === id);
     if (!jsonStudent) {
       setLoading(false);
@@ -51,8 +78,7 @@ export const useAuth = () => {
       return;
     }
 
-    try { await registerDevice(id); } catch { }
-
+    try { await registerDevice(id); } catch {}
     await signInAndMapStudent(id);
 
     sessionStorage.setItem('emailVerified', 'true');
@@ -62,6 +88,7 @@ export const useAuth = () => {
 
   const login = async (studentId: string): Promise<boolean> => {
     setLoading(true);
+    setGoogleError(''); // Hataları temizle
     if (studentId === ADMIN_ID) {
       const jsonStudent = getStudents().find(s => s.id === ADMIN_ID);
       if (jsonStudent) {
@@ -89,23 +116,21 @@ export const useAuth = () => {
     return false;
   };
 
-  const loginWithGoogle = async (studentId: string, email: string): Promise<boolean> => {
-    const jsonStudent = getStudents().find(s => s.id === studentId);
-    if (jsonStudent) {
-      localStorage.setItem('studentId', studentId);
-      sessionStorage.setItem('emailVerified', 'true');
-      await saveStudentEmail(studentId, email);
-      await loadStudent(studentId, true);
-      return true;
-    }
-    return false;
+  // YENİ: Sadece Google'a yönlendirir, anında hata vermez!
+  const loginWithGoogle = async () => {
+    setLoading(true);
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin }
+    });
+    return true; 
   };
 
   const confirmEmailVerification = (email: string) => {
     if (pendingStudent) {
       const updated = { ...pendingStudent, email };
       sessionStorage.setItem('emailVerified', 'true');
-      saveStudentEmail(updated.id, email);
+      saveStudentEmail(updated.id, email); 
       setStudent(updated);
       setPendingStudent(null);
       setNeedsEmailVerification(false);
@@ -138,5 +163,5 @@ export const useAuth = () => {
     window.location.reload();
   };
 
-  return { student, loading, login, loginWithGoogle, logout, pendingStudent, needsAdminAuth, confirmAdminAuth, cancelAdminAuth, needsEmailVerification, confirmEmailVerification };
+  return { student, loading, login, loginWithGoogle, logout, pendingStudent, needsAdminAuth, confirmAdminAuth, cancelAdminAuth, needsEmailVerification, confirmEmailVerification, googleError };
 };
