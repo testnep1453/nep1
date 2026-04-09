@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from 'react';
 import { Student, Lesson, Trailer } from '../../types/student';
 import { ProfileSection } from '../Dashboard/ProfileSection';
 import { TopBar } from '../Dashboard/TopBar';
-import { MessageFeed } from '../Dashboard/MessageFeed';
 import { OperationDrawer } from '../Drawer/OperationDrawer';
 import { FeedbackForm } from '../Feedback/FeedbackForm';
 import { ArchivePage } from '../Archive/ArchivePage';
@@ -85,12 +84,14 @@ export const AgentDashboard = ({
   ];
 
   const tabTitles: Record<AgentTab, string> = {
-    home: 'ANA SAYFA', operation: 'OPERASYON', levels: 'LEVEL & ROZETLER',
+    home: 'AJAN KARARGAHI', operation: 'OPERASYON', levels: 'LEVEL & ROZETLER',
     archive: 'ARŞİV', activity: 'ETKİNLİK', feedback: 'GERİ BİLDİRİM',
   };
 
   return (
-    <div className="h-[100dvh] bg-[#050505] text-white flex flex-col md:flex-row font-['Rajdhani',sans-serif] selection:bg-[#00F0FF]/30 overflow-hidden">
+    <div className="h-[100dvh] w-full bg-[#050505] text-white flex flex-col md:flex-row font-['Rajdhani',sans-serif] overflow-hidden selection:bg-[#00F0FF]/30">
+      
+      {/* Arka Plan Efektleri */}
       <div className="fixed inset-0 pointer-events-none z-0 opacity-20">
         <div className="absolute inset-0 bg-[linear-gradient(rgba(0,240,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(0,240,255,0.03)_1px,transparent_1px)] bg-[length:40px_40px]" />
         <div className="scanlines absolute inset-0" />
@@ -106,23 +107,24 @@ export const AgentDashboard = ({
       )}
 
       {/* Mobil Üst Bar */}
-      <div className="md:hidden sticky top-0 z-30 bg-[#0A1128] border-b border-[#00F0FF]/20 flex items-center justify-between px-4 py-3">
-        <button onClick={() => setDrawerOpen(true)} className="text-[#00F0FF] p-2 min-w-[44px] min-h-[44px] flex items-center justify-center">
+      <div className="md:hidden flex-none z-30 bg-[#0A1128] border-b border-[#00F0FF]/20 flex items-center justify-between px-4 py-2">
+        <button onClick={() => setDrawerOpen(true)} className="text-[#00F0FF] p-2 flex items-center justify-center">
           <Icons.Swords />
         </button>
-        <img src={`${import.meta.env.BASE_URL}nep-logo.png`} alt="NEP" className="h-7 brightness-0 invert opacity-70" />
-        <button onClick={() => setMobileNavOpen(!mobileNavOpen)} className="text-white p-2 min-w-[44px] min-h-[44px] flex items-center justify-center relative">
+        <img src={`${import.meta.env.BASE_URL}nep-logo.png`} alt="NEP" className="h-6 brightness-0 invert opacity-70" />
+        <button onClick={() => setMobileNavOpen(!mobileNavOpen)} className="text-white p-2 flex items-center justify-center relative">
           <Icons.Menu />
           {unreadCount > 0 && <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#FF4500] rounded-full" />}
         </button>
       </div>
 
+      {/* Mobil Menü Modal */}
       {mobileNavOpen && (
-        <div className="md:hidden fixed inset-0 top-[52px] bg-black/80 z-20" onClick={() => setMobileNavOpen(false)}>
+        <div className="md:hidden fixed inset-0 top-[48px] bg-black/80 z-20" onClick={() => setMobileNavOpen(false)}>
           <div className="bg-[#0A1128] border-b border-[#00F0FF]/20 p-4 space-y-2">
             {tabs.map(tab => (
               <button key={tab.id} onClick={() => { setActiveTab(tab.id); setMobileNavOpen(false); }}
-                className={`flex items-center gap-3 w-full p-3 rounded-md transition-all min-h-[48px] ${
+                className={`flex items-center gap-3 w-full p-3 rounded-md transition-all ${
                   activeTab === tab.id ? 'bg-[#00F0FF]/10 text-[#00F0FF]' : 'text-gray-400 hover:bg-white/5'
                 }`}>
                 {tab.icon}
@@ -134,18 +136,18 @@ export const AgentDashboard = ({
       )}
 
       {/* Desktop Sidebar */}
-      <aside className="hidden md:flex w-64 bg-[#0A1128] border-r border-[#00F0FF]/20 z-10 flex-col h-screen sticky top-0">
+      <aside className="hidden md:flex w-64 bg-[#0A1128] border-r border-[#00F0FF]/20 z-10 flex-col h-full flex-none">
         <div className="p-6 border-b border-[#00F0FF]/20 flex items-center justify-center">
           <img src={`${import.meta.env.BASE_URL}nep-logo.png`} alt="NEP" className="h-10 brightness-0 invert opacity-80" />
         </div>
         <div className="p-4 border-b border-[#6358cc]/20">
           <button onClick={() => setDrawerOpen(true)}
-            className="flex items-center gap-3 w-full p-3 rounded-md bg-[#6358cc]/10 text-[#8b7fd8] hover:bg-[#6358cc]/20 border border-[#6358cc]/30 transition-all">
+            className="flex items-center gap-3 w-full p-3 rounded-md bg-[#6358cc]/10 text-[#8b7fd8] hover:bg-[#6358cc]/20 border border-[#6358cc]/30 transition-all shadow-[0_0_15px_rgba(99,88,204,0.2)]">
             <Icons.Swords />
             <span className="font-bold tracking-wide text-sm">DERSE KATIL</span>
           </button>
         </div>
-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+        <nav className="flex-1 p-4 space-y-2">
           {tabs.map(tab => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-3 w-full p-3 rounded-md transition-all ${
@@ -160,73 +162,68 @@ export const AgentDashboard = ({
         </nav>
       </aside>
 
-      {/* Main Content - ARTIK NORMAL SCROLL EDİLEBİLİR */}
-      <main className="flex-1 p-4 md:p-8 z-10 overflow-y-auto pb-24 md:pb-8">
-        <header className="flex items-center justify-between mb-6 md:mb-8">
+      {/* ANA EKRAN İÇERİĞİ (SCROLL YOK) */}
+      <main className="flex-1 flex flex-col h-[calc(100dvh-48px)] md:h-[100dvh] z-10 overflow-hidden relative">
+        
+        {/* Üst Başlık Kısmı */}
+        <header className="flex-none flex items-center justify-between p-4 md:p-6 shrink-0">
           <div>
-            <h2 className="text-xs sm:text-sm tracking-[0.2em] uppercase mb-1 flex items-center gap-2 text-[#00F0FF]">
-              <span className="inline-block w-2 h-2 animate-pulse rounded-full bg-[#00F0FF]" /> Ajan Sistemi
+            <h2 className="text-[10px] sm:text-xs tracking-[0.2em] uppercase mb-0.5 flex items-center gap-2 text-[#00F0FF]">
+              <span className="inline-block w-1.5 h-1.5 animate-pulse rounded-full bg-[#00F0FF]" /> Sisteme Bağlı
             </h2>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold uppercase tracking-wider text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold uppercase tracking-wider text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">
               {tabTitles[activeTab]}
             </h1>
           </div>
           <TopBar student={student} unreadCount={unreadCount} theme={theme} onThemeChange={handleThemeChange} />
         </header>
 
-        <div className="max-w-4xl mx-auto">
-          {activeTab === 'home' && (
-            <div className="space-y-6 sm:space-y-8 animate-fade-in">
-              <ProfileSection student={student} />
+        {/* İÇERİK KISMI (Tam Ekrana Sığdırıldı) */}
+        <div className="flex-1 flex flex-col p-4 pt-0 overflow-hidden">
+          <div className="w-full max-w-5xl mx-auto flex-1 flex flex-col justify-center">
+            
+            {activeTab === 'home' && (
+              <div className="flex flex-col gap-4 animate-fade-in w-full">
+                
+                {/* PROFIL KARTI: Tek Ekrana Sığacak Şekilde Boyutları Sıkıştırıldı */}
+                <ProfileSection student={student} />
 
-              {/* Dinamik Feedback Butonu */}
-              {autoZoomState.status === 'feedback' && !showFeedback && (
-                <button
-                  onClick={() => setShowFeedback(true)}
-                  className="w-full bg-gradient-to-r from-[#FF9F43]/20 to-[#FF4500]/20 border border-[#FF9F43]/40 text-[#FF9F43] py-4 rounded-xl font-bold uppercase tracking-wider text-sm hover:from-[#FF9F43]/30 hover:to-[#FF4500]/30 transition-all animate-pulse"
-                >
-                  📝 Ders Hakkında Geri Bildirim Ver
-                </button>
-              )}
-
-              {/* Mesaj Akışı Tekrar Ana Sayfaya Döndü */}
-              <div className="bg-[#0A1128]/80 border border-[#00F0FF]/20 rounded-2xl overflow-hidden">
-                <div className="bg-[#00F0FF]/10 px-4 py-3 border-b border-[#00F0FF]/20">
-                  <h3 className="text-[#00F0FF] font-bold text-sm uppercase tracking-widest flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-[#00F0FF] animate-pulse" />
-                    Gelen Kutusu
-                  </h3>
-                </div>
-                <div className="p-4">
-                  <MessageFeed />
-                </div>
+                {/* Dinamik Feedback Butonu */}
+                {autoZoomState.status === 'feedback' && !showFeedback && (
+                  <button
+                    onClick={() => setShowFeedback(true)}
+                    className="w-full bg-gradient-to-r from-[#FF9F43]/20 to-[#FF4500]/20 border border-[#FF9F43]/40 text-[#FF9F43] py-3 rounded-xl font-bold uppercase tracking-wider text-sm hover:from-[#FF9F43]/30 hover:to-[#FF4500]/30 transition-all animate-pulse shadow-[0_0_20px_rgba(255,69,0,0.2)] flex-none"
+                  >
+                    📝 Ders Hakkında Geri Bildirim Ver
+                  </button>
+                )}
               </div>
-            </div>
-          )}
-          
-          {activeTab === 'levels' && <LevelProgress student={student} />}
-          {activeTab === 'archive' && <ArchivePage />}
-          {activeTab === 'activity' && <ActivityPage student={student} />}
-          {activeTab === 'feedback' && <FeedbackHistory studentId={student.id} />}
+            )}
+            
+            {activeTab === 'levels' && <div className="overflow-y-auto h-full pr-2 custom-scrollbar"><LevelProgress student={student} /></div>}
+            {activeTab === 'archive' && <div className="overflow-y-auto h-full pr-2 custom-scrollbar"><ArchivePage /></div>}
+            {activeTab === 'activity' && <div className="overflow-y-auto h-full pr-2 custom-scrollbar"><ActivityPage student={student} /></div>}
+            {activeTab === 'feedback' && <div className="overflow-y-auto h-full pr-2 custom-scrollbar"><FeedbackHistory studentId={student.id} /></div>}
+          </div>
         </div>
       </main>
 
       {/* Mobil Alt Bar */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-[#0A1128] border-t border-[#00F0FF]/20 z-20 flex items-center justify-around px-1 py-2 safe-area-bottom">
+      <div className="md:hidden flex-none bg-[#0A1128] border-t border-[#00F0FF]/20 z-20 flex items-center justify-around px-1 py-1 pb-safe">
         {[
-          { id: 'home' as AgentTab, icon: <Icons.Home />, label: 'ANA SAYFA' },
+          { id: 'home' as AgentTab, icon: <Icons.Home />, label: 'LOBİ' },
           { id: 'operation' as AgentTab, icon: <Icons.Swords />, label: 'OPERASYON', action: () => setDrawerOpen(true) },
           { id: 'levels' as AgentTab, icon: <Icons.Trophy />, label: 'LEVEL' },
           { id: 'archive' as AgentTab, icon: <Icons.Film />, label: 'ARŞİV' },
-          { id: 'feedback' as AgentTab, icon: <Icons.Star />, label: 'GERİ BİLDİRİM' },
+          { id: 'feedback' as AgentTab, icon: <Icons.Star />, label: 'G.BİLDİRİM' },
         ].map(item => (
           <button key={item.id}
             onClick={item.action || (() => setActiveTab(item.id))}
-            className={`flex flex-col items-center gap-0.5 p-1.5 rounded-lg transition-all min-w-[52px] min-h-[48px] ${
+            className={`flex flex-col items-center gap-0.5 p-1.5 rounded-lg transition-all min-w-[52px] ${
               activeTab === item.id && !item.action ? 'text-[#00F0FF]' : item.action ? 'bg-[#6358cc]/20 text-[#8b7fd8]' : 'text-gray-500'
             }`}>
             {item.icon}
-            <span className="text-[9px] font-bold">{item.label}</span>
+            <span className="text-[8px] font-bold">{item.label}</span>
           </button>
         ))}
       </div>
