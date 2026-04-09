@@ -8,7 +8,7 @@ interface ProfileSectionProps {
   isAdmin?: boolean;
 }
 
-// YENİ ENVANTER SİSTEMİ (XP/Level'a göre açılır)
+// ENVANTER SİSTEMİ
 const INVENTORY_ITEMS = [
   { id: 'item_1', name: 'Taktik Kulaklık', reqLevel: 1, icon: '🎧', desc: 'Merkezle kriptolu iletişim kurmanı sağlar.' },
   { id: 'item_2', name: 'Siber Tablet', reqLevel: 2, icon: '📱', desc: 'Düşman güvenlik duvarlarını hacklemek için kullanılır.' },
@@ -22,7 +22,7 @@ export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps
   const [isEditingNickname, setIsEditingNickname] = useState(false);
   const [nicknameValue, setNicknameValue] = useState(student.nickname || '');
   const [saving, setSaving] = useState(false);
-  const [imgError, setImgError] = useState(false); // Resim bulunamazsa fallback için
+  const [imgError, setImgError] = useState(false);
 
   const xpForNextLevel = student.level * 200;
   const xpProgress = (student.xp % 200) / 200 * 100;
@@ -45,26 +45,32 @@ export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps
     }
   };
 
+  // Açık Kaynaklı Algoritmik Avatar URL'si
+  // Ajanın ID'sine göre her zaman aynı ama diğerlerinden tamamen farklı bir yüz üretir!
+  const avatarStyle = student.avatar || 'bottts'; // Varsayılan tarz: Siber Robot
+  const dicebearUrl = `https://api.dicebear.com/9.x/${avatarStyle}/svg?seed=${student.id}&backgroundColor=transparent`;
+
   return (
     <div className="bg-gradient-to-br from-[#1a1d2e] to-[#0A1128] rounded-2xl p-5 border border-[#00F0FF]/30 shadow-[0_0_20px_rgba(0,240,255,0.1)]">
       
       {/* ÜST KISIM: Profil Bilgileri */}
       <div className="flex items-center gap-5 mb-6">
         <div className="relative shrink-0 group">
-          {/* Gerçekçi Avatar (Resim yüklenmezse kalkan ikonu çıkar) */}
-          <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-[#00F0FF]/50 shadow-[0_0_15px_rgba(0,240,255,0.3)] bg-[#050505] flex items-center justify-center">
+          {/* Benzersiz Algoritmik Avatar */}
+          <div className="w-24 h-24 rounded-2xl overflow-hidden border-2 border-[#00F0FF]/50 shadow-[0_0_15px_rgba(0,240,255,0.3)] bg-[#050505] flex items-center justify-center relative">
+            <div className="absolute inset-0 bg-gradient-to-t from-[#00F0FF]/20 to-transparent opacity-50"></div>
             {!imgError ? (
               <img 
-                src={`${import.meta.env.BASE_URL}avatars/${student.avatar || 'hero_1'}.jpg`} 
+                src={dicebearUrl} 
                 alt="Ajan Avatar" 
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain p-1.5 drop-shadow-[0_0_8px_rgba(0,240,255,0.8)] transition-transform duration-500 group-hover:scale-110"
                 onError={() => setImgError(true)}
               />
             ) : (
               <Shield className="w-12 h-12 text-[#00F0FF]/50" />
             )}
           </div>
-          <div className="absolute -bottom-3 -right-3 bg-[#00F0FF] rounded-lg px-2 py-1 flex items-center justify-center border border-[#0A1128] shadow-lg text-[#0A1128] font-black text-xs">
+          <div className="absolute -bottom-3 -right-3 bg-[#00F0FF] rounded-lg px-2 py-1 flex items-center justify-center border border-[#0A1128] shadow-lg text-[#0A1128] font-black text-xs z-10">
             LVL {student.level}
           </div>
         </div>
@@ -165,7 +171,6 @@ export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps
                     {item.icon}
                   </div>
                   
-                  {/* Kilit İkonu */}
                   {!isUnlocked && (
                     <div className="absolute top-1 right-1 text-gray-500">
                       <Lock className="w-3 h-3" />
@@ -177,7 +182,6 @@ export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps
                     </div>
                   )}
 
-                  {/* Detay Tooltip */}
                   <div className="absolute w-48 bottom-full left-1/2 -translate-x-1/2 mb-2 p-3 bg-[#0A1128] border border-[#00F0FF]/40 text-white text-xs rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-20 shadow-2xl pointer-events-none">
                     <div className={`font-bold mb-1 text-sm ${isUnlocked ? 'text-[#00F0FF]' : 'text-gray-400'}`}>
                       {item.name}
@@ -185,8 +189,8 @@ export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps
                     <div className="text-gray-300 mb-2 leading-relaxed">
                       {item.desc}
                     </div>
-                    <div className={`font-mono text-[10px] uppercase tracking-widest ${isUnlocked ? 'text-[#39FF14]' : 'text-[#FF4500]'}`}>
-                      {isUnlocked ? '✓ KULLANIMA AÇIK' : `🔒 KİLİDİ AÇMAK İÇİN LEVEL ${item.reqLevel} GEREKİR`}
+                    <div className={`font-mono text-[10px] uppercase tracking-widest mt-2 ${isUnlocked ? 'text-[#39FF14]' : 'text-[#FF4500]'}`}>
+                      {isUnlocked ? '✓ KULLANIMA AÇIK' : `🔒 AÇMAK İÇİN LEVEL ${item.reqLevel} GEREKİR`}
                     </div>
                   </div>
                 </div>
