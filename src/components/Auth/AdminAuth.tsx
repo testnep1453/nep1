@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Shield, Key, Loader2, ArrowLeft } from 'lucide-react';
-import { getAdminAuth, saveAdminPassword } from '../../services/dbFirebase'; // Supabase'e bağlı
-import { hashPin } from '../../services/crypto';
+import { getAdminAuth, saveAdminPassword } from '../../services/dbFirebase'; 
+
+// YENİ: Şifreleme motorunu direkt buraya aldık, crypto.ts hatası tarihe karıştı!
+const hashPin = async (pin: string) => {
+  const msgBuffer = new TextEncoder().encode(pin);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+};
 
 interface Props {
   onSuccess: () => void;
