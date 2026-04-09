@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Student } from '../../types/student';
-import { Shield, Lock, Zap, Dices } from 'lucide-react';
+import { Shield, Lock, Zap } from 'lucide-react';
 import { updateNickname } from '../../services/dbFirebase';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../../config/firebase';
@@ -19,16 +19,28 @@ const INVENTORY_ITEMS = [
   { id: 'item_6', name: 'Hayalet Pelerini', reqLevel: 10, icon: '🥷' },
 ];
 
+const AVATAR_IDS = Array.from({ length: 30 }, (_, i) => `av${i + 1}`);
+
+const getAvatarUrl = (avatarId: string) => {
+  if (!avatarId || avatarId.includes(':')) return `${import.meta.env.BASE_URL}avatars/av1.svg`;
+  return `${import.meta.env.BASE_URL}avatars/${avatarId}.svg`;
+};
+
 export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps) => {
   const [isEditingNickname, setIsEditingNickname] = useState(false);
   const [nicknameValue, setNicknameValue] = useState(student.nickname || '');
   const [saving, setSaving] = useState(false);
-
-  const [localAvatar, setLocalAvatar] = useState(student.avatar || `avataaars:${student.id}`);
-  const [isRandomizing, setIsRandomizing] = useState(false);
+  const [showPicker, setShowPicker] = useState(false);
+  const [localAvatar, setLocalAvatar] = useState(() => {
+    const av = student.avatar || '';
+    if (!av || av.includes(':')) return 'av1';
+    return av;
+  });
 
   useEffect(() => {
-    if (student.avatar) setLocalAvatar(student.avatar);
+    if (student.avatar && !student.avatar.includes(':')) {
+      setLocalAvatar(student.avatar);
+    }
   }, [student.avatar]);
 
   const xpForNextLevel = student.level * 200;
@@ -42,7 +54,7 @@ export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps
     setSaving(true);
     try {
       await updateNickname(student.id, nicknameValue.trim());
-      student.nickname = nicknameValue.trim(); 
+      student.nickname = nicknameValue.trim();
       setIsEditingNickname(false);
     } catch {
       alert('Hata oluştu.');
@@ -51,65 +63,81 @@ export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps
     }
   };
 
-  const handleRandomizeAvatar = async () => {
-    if (isRandomizing || isAdmin) return;
-    setIsRandomizing(true);
-    
-    const newSeed = Math.random().toString(36).substring(2, 10);
-    const style = localAvatar.split(':')[0] || 'avataaars';
-    const newAvatar = `${style}:${newSeed}`;
-    
+  const handleSelectAvatar = async (avatarId: string) => {
+    if (isAdmin) return;
     try {
-      await updateDoc(doc(db, 'students', student.id), { avatar: newAvatar });
-      student.avatar = newAvatar;
-      setLocalAvatar(newAvatar);
+      await updateDoc(doc(db, 'students', student.id), { avatar: avatarId });
+      student.avatar = avatarId;
+      setLocalAvatar(avatarId);
     } catch (error) {
       console.error('Karakter güncellenemedi', error);
-    } finally {
-      setIsRandomizing(false);
     }
+    setShowPicker(false);
   };
-
-  const getAvatarUrl = () => {
-    const parts = localAvatar.split(':');
-    const style = parts[0] || 'avataaars';
-    const seed = parts[1] || student.id;
-
-    let url = `https://api.dicebear.com/9.x/${style}/svg?seed=${seed}&backgroundColor=transparent`;
-
-    // 404 HATASINI ÇÖZEN, GÜVENLİ VE %100 ERKEK FİLTRESİ
-    if (style === 'avataaars') {
-      url += '&top=shortHairShortFlat,shortHairShortRound,shortHairShortWaved,shortHairSides';
-      url += '&facialHairProbability=0';
-      url += '&clothing=hoodie,shirtCrewNeck,blazerAndShirt';
-      url += '&skinColor=light,pale,tanned'; 
-    }
-    return url;
-  };
-
-  const dicebearUrl = getAvatarUrl();
 
   return (
     <div className="bg-gradient-to-br from-[#1a1d2e] to-[#0A1128] rounded-3xl p-5 md:p-10 border border-[#00F0FF]/30 shadow-[0_0_40px_rgba(0,240,255,0.05)] w-full h-full flex flex-col lg:flex-row items-center justify-center gap-6 lg:gap-16 overflow-hidden">
-      
+
+      {/* Avatar Picker Modal */}
+      {showPicker && (
+        <div
+          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
+          onClick={() => setShowPicker(false)}
+        >
+          <div
+            className="bg-[#0A1128] border border-[#00F0FF]/40 rounded-2xl p-6 w-full max-w-lg shadow-[0_0_40px_rgba(0,240,255,0.2)]"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-[#00F0FF] font-black text-lg tracking-widest uppercase">Karakter Seç</h3>
+              <button onClick={() => setShowPicker(false)} className="text-gray-400 hover:text-white text-xl">✕</button>
+            </div>
+            <div className="grid grid-cols-6 gap-2 max-h-[60vh] overflow-y-auto custom-scrollbar pr-1">
+              {AVATAR_IDS.map(id => (
+                <button
+                  key={id}
+                  onClick={() => handleSelectAvatar(id)}
+                  className={`relative rounded-xl border-2 p-1 transition-all hover:scale-110 ${
+                    localAvatar === id
+                      ? 'border-[#00F0FF] shadow-[0_0_12px_rgba(0,240,255,0.6)] bg-[#00F0FF]/10'
+                      : 'border-gray-700 hover:border-[#00F0FF]/50 bg-black/30'
+                  }`}
+                >
+                  <img
+                    src={getAvatarUrl(id)}
+                    alt={id}
+                    className="w-full aspect-square object-contain"
+                    loading="lazy"
+                  />
+                  {localAvatar === id && (
+                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-[#00F0FF] rounded-full flex items-center justify-center">
+                      <span className="text-[8px] text-black font-black">✓</span>
+                    </div>
+                  )}
+                </button>
+              ))}
+            </div>
+            <p className="text-gray-500 text-xs text-center mt-3 tracking-wider">30 farklı ajan karakteri</p>
+          </div>
+        </div>
+      )}
+
       {/* SOL: AVATAR VE KİMLİK */}
       <div className="flex flex-col items-center text-center w-full lg:w-1/3 shrink-0">
-        
-        <div 
-          className={`relative mb-4 ${!isAdmin ? 'cursor-pointer group' : ''}`} 
-          onClick={handleRandomizeAvatar}
-          title={!isAdmin ? "Karakteri Değiştirmek İçin Tıkla!" : ""}
+        <div
+          className={`relative mb-4 ${!isAdmin ? 'cursor-pointer group' : ''}`}
+          onClick={() => !isAdmin && setShowPicker(true)}
+          title={!isAdmin ? 'Karakter Seç' : ''}
         >
           <div className="w-24 h-24 md:w-40 md:h-40 rounded-3xl bg-gradient-to-b from-slate-100 to-slate-300 border-4 border-[#00F0FF] p-2 shadow-[0_0_30px_rgba(0,240,255,0.4)] relative overflow-hidden">
-            <img 
-              src={dicebearUrl} 
-              alt="Avatar" 
-              className={`w-full h-full object-contain drop-shadow-xl transition-all duration-300 ${isRandomizing ? 'opacity-30 scale-90' : 'opacity-100 scale-100'}`} 
+            <img
+              src={getAvatarUrl(localAvatar)}
+              alt="Avatar"
+              className="w-full h-full object-contain drop-shadow-xl"
             />
-            
             {!isAdmin && (
-              <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <Dices className="w-8 h-8 text-[#39FF14] mb-1 animate-pulse" />
+              <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl">
+                <span className="text-[#39FF14] text-2xl mb-1">🎭</span>
                 <span className="text-[#39FF14] text-[10px] font-black tracking-widest">DEĞİŞTİR</span>
               </div>
             )}
@@ -120,11 +148,24 @@ export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps
         </div>
 
         <h2 className="text-2xl md:text-4xl font-black text-white uppercase tracking-wider mt-3">{student.name}</h2>
-        
+
         {isEditingNickname ? (
           <div className="flex items-center justify-center gap-2 mt-3">
-            <input type="text" value={nicknameValue} onChange={(e) => setNicknameValue(e.target.value)} maxLength={20} autoFocus className="bg-[#050505] border border-[#00F0FF] text-[#00F0FF] px-3 py-1.5 text-sm rounded font-mono focus:outline-none w-full max-w-[160px]" />
-            <button onClick={handleSaveNickname} disabled={saving} className="text-[#39FF14] text-sm font-bold bg-[#39FF14]/10 px-2.5 py-1.5 rounded">{saving ? '...' : '✓'}</button>
+            <input
+              type="text"
+              value={nicknameValue}
+              onChange={e => setNicknameValue(e.target.value)}
+              maxLength={20}
+              autoFocus
+              className="bg-[#050505] border border-[#00F0FF] text-[#00F0FF] px-3 py-1.5 text-sm rounded font-mono focus:outline-none w-full max-w-[160px]"
+            />
+            <button
+              onClick={handleSaveNickname}
+              disabled={saving}
+              className="text-[#39FF14] text-sm font-bold bg-[#39FF14]/10 px-2.5 py-1.5 rounded"
+            >
+              {saving ? '...' : '✓'}
+            </button>
           </div>
         ) : (
           <div className="flex items-center justify-center gap-2 mt-2">
@@ -144,14 +185,16 @@ export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps
       {/* SAĞ: XP BAR VE ENVANTER */}
       {!isAdmin && (
         <div className="w-full lg:w-2/3 flex flex-col gap-4 md:gap-6 justify-center">
-          
           <div className="bg-black/40 p-4 md:p-5 rounded-2xl border border-gray-800">
             <div className="flex justify-between items-end mb-2">
               <span className="text-gray-500 text-[10px] md:text-xs font-mono tracking-widest uppercase">Sonraki Level Hedefi</span>
               <span className="text-[#00F0FF] text-xs md:text-sm font-mono font-bold">{student.xp % 200} / {xpForNextLevel} XP</span>
             </div>
             <div className="h-3 md:h-4 bg-[#050505] rounded-full overflow-hidden border border-gray-800 shadow-inner">
-              <div className="h-full bg-gradient-to-r from-[#00F0FF] to-[#39FF14] rounded-full transition-all duration-1000 relative" style={{ width: `${xpProgress}%` }}>
+              <div
+                className="h-full bg-gradient-to-r from-[#00F0FF] to-[#39FF14] rounded-full transition-all duration-1000 relative"
+                style={{ width: `${xpProgress}%` }}
+              >
                 <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,0.2)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.2)_50%,rgba(255,255,255,0.2)_75%,transparent_75%,transparent)] bg-[length:1rem_1rem] animate-[pan_1s_linear_infinite]" />
               </div>
             </div>
@@ -162,19 +205,29 @@ export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps
               <Shield className="w-4 h-4 text-[#00F0FF]" /> KİLİDİ AÇILAN TEÇHİZATLAR
             </h3>
             <div className="grid grid-cols-3 gap-2 md:gap-4">
-              {INVENTORY_ITEMS.map((item) => {
+              {INVENTORY_ITEMS.map(item => {
                 const isUnlocked = student.level >= item.reqLevel;
                 return (
-                  <div key={item.id} className={`relative flex flex-col items-center justify-center p-2 md:p-4 rounded-xl border-2 transition-all h-16 md:h-24 ${isUnlocked ? 'bg-[#00F0FF]/10 border-[#00F0FF]/40 shadow-[0_0_15px_rgba(0,240,255,0.15)]' : 'bg-black/50 border-gray-800 opacity-40'}`}>
+                  <div
+                    key={item.id}
+                    className={`relative flex flex-col items-center justify-center p-2 md:p-4 rounded-xl border-2 transition-all h-16 md:h-24 ${
+                      isUnlocked
+                        ? 'bg-[#00F0FF]/10 border-[#00F0FF]/40 shadow-[0_0_15px_rgba(0,240,255,0.15)]'
+                        : 'bg-black/50 border-gray-800 opacity-40'
+                    }`}
+                  >
                     <div className={`text-2xl md:text-4xl ${!isUnlocked && 'grayscale opacity-50'}`}>{item.icon}</div>
-                    {isUnlocked && <div className="text-[8px] md:text-[10px] text-[#00F0FF] mt-1 font-bold tracking-wider hidden sm:block truncate w-full text-center">{item.name}</div>}
+                    {isUnlocked && (
+                      <div className="text-[8px] md:text-[10px] text-[#00F0FF] mt-1 font-bold tracking-wider hidden sm:block truncate w-full text-center">
+                        {item.name}
+                      </div>
+                    )}
                     {!isUnlocked && <Lock className="absolute top-1.5 right-1.5 w-2.5 h-2.5 md:w-3 md:h-3 text-gray-600" />}
                   </div>
                 );
               })}
             </div>
           </div>
-
         </div>
       )}
     </div>
