@@ -1,11 +1,9 @@
 /**
- * Bildirimler Paneli (Modül 1.4)
- * Çan ikonuna tıklanınca açılır, bildirimler listelenir
+ * Bildirimler Paneli - Supabase tabanlı
  */
 
 import { useState, useEffect, useRef } from 'react';
-import { collection, query, orderBy, limit, onSnapshot, doc, updateDoc } from 'firebase/firestore';
-import { db } from '../../config/firebase';
+import { supabase } from '../../config/supabase';
 
 interface NotificationItem {
   id: string;
@@ -27,7 +25,6 @@ export const NotificationPanel = ({ studentId, isOpen, onClose }: NotificationPa
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const panelRef = useRef<HTMLDivElement>(null);
 
-  // Dışarı tıklayınca kapat
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
@@ -40,60 +37,65 @@ export const NotificationPanel = ({ studentId, isOpen, onClose }: NotificationPa
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen, onClose]);
 
-  // Firestore'dan bildirimleri dinle
+  // Supabase'den bildirimleri ve mesajları çek
   useEffect(() => {
     if (!studentId) return;
 
-    const q = query(
-      collection(db, 'notifications', studentId, 'items'),
-      orderBy('createdAt', 'desc'),
-      limit(30)
-    );
+    const fetchAll = async () => {
+      // Kişisel bildirimler
+      const { data: notifData } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('studentId', studentId)
+        .order('createdAt', { ascending: false })
+        .limit(30);
 
-    const unsub = onSnapshot(q, (snap) => {
-      const items = snap.docs.map(d => ({
-        id: d.id,
-        ...d.data(),
-      })) as NotificationItem[];
-      setNotifications(items);
-    }, () => {
-      // Hata durumunda sessiz
-    });
+      // Admin mesajları
+      const { data: msgData } = await supabase
+        .from('messages')
+        .select('*')
+        .order('date', { ascending: false })
+        .limit(20);
 
-    return () => unsub();
-  }, [studentId]);
-
-  // Bildirimler ayrıca messages koleksiyonundan da gelsin (admin duyuruları)
-  useEffect(() => {
-    const q = query(
-      collection(db, 'messages'),
-      orderBy('date', 'desc'),
-      limit(20)
-    );
-
-    const unsub = onSnapshot(q, (snap) => {
-      const msgs = snap.docs.map(d => ({
-        id: `msg_${d.id}`,
-        title: 'Admin Duyurusu',
-        body: d.data().text || '',
-        type: 'admin' as const,
-        read: true, // Mesajlar her zaman okunmuş sayılır
-        createdAt: d.data().date || Date.now(),
+      const personalNotifs: NotificationItem[] = (notifData || []).map((n: Record<string, unknown>) => ({
+        id: String(n.id),
+        title: String(n.title || ''),
+        body: String(n.body || ''),
+        type: (n.type as NotificationItem['type']) || 'system',
+        read: Boolean(n.read),
+        createdAt: Number(n.createdAt) || 0,
       }));
-      setNotifications(prev => {
-        const personalOnes = prev.filter(n => !n.id.startsWith('msg_'));
-        return [...personalOnes, ...msgs].sort((a, b) => b.createdAt - a.createdAt);
-      });
-    }, () => {});
 
-    return () => unsub();
-  }, []);
+      const msgNotifs: NotificationItem[] = (msgData || []).map((m: Record<string, unknown>) => ({
+        id: `msg_${m.id}`,
+        title: 'Admin Duyurusu',
+        body: String(m.text || ''),
+        type: 'admin' as const,
+        read: true,
+        createdAt: Number(m.date) || Date.now(),
+      }));
+
+      const all = [...personalNotifs, ...msgNotifs].sort((a, b) => b.createdAt - a.createdAt);
+      setNotifications(all);
+    };
+
+    fetchAll();
+
+    // Realtime
+    const channel = supabase
+      .channel(`notif_panel_${studentId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, fetchAll)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, fetchAll)
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
+  }, [studentId]);
 
   const markAsRead = async (notifId: string) => {
     if (notifId.startsWith('msg_')) return;
     try {
-      const ref = doc(db, 'notifications', studentId, 'items', notifId);
-      await updateDoc(ref, { read: true });
+      await supabase.from('notifications').update({ read: true }).eq('id', notifId);
+      setNotifications(prev => prev.map(n => n.id === notifId ? { ...n, read: true } : n));
     } catch {
       // sessiz
     }
