@@ -26,15 +26,16 @@ export const EmailVerificationModal: React.FC<Props> = ({ studentId, onVerified,
       setErrorMessage('');
     } else {
       setStatus('error');
-      setErrorMessage('Kod gönderilemedi. Lütfen geçerli bir adres girin.');
+      // 403 ve 429 hataları için genel ve karizmatik uyarı
+      setErrorMessage('Şu an yoğunluk var. Lütfen biraz bekleyip tekrar deneyin.');
     }
   };
 
   const handleVerifyCode = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (code.length !== 6) {
+    if (code.length < 6) { // Artık 6 veya 8 haneyi kabul ediyor
       setStatus('error');
-      setErrorMessage('Lütfen 6 haneli kodu eksiksiz girin.');
+      setErrorMessage('Lütfen kodu eksiksiz girin.');
       return;
     }
     setStatus('verifying');
@@ -44,7 +45,7 @@ export const EmailVerificationModal: React.FC<Props> = ({ studentId, onVerified,
       setTimeout(() => onVerified(email), 1000);
     } else {
       setStatus('error');
-      setErrorMessage('Hatalı kod girdiniz. Lütfen tekrar deneyin.');
+      setErrorMessage('Hatalı kod. Lütfen kontrol edip tekrar deneyin.');
     }
   };
 
@@ -59,12 +60,13 @@ export const EmailVerificationModal: React.FC<Props> = ({ studentId, onVerified,
         {step === 'email' ? (
           <form onSubmit={handleSendCode} className="space-y-5">
             <p className="text-slate-300 leading-relaxed">
-              Güvenliğiniz için lütfen e-posta adresinizi girin. Size <b>6 haneli</b> bir onay kodu göndereceğiz.
+              Güvenliğiniz için lütfen e-posta adresinizi girin. Size bir onay kodu göndereceğiz.
             </p>
             <input
               id="email-input"
               name="email"
               type="email"
+              autoComplete="email" // UYARIYI SUSTURAN KOD
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="ornek@email.com"
@@ -84,17 +86,19 @@ export const EmailVerificationModal: React.FC<Props> = ({ studentId, onVerified,
         ) : (
           <form onSubmit={handleVerifyCode} className="space-y-5">
             <p className="text-slate-300 leading-relaxed">
-              <b>{email}</b> adresine 6 haneli bir kod gönderdik. Lütfen aşağıya girin.
+              <b>{email}</b> adresine bir kod gönderdik. Lütfen aşağıya girin.
             </p>
             <input
               id="code-input"
               name="code"
               type="text"
-              maxLength={6}
+              maxLength={8} // 8 HANEYE ÇIKARILDI
+              autoComplete="one-time-code" // UYARIYI SUSTURAN KOD
               value={code}
-              onChange={(e) => setCode(e.target.value.replace(/[^0-9]/g, ''))}
-              placeholder="0 0 0 0 0 0"
-              className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-4 text-center text-4xl tracking-[0.5em] font-mono text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
+              // Sadece rakam kısıtlaması kaldırıldı, harf+rakam destekliyor
+              onChange={(e) => setCode(e.target.value.replace(/[^a-zA-Z0-9]/g, '').toUpperCase())}
+              placeholder="KODU GİRİN"
+              className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-4 text-center text-3xl tracking-[0.2em] font-mono text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all uppercase"
               required
             />
             {status === 'error' && <p className="text-red-400 text-sm flex items-center gap-1"><XCircle className="w-4 h-4"/> {errorMessage}</p>}
