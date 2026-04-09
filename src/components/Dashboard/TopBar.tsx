@@ -24,7 +24,6 @@ const UserIcon = () => (
   </svg>
 );
 
-// SENİN GETİRDİĞİN EFSANE WHATSAPP İNDİRME İKONU
 const InstallIcon = () => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="w-4 h-4 sm:w-5 sm:h-5">
     <path fillRule="evenodd" clipRule="evenodd" d="M13.75 13.75C13.75 14.1642 13.4142 14.5 13 14.5L3 14.5C2.58579 14.5 2.25 14.1642 2.25 13.75C2.25 13.3358 2.58579 13 3 13L13 13C13.4142 13 13.75 13.3358 13.75 13.75Z" fill="currentColor"></path>
@@ -91,7 +90,7 @@ export const TopBar = ({ student, unreadCount, theme, onThemeChange }: TopBarPro
             </button>
 
             {showManualPrompt && (
-              <div className="absolute top-12 right-0 w-72 bg-[#0A1128] border border-[#00F0FF]/40 p-4 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] z-50">
+              <div className="absolute top-12 right-0 w-80 bg-[#0A1128] border border-[#00F0FF]/40 p-4 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] z-50">
                 <p className="text-[#00F0FF] font-bold text-sm mb-2 border-b border-[#00F0FF]/20 pb-1">
                   Kurulum Kılavuzu:
                 </p>
@@ -103,8 +102,8 @@ export const TopBar = ({ student, unreadCount, theme, onThemeChange }: TopBarPro
                     </>
                   ) : isDesktop ? (
                     <>
-                      <p>1. Adres çubuğunun sağındaki <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Yükle ⬇️</span> ikonuna tıklayın.</p>
-                      <p>2. Veya tarayıcı menüsüne girip <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Uygulamayı Yükle</span> / <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Kaydet ve Paylaş &gt; Yükle</span> seçeneğine tıklayın.</p>
+                      <p>1. Adres çubuğunun sağındaki <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Yükle ⬇️</span> veya <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Uygulamayı yükle 💻</span> ikonuna tıklayın.</p>
+                      <p>2. Veya sağ üstteki <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Üç Nokta ⋮ / Üç Çizgi ≡</span> menüsüne basıp <span className="inline-block bg-white/10 px-1 rounded text-white border border-white/20">Kaydet ve Paylaş &gt; NEP — Eğitim Operasyon Merkezi uygulamasını yükle</span> seçeneğine tıklayın.</p>
                     </>
                   ) : (
                     <>
