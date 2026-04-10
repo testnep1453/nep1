@@ -114,9 +114,19 @@ export const ArchiveManager = ({ isAdmin = false }: Props) => {
                   className="w-24 h-16 object-cover rounded flex-shrink-0 bg-gray-900"
                   onError={(e) => {
                     const img = e.target as HTMLImageElement;
-                    img.style.display = 'none';
-                    const placeholder = img.nextElementSibling as HTMLElement;
-                    if (placeholder) placeholder.style.display = 'flex';
+                    if (!img.src.endsWith('default.jpg')) {
+                      // Try default.jpg (usually exists even for unlisted)
+                      if (v.youtubeId) img.src = `https://img.youtube.com/vi/${v.youtubeId}/default.jpg`;
+                      else {
+                        img.style.display = 'none';
+                        const placeholder = img.nextElementSibling as HTMLElement;
+                        if (placeholder) placeholder.style.display = 'flex';
+                      }
+                    } else {
+                      img.style.display = 'none';
+                      const placeholder = img.nextElementSibling as HTMLElement;
+                      if (placeholder) placeholder.style.display = 'flex';
+                    }
                   }}
                 />
                 <div

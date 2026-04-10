@@ -53,8 +53,25 @@ export const ArchivePage = () => {
             onClick={() => setSelectedVideo(video)}
             className="bg-[#0A1128]/80 border border-gray-800 rounded-lg overflow-hidden cursor-pointer hover:border-[#00F0FF]/30 transition-all group">
             <div className="aspect-video relative overflow-hidden">
-              <img src={video.thumbnailUrl} alt={video.title}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+              <img src={video.thumbnailUrl?.replace('hqdefault', 'mqdefault')} alt={video.title}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  // If thumbnail fails, try default.jpg, or finally hide it
+                  if (!target.src.endsWith('default.jpg')) {
+                    target.src = `https://img.youtube.com/vi/${video.youtubeId}/default.jpg`;
+                  } else {
+                    target.style.display = 'none';
+                    if (target.nextElementSibling) {
+                      (target.nextElementSibling as HTMLElement).style.display = 'flex';
+                    }
+                  }
+                }}
+              />
+              <div className="absolute inset-0 bg-gray-900 hidden items-center justify-center flex-col gap-2">
+                <span className="text-4xl">🎞️</span>
+                <span className="text-xs text-gray-500 font-mono">Önizleme Yok</span>
+              </div>
               <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                 <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
                   <span className="text-2xl ml-1">▶</span>
