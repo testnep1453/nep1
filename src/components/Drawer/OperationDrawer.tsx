@@ -114,7 +114,7 @@ export const OperationDrawer = ({
                       Ders <span className="text-[#00F0FF]">{lessonNo}</span>
                     </div>
                     <div className="text-sm text-white/40 font-mono mt-1">
-                      {formattedDate} · 19:00
+                      {formattedDate} · 19.00
                     </div>
                   </div>
                 )}

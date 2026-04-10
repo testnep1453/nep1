@@ -765,7 +765,6 @@ export const UnifiedDashboard = ({
                   { icon: '📅', title: 'Ders Programı', desc: 'Dersler her Perşembe saat 19.00–20.00 arası yapılır. Giriş ekranında bir sonraki derse ne kadar kaldığını görebilirsin.' },
                   { icon: '🚀', title: 'Derse Katılma', desc: '“Derse Katıl” butonuna basınca seni Zoom toplantısına yönlendirir. Dersin başladığı saatte buton aktif olur.' },
                   { icon: '🎬', title: 'Fragman', desc: 'Adminler yeni ders fragmanı paylaştığında ana sayfaında otomatik görünür.' },
-                  { icon: '🗄️', title: 'Arşiv', desc: 'Geçmiş ders kayıtlarına erişmek için Operasyon menüsündeki Arşiv bölümüne bak.' },
                   { icon: '💬', title: 'Geri Bildirim', desc: 'Her dersten 15 dakika sonra değerlendirme formu açılır. Düşüncelerini paylasmayı unutma!' },
                   { icon: '📣', title: 'Duyurular', desc: 'Admin duyuruları ana sayfanda “İstihbarat Akışı” bölümünde görünür.' },
                 ].map(item => (
