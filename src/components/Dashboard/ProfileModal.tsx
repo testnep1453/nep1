@@ -92,7 +92,7 @@ export const ProfileModal = ({ student, isOpen, onClose, theme, onThemeChange }:
           <div className="w-full space-y-5">
             <div>
               <label className="text-gray-500 text-[10px] uppercase font-bold mb-1.5 block">Ajan Takma Adı</label>
-              <input type="text" value={nickname} onChange={(e) => setNickname(e.target.value)} maxLength={20} className="w-full bg-[#050505] border border-gray-700 focus:border-[#00F0FF] outline-none text-white px-4 py-2 rounded-xl font-mono text-sm transition-colors" />
+              <input id="profileNickname" name="nickname" type="text" value={nickname} onChange={(e) => setNickname(e.target.value)} maxLength={20} className="w-full bg-[#050505] border border-gray-700 focus:border-[#00F0FF] outline-none text-white px-4 py-2 rounded-xl font-mono text-sm transition-colors" />
             </div>
 
             <div>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { ref, onValue, set, onDisconnect } from 'firebase/database';
-import { rtdb, auth } from '../config/firebase';
+import { rtdb } from '../config/firebase';
 
 export const usePresence = (studentId: string | null) => {
   const [onlineCount, setOnlineCount] = useState(0);
@@ -11,24 +11,16 @@ export const usePresence = (studentId: string | null) => {
     const presenceRef = ref(rtdb, `presence/${studentId}`);
     const connectedRef = ref(rtdb, '.info/connected');
 
-    // Auth hazır olana kadar yazma denemesi yapma
-    const trySetPresence = () => {
-      if (!auth.currentUser) {
-        // Auth henüz hazır değil — 1sn sonra tekrar dene
-        const timer = setTimeout(trySetPresence, 1000);
-        return () => clearTimeout(timer);
-      }
-      set(presenceRef, true).catch(() => {});
-      onDisconnect(presenceRef).remove().catch(() => {});
-      return undefined;
-    };
-
+    // Presence yazma: bağlantı kurulduğunda dene, hata varsa sessizce geç
     const unsubscribeConnected = onValue(connectedRef, (snap) => {
-      if (snap.val() === true) {
-        trySetPresence();
-      }
+      if (snap.val() !== true) return;
+      // Firebase Auth kullanılmıyor (sayısal ID sistemi) → RTDB kuralları
+      // anonim write'a izin vermiyorsa sadece read yap, hata basma
+      set(presenceRef, true).catch(() => { /* RTDB rules deny anonymous write — ok */ });
+      onDisconnect(presenceRef).remove().catch(() => {});
     });
 
+    // Online sayacı: sadece okuma — her zaman çalışır
     const presenceCountRef = ref(rtdb, 'presence');
     const unsubscribeCount = onValue(presenceCountRef, (snapshot) => {
       let count = 0;
@@ -39,6 +31,8 @@ export const usePresence = (studentId: string | null) => {
     return () => {
       unsubscribeConnected();
       unsubscribeCount();
+      // Temizlik: kendi presence'ını sil (hata olursa sessiz)
+      set(presenceRef, null).catch(() => {});
     };
   }, [studentId]);
 

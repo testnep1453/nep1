@@ -5,8 +5,6 @@ import {
   updateStudentInFirebase, addMessageToFirebase, setTrailer, disableTrailer, subscribeToTrailer,
   extractYoutubeId, getAllFeedback
 } from '../../services/dbFirebase';
-import { ref, remove } from 'firebase/database';
-import { rtdb } from '../../config/firebase';
 import { recordAttendance } from '../../services/db';
 import { Student, Lesson, Trailer, FeedbackEntry } from '../../types/student';
 import { ProfileSection } from './ProfileSection';
@@ -251,17 +249,15 @@ export const UnifiedDashboard = ({
     }
     if (!window.confirm(`Ajan ${name} (${id}) kalıcı olarak silinecek. Onaylıyor musunuz?`)) return;
     try {
+      // Yalnızca Supabase'den sil (RTDB write izni yok)
       await removeStudentFromFirebase(id);
-      const presenceRef = ref(rtdb, `presence/${id}`);
-      await remove(presenceRef);
-      const approvalRef = ref(rtdb, `deviceApprovals/${id}`);
-      await remove(approvalRef);
       setStudents(prev => prev.filter(s => s.id !== id));
     } catch (error) {
       console.error('Ajan silme hatası:', error);
       alert('Silme işlemi sırasında hata oluştu.');
     }
   };
+
 
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -496,10 +492,10 @@ export const UnifiedDashboard = ({
                   <span className="text-xl">+</span> Tekil Ajan Kayıt
                 </h3>
                 <form onSubmit={handleAddStudent} className="grid grid-cols-1 sm:grid-cols-5 gap-3">
-                  <input type="text" aria-label="ID" placeholder="ID" required value={newStudent.id} onChange={(e) => setNewStudent({ ...newStudent, id: e.target.value })} className="bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#39FF14] font-mono transition-colors rounded" />
-                  <input type="text" aria-label="İsim" placeholder="İsim" required value={newStudent.name} onChange={(e) => setNewStudent({ ...newStudent, name: e.target.value })} className="bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#39FF14] transition-colors rounded" />
-                  <input type="text" aria-label="Takma Ad" placeholder="Takma Ad (opsiyonel)" value={newStudent.nickname} onChange={(e) => setNewStudent({ ...newStudent, nickname: e.target.value })} className="bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#39FF14] transition-colors rounded" />
-                  <input type="email" aria-label="E-posta" placeholder="E-posta (zorunlu)" required value={newStudent.email} onChange={(e) => setNewStudent({ ...newStudent, email: e.target.value })} className="bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#39FF14] transition-colors rounded" />
+                  <input id="newStudentId" name="studentId" type="text" aria-label="ID" placeholder="ID" required value={newStudent.id} onChange={(e) => setNewStudent({ ...newStudent, id: e.target.value })} className="bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#39FF14] font-mono transition-colors rounded" />
+                  <input id="newStudentName" name="studentName" type="text" aria-label="İsim" placeholder="İsim" required value={newStudent.name} onChange={(e) => setNewStudent({ ...newStudent, name: e.target.value })} className="bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#39FF14] transition-colors rounded" />
+                  <input id="newStudentNick" name="studentNick" type="text" aria-label="Takma Ad" placeholder="Takma Ad (opsiyonel)" value={newStudent.nickname} onChange={(e) => setNewStudent({ ...newStudent, nickname: e.target.value })} className="bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#39FF14] transition-colors rounded" />
+                  <input id="newStudentEmail" name="studentEmail" type="email" aria-label="E-posta" placeholder="E-posta (zorunlu)" required value={newStudent.email} onChange={(e) => setNewStudent({ ...newStudent, email: e.target.value })} className="bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#39FF14] transition-colors rounded" />
                   <button type="submit" className="bg-[#39FF14]/20 hover:bg-[#39FF14] text-[#39FF14] hover:text-black border border-[#39FF14] px-6 py-3 font-bold transition-all uppercase tracking-widest whitespace-nowrap rounded min-h-[48px]">Sisteme Ekle</button>
                 </form>
               </div>
@@ -575,7 +571,7 @@ export const UnifiedDashboard = ({
                 <h3 className="text-[#00F0FF] text-base sm:text-lg font-bold mb-2 uppercase tracking-widest">Global Mesaj</h3>
                 <p className="text-gray-400 text-xs sm:text-sm mb-6">Firestore üzerinden tüm ajanların ekranına gönderilir.</p>
                 <form onSubmit={handleSendMessage}>
-                  <textarea aria-label="Mesaj Kutusu" value={messageText} onChange={(e) => setMessageText(e.target.value)} placeholder="Mesajınızı yazın..." required rows={4} className="w-full bg-[#050505] border border-gray-700 text-white p-4 focus:outline-none focus:border-[#00F0FF] font-mono text-sm mb-4 transition-colors resize-none rounded" />
+                  <textarea id="broadcastMsg" name="broadcastMsg" aria-label="Mesaj Kutusu" value={messageText} onChange={(e) => setMessageText(e.target.value)} placeholder="Mesajınızı yazın..." required rows={4} className="w-full bg-[#050505] border border-gray-700 text-white p-4 focus:outline-none focus:border-[#00F0FF] font-mono text-sm mb-4 transition-colors resize-none rounded" />
                   <button type="submit" className="w-full bg-[#00F0FF]/20 hover:bg-[#00F0FF] text-[#00F0FF] hover:text-black border border-[#00F0FF] py-3 font-bold transition-all uppercase tracking-widest flex items-center justify-center gap-2 rounded min-h-[48px]"><Icons.Message /> GÖNDER</button>
                 </form>
               </div>

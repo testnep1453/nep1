@@ -1,10 +1,28 @@
 /**
  * Login Alert Service - Supabase tabanlı
+ * NOT: loginAlerts tablosu Supabase'de oluşturulmamışsa tüm işlemler sessizce atlanır.
  */
 
 import { supabase } from '../config/supabase';
 
+// loginAlerts tablosunun var olup olmadığı önbelleğe alınır
+let tableExists: boolean | null = null;
+
+const checkTableExists = async (): Promise<boolean> => {
+  if (tableExists !== null) return tableExists;
+  try {
+    const { error } = await supabase.from('loginAlerts').select('studentId').limit(1);
+    tableExists = !error || (error.code !== '42P01' && !error.message?.includes('does not exist'));
+  } catch {
+    tableExists = false;
+  }
+  return tableExists;
+};
+
 export const recordLoginAndCheckSuspicious = async (studentId: string): Promise<void> => {
+  const exists = await checkTableExists();
+  if (!exists) return; // Tablo yoksa sessizce çık
+
   const currentUA = navigator.userAgent;
   const currentPlatform = navigator.platform;
 
@@ -47,11 +65,13 @@ export const recordLoginAndCheckSuspicious = async (studentId: string): Promise<
       reason: reason || null,
     }]);
   } catch {
-    // sessiz
+    // ağ/izin hatası — sessiz
   }
 };
 
 export const getSuspiciousLogins = async (limitCount: number = 20) => {
+  const exists = await checkTableExists();
+  if (!exists) return [];
   try {
     const { data } = await supabase
       .from('loginAlerts')
