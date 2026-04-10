@@ -26,37 +26,9 @@ const LEVEL_COLORS = [
 export const LevelProgress = ({ student }: { student: Student }) => {
   const currentLevel = student.level || 1;
   const currentXP = student.xp || 0;
-  const currentThreshold = LEVEL_THRESHOLDS[currentLevel - 1] || 0;
-  const nextThreshold = LEVEL_THRESHOLDS[currentLevel] || LEVEL_THRESHOLDS[LEVEL_THRESHOLDS.length - 1];
-  const progress = Math.min(((currentXP - currentThreshold) / (nextThreshold - currentThreshold)) * 100, 100);
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Level Card */}
-      <div className="bg-[#0A1128]/80 border border-[#00F0FF]/30 p-6 rounded-lg">
-        <div className="flex items-center gap-4 mb-4">
-          <div className="w-16 h-16 bg-[#00F0FF]/10 border-2 border-[#00F0FF]/50 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(0,240,255,0.3)]">
-            <span className="text-2xl font-bold text-[#00F0FF]">{currentLevel}</span>
-          </div>
-          <div>
-            <p className="text-gray-400 text-sm font-mono">{currentXP} / {nextThreshold} XP</p>
-          </div>
-        </div>
-        <div className="mb-1">
-          <div className="flex justify-between text-xs text-gray-500 mb-1">
-            <span>LEVEL İLERLEMESİ</span>
-            <span>{Math.round(progress)}%</span>
-          </div>
-          <div className="h-3 bg-[#050505] rounded-full overflow-hidden border border-gray-800">
-            <div className="h-full bg-gradient-to-r from-[#00F0FF] to-[#6358cc] rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(0,240,255,0.5)]"
-              style={{ width: `${progress}%` }} />
-          </div>
-        </div>
-        <p className="text-gray-600 text-xs text-center mt-2">
-          Sonraki level için {nextThreshold - currentXP} XP daha gerekli
-        </p>
-      </div>
-
       {/* LEVEL YOL HARİTASI — Cyber-Rank Sistemi */}
       <div className="bg-gradient-to-br from-[#0A1128] to-[#050505] border-t-2 border-[#6358cc]/30 p-6 rounded-2xl relative overflow-hidden shadow-2xl">
         <div className="absolute inset-0 bg-[linear-gradient(rgba(99,88,204,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(99,88,204,0.05)_1px,transparent_1px)] bg-[length:20px_20px] pointer-events-none" />
