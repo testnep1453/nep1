@@ -39,7 +39,6 @@ export const LevelProgress = ({ student }: { student: Student }) => {
             <span className="text-2xl font-bold text-[#00F0FF]">{currentLevel}</span>
           </div>
           <div>
-            <h3 className="text-xl font-bold text-white">Level {currentLevel}</h3>
             <p className="text-gray-400 text-sm font-mono">{currentXP} / {nextThreshold} XP</p>
           </div>
         </div>
