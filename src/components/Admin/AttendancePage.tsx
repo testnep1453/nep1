@@ -13,7 +13,7 @@ const MONTHS_TR = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran',
   'Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
 
 function formatDate(dateStr: string): string {
-  const [y, m, d] = dateStr.split('-').map(Number);
+  const [_y, m, d] = dateStr.split('-').map(Number);
   return `${d} ${MONTHS_TR[m - 1]}`;
 }
 

@@ -33,7 +33,7 @@ export function isFeedbackTime(lessonDate: string): boolean {
   return now >= openAt;
 }
 
-export const FeedbackForm = ({ lessonDate, studentId, onClose }: FeedbackFormProps) => {
+export const FeedbackForm = ({ lessonDate, studentId: _studentId, onClose }: FeedbackFormProps) => {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
   const [submitted, setSubmitted] = useState(false);
