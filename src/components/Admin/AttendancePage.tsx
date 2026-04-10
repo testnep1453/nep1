@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Student } from '../../types/student';
-import { getAttendanceForLesson } from '../../services/dbFirebase';
+import { getAttendanceForLesson, recordAttendanceToFirebase } from '../../services/dbFirebase';
 import { FIXED_LESSON_SCHEDULE } from '../../config/lessonSchedule';
 
 interface AttendanceEntry {
@@ -8,6 +8,9 @@ interface AttendanceEntry {
   joinedAt: number;
   autoJoined: boolean;
 }
+
+// Gizlenen sistem hesapları
+const HIDDEN_IDS = new Set(['1001', '1002', '1003']);
 
 const MONTHS_TR = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran',
   'Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
@@ -17,124 +20,309 @@ function formatDate(dateStr: string): string {
   return `${d} ${MONTHS_TR[m - 1]}`;
 }
 
+/** Her öğrencinin tüm derslerdeki katılım istatistiği */
+function calcStudentStats(
+  allRecords: Map<string, AttendanceEntry[]>,
+  students: Student[],
+  lessonDates: string[]
+): Record<string, { attended: number; total: number; rate: number }> {
+  const stats: Record<string, { attended: number; total: number; rate: number }> = {};
+  for (const stu of students) {
+    let attended = 0;
+    for (const date of lessonDates) {
+      const recs = allRecords.get(date) || [];
+      if (recs.some(r => r.studentId === stu.id)) attended++;
+    }
+    const rate = lessonDates.length > 0 ? Math.round((attended / lessonDates.length) * 100) : 0;
+    stats[stu.id] = { attended, total: lessonDates.length, rate };
+  }
+  return stats;
+}
+
 export const AttendancePage = ({ students }: { students: Student[] }) => {
   const [selectedDate, setSelectedDate] = useState('');
   const [records, setRecords] = useState<AttendanceEntry[]>([]);
   const [loading, setLoading] = useState(false);
+  const [savingId, setSavingId] = useState<string | null>(null);
+  const [allRecords, setAllRecords] = useState<Map<string, AttendanceEntry[]>>(new Map());
+  const [statsLoading, setStatsLoading] = useState(false);
+  const [tab, setTab] = useState<'ders' | 'oranlar'>('ders');
 
-  // Geçmiş + bugünkü dersler (henüz bitmeyen lessonlar hariç)
+  // Sistem hesaplarını filtrele
+  const visibleStudents = students.filter(s => !HIDDEN_IDS.has(s.id));
+
+  // Geçmiş dersler
   const now = new Date();
   const pastLessons = FIXED_LESSON_SCHEDULE.filter(l => {
     const [y, m, d] = l.date.split('-').map(Number);
-    const end = new Date(y, m - 1, d, 20, 0, 0);
-    return now >= end;
+    return now >= new Date(y, m - 1, d, 20, 0, 0);
   });
-
-  // Sonraki düzeni: son olan en başta (en güncel)
   const sortedLessons = [...pastLessons].reverse();
 
   useEffect(() => {
-    if (!selectedDate && sortedLessons.length > 0) {
-      setSelectedDate(sortedLessons[0].date);
-    }
+    if (!selectedDate && sortedLessons.length > 0) setSelectedDate(sortedLessons[0].date);
   }, []);
 
+  // Seçili derse ait kayıtlar
   useEffect(() => {
-    if (selectedDate) {
-      setLoading(true);
-      getAttendanceForLesson(selectedDate)
-        .then(r => { setRecords(r); setLoading(false); })
-        .catch(() => setLoading(false));
-    }
+    if (!selectedDate) return;
+    setLoading(true);
+    getAttendanceForLesson(selectedDate)
+      .then(r => { setRecords(r); setLoading(false); })
+      .catch(() => setLoading(false));
   }, [selectedDate]);
 
-  const attendanceRate = students.length > 0
-    ? Math.round((records.length / students.length) * 100) : 0;
+  // Tüm dersler için kayıtları yükle (katılım oranları sekmesi)
+  useEffect(() => {
+    if (tab !== 'oranlar') return;
+    setStatsLoading(true);
+    Promise.all(
+      pastLessons.map(l => getAttendanceForLesson(l.date).then(r => [l.date, r] as [string, AttendanceEntry[]]))
+    ).then(results => {
+      const map = new Map<string, AttendanceEntry[]>();
+      for (const [date, recs] of results) map.set(date, recs);
+      setAllRecords(map);
+      setStatsLoading(false);
+    });
+  }, [tab, pastLessons.length]);
+
+  // Genel katılım oranı (seçili ders)
+  const lessonAttendanceRate = visibleStudents.length > 0
+    ? Math.round((records.filter(r => !HIDDEN_IDS.has(r.studentId)).length / visibleStudents.length) * 100)
+    : 0;
+
+  // Genel toplam katılım oranı (tüm dersler)
+  const overallRate = (() => {
+    if (pastLessons.length === 0 || allRecords.size === 0) return null;
+    let total = 0, attended = 0;
+    for (const stu of visibleStudents) {
+      for (const l of pastLessons) {
+        total++;
+        if ((allRecords.get(l.date) || []).some(r => r.studentId === stu.id)) attended++;
+      }
+    }
+    return total > 0 ? Math.round((attended / total) * 100) : 0;
+  })();
+
+  const studentStats = calcStudentStats(allRecords, visibleStudents, pastLessons.map(l => l.date));
 
   const selectedLesson = FIXED_LESSON_SCHEDULE.find(l => l.date === selectedDate);
 
+  // Manuel katılım toggle
+  const toggleAttendance = async (studentId: string) => {
+    if (!selectedDate) return;
+    const isPresent = records.some(r => r.studentId === studentId);
+    setSavingId(studentId);
+    try {
+      if (!isPresent) {
+        // Katıldı olarak işaretle
+        await recordAttendanceToFirebase(studentId, selectedDate, false);
+        const updated = await getAttendanceForLesson(selectedDate);
+        setRecords(updated);
+      } else {
+        // Katılmadı olarak işaretle — Supabase'den sil
+        const { supabase } = await import('../../config/supabase');
+        await supabase.from('attendance').delete()
+          .eq('studentId', studentId)
+          .eq('lessonDate', selectedDate);
+        const updated = await getAttendanceForLesson(selectedDate);
+        setRecords(updated);
+      }
+    } catch (e) {
+      alert('Kayıt güncellenemedi: ' + (e as Error).message);
+    } finally {
+      setSavingId(null);
+    }
+  };
+
   return (
     <div className="space-y-5 animate-fade-in">
-      {/* Ders Seçici — buton banterı */}
-      <div className="flex flex-wrap gap-2">
-        {sortedLessons.map(l => (
-          <button key={l.date} onClick={() => setSelectedDate(l.date)}
-            className={`px-3 py-1.5 rounded text-xs font-mono transition-all ${
-              selectedDate === l.date
-                ? 'bg-[#39FF14]/20 text-[#39FF14] border border-[#39FF14]/50'
-                : 'bg-[#0A1128] text-gray-500 border border-gray-800 hover:border-gray-600'
-            }`}>
-            <span className="font-bold">Ders {l.lessonNo}</span>
-            <span className="ml-1.5 opacity-60">{formatDate(l.date)}</span>
-          </button>
-        ))}
-        {sortedLessons.length === 0 && (
-          <p className="text-gray-600 text-sm font-mono">Henüz tamamlanmış ders yok.</p>
-        )}
+      {/* Sekme */}
+      <div className="flex gap-2">
+        <button
+          onClick={() => setTab('ders')}
+          className={`px-4 py-2 text-xs font-bold rounded transition-all ${tab === 'ders' ? 'bg-[#39FF14]/20 text-[#39FF14] border border-[#39FF14]/50' : 'bg-[#0A1128] text-gray-500 border border-gray-800 hover:border-gray-600'}`}
+        >
+          📋 Ders Yoklaması
+        </button>
+        <button
+          onClick={() => setTab('oranlar')}
+          className={`px-4 py-2 text-xs font-bold rounded transition-all ${tab === 'oranlar' ? 'bg-[#00F0FF]/20 text-[#00F0FF] border border-[#00F0FF]/50' : 'bg-[#0A1128] text-gray-500 border border-gray-800 hover:border-gray-600'}`}
+        >
+          📊 Katılım Oranları
+        </button>
       </div>
 
-      {selectedDate && (
+      {/* ── DERS YOKLAMASI ── */}
+      {tab === 'ders' && (
         <>
-          {/* Başlık */}
-          <div className="text-center">
-            <p className="text-xs text-gray-600 font-mono uppercase tracking-widest">
-              Ders {selectedLesson?.lessonNo} — {selectedDate}
-            </p>
+          {/* Ders Seçici */}
+          <div className="flex flex-wrap gap-2">
+            {sortedLessons.map(l => (
+              <button key={l.date} onClick={() => setSelectedDate(l.date)}
+                className={`px-3 py-1.5 rounded text-xs font-mono transition-all ${
+                  selectedDate === l.date
+                    ? 'bg-[#39FF14]/20 text-[#39FF14] border border-[#39FF14]/50'
+                    : 'bg-[#0A1128] text-gray-500 border border-gray-800 hover:border-gray-600'
+                }`}>
+                <span className="font-bold">Ders {l.lessonNo}</span>
+                <span className="ml-1.5 opacity-60">{formatDate(l.date)}</span>
+              </button>
+            ))}
+            {sortedLessons.length === 0 && (
+              <p className="text-gray-600 text-sm font-mono">Henüz tamamlanmış ders yok.</p>
+            )}
           </div>
 
-          {/* İstatistikler */}
-          <div className="grid grid-cols-3 gap-4">
-            <div className="bg-[#0A1128]/80 border border-[#39FF14]/30 p-4 rounded-lg text-center">
-              <div className="text-2xl font-bold text-[#39FF14]">{records.length}</div>
-              <div className="text-xs text-gray-500 uppercase tracking-wider">Katılan</div>
-            </div>
-            <div className="bg-[#0A1128]/80 border border-[#FF4500]/30 p-4 rounded-lg text-center">
-              <div className="text-2xl font-bold text-[#FF4500]">{students.length - records.length}</div>
-              <div className="text-xs text-gray-500 uppercase tracking-wider">Katılmayan</div>
-            </div>
-            <div className="bg-[#0A1128]/80 border border-[#00F0FF]/30 p-4 rounded-lg text-center">
-              <div className="text-2xl font-bold text-[#00F0FF]">%{attendanceRate}</div>
-              <div className="text-xs text-gray-500 uppercase tracking-wider">Katılım</div>
-            </div>
-          </div>
+          {selectedDate && (
+            <>
+              {/* İstatistik kartları */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="bg-[#0A1128]/80 border border-[#39FF14]/30 p-4 rounded-lg text-center">
+                  <div className="text-2xl font-bold text-[#39FF14]">
+                    {records.filter(r => !HIDDEN_IDS.has(r.studentId)).length}
+                  </div>
+                  <div className="text-xs text-gray-500 uppercase tracking-wider">Katılan</div>
+                </div>
+                <div className="bg-[#0A1128]/80 border border-[#FF4500]/30 p-4 rounded-lg text-center">
+                  <div className="text-2xl font-bold text-[#FF4500]">
+                    {visibleStudents.length - records.filter(r => !HIDDEN_IDS.has(r.studentId)).length}
+                  </div>
+                  <div className="text-xs text-gray-500 uppercase tracking-wider">Katılmayan</div>
+                </div>
+                <div className="bg-[#0A1128]/80 border border-[#00F0FF]/30 p-4 rounded-lg text-center">
+                  <div className="text-2xl font-bold text-[#00F0FF]">%{lessonAttendanceRate}</div>
+                  <div className="text-xs text-gray-500 uppercase tracking-wider">Oran</div>
+                </div>
+              </div>
 
-          {/* Tablo */}
-          <div className="bg-[#0A1128]/60 border border-gray-800 rounded overflow-x-auto">
-            {loading ? (
-              <div className="text-center py-8 text-gray-500 animate-pulse">Yükleniyor...</div>
-            ) : (
+              {/* Başlık + düzenleme uyarısı */}
+              <div className="flex items-center justify-between">
+                <p className="text-xs text-gray-600 font-mono">
+                  Ders {selectedLesson?.lessonNo} — {selectedDate} &nbsp;·&nbsp; Satıra tıklayarak katılım düzenle
+                </p>
+              </div>
+
+              {/* Tablo */}
+              <div className="bg-[#0A1128]/60 border border-gray-800 rounded overflow-x-auto">
+                {loading ? (
+                  <div className="text-center py-8 text-gray-500 animate-pulse">Yükleniyor…</div>
+                ) : (
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-gray-900 border-b border-gray-700 font-mono text-gray-400 text-xs">
+                        <th className="p-3 font-normal">ID</th>
+                        <th className="p-3 font-normal">İSİM</th>
+                        <th className="p-3 font-normal">DURUM</th>
+                        <th className="p-3 font-normal hidden sm:table-cell">SAAT</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-800">
+                      {visibleStudents.map(stu => {
+                        const record = records.find(r => r.studentId === stu.id);
+                        const attended = !!record;
+                        const isSaving = savingId === stu.id;
+                        return (
+                          <tr
+                            key={stu.id}
+                            onClick={() => !isSaving && toggleAttendance(stu.id)}
+                            className={`transition-colors cursor-pointer select-none ${attended ? 'hover:bg-[#39FF14]/5' : 'hover:bg-[#FF4500]/5'}`}
+                          >
+                            <td className="p-3 font-mono text-[#39FF14] text-sm">{stu.id}</td>
+                            <td className="p-3 font-bold text-sm">{stu.name}</td>
+                            <td className="p-3">
+                              {isSaving ? (
+                                <span className="text-yellow-400 text-xs font-bold animate-pulse">Kaydediliyor…</span>
+                              ) : attended ? (
+                                <span className="text-[#39FF14] text-xs font-bold">✅ KATILDI</span>
+                              ) : (
+                                <span className="text-[#FF4500] text-xs font-bold">❌ KATILMADI</span>
+                              )}
+                            </td>
+                            <td className="p-3 hidden sm:table-cell text-xs text-gray-500 font-mono">
+                              {record ? new Date(record.joinedAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }) : '—'}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            </>
+          )}
+        </>
+      )}
+
+      {/* ── KATILIM ORANLARI ── */}
+      {tab === 'oranlar' && (
+        <>
+          {/* Genel oran */}
+          {overallRate !== null && (
+            <div className="grid grid-cols-3 gap-3">
+              <div className="bg-[#0A1128]/80 border border-[#6358cc]/30 p-4 rounded-lg text-center">
+                <div className="text-2xl font-bold text-[#6358cc]">{pastLessons.length}</div>
+                <div className="text-xs text-gray-500 uppercase tracking-wider">Toplam Ders</div>
+              </div>
+              <div className="bg-[#0A1128]/80 border border-[#39FF14]/30 p-4 rounded-lg text-center">
+                <div className="text-2xl font-bold text-[#39FF14]">{visibleStudents.length}</div>
+                <div className="text-xs text-gray-500 uppercase tracking-wider">Aktif Ajan</div>
+              </div>
+              <div className="bg-[#0A1128]/80 border border-[#00F0FF]/30 p-4 rounded-lg text-center">
+                <div className="text-2xl font-bold text-[#00F0FF]">%{overallRate}</div>
+                <div className="text-xs text-gray-500 uppercase tracking-wider">Genel Katılım</div>
+              </div>
+            </div>
+          )}
+
+          {statsLoading ? (
+            <div className="text-center py-12 text-gray-500 animate-pulse">Veriler hesaplanıyor…</div>
+          ) : (
+            <div className="bg-[#0A1128]/60 border border-gray-800 rounded overflow-x-auto">
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-gray-900 border-b border-gray-700 font-mono text-gray-400 text-xs">
-                    <th className="p-3 font-normal">ID</th>
-                    <th className="p-3 font-normal">İSİM</th>
-                    <th className="p-3 font-normal">DURUM</th>
-                    <th className="p-3 font-normal hidden sm:table-cell">SAAT</th>
+                    <th className="p-3 font-normal">AJAN</th>
+                    <th className="p-3 font-normal text-center">KATILDI</th>
+                    <th className="p-3 font-normal text-center">TOPLAM</th>
+                    <th className="p-3 font-normal">ORAN</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-800">
-                  {students.map(stu => {
-                    const record = records.find(r => r.studentId === stu.id);
-                    const attended = !!record;
-                    return (
-                      <tr key={stu.id} className="hover:bg-white/5 transition-colors">
-                        <td className="p-3 font-mono text-[#39FF14] text-sm">{stu.id}</td>
-                        <td className="p-3 font-bold text-sm">{stu.name}</td>
-                        <td className="p-3">
-                          {attended
-                            ? <span className="text-[#39FF14] text-xs font-bold">✅ KATILDI</span>
-                            : <span className="text-[#FF4500] text-xs font-bold">❌ KATILMADI</span>}
-                        </td>
-                        <td className="p-3 hidden sm:table-cell text-xs text-gray-500 font-mono">
-                          {record ? new Date(record.joinedAt).toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' }) : '—'}
-                        </td>
-                      </tr>
-                    );
-                  })}
+                  {[...visibleStudents]
+                    .sort((a, b) => (studentStats[b.id]?.rate ?? 0) - (studentStats[a.id]?.rate ?? 0))
+                    .map(stu => {
+                      const s = studentStats[stu.id] ?? { attended: 0, total: 0, rate: 0 };
+                      const color = s.rate >= 75 ? '#39FF14' : s.rate >= 50 ? '#FFB000' : '#FF4500';
+                      return (
+                        <tr key={stu.id} className="hover:bg-white/5 transition-colors">
+                          <td className="p-3">
+                            <div className="font-bold text-sm">{stu.name}</div>
+                            <div className="text-xs text-gray-600 font-mono">{stu.id}</div>
+                          </td>
+                          <td className="p-3 text-center font-mono text-sm" style={{ color }}>{s.attended}</td>
+                          <td className="p-3 text-center font-mono text-sm text-gray-500">{s.total}</td>
+                          <td className="p-3 w-40">
+                            <div className="flex items-center gap-2">
+                              <div className="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden">
+                                <div
+                                  className="h-full rounded-full transition-all"
+                                  style={{ width: `${s.rate}%`, backgroundColor: color }}
+                                />
+                              </div>
+                              <span className="text-xs font-bold font-mono w-9 text-right" style={{ color }}>%{s.rate}</span>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                 </tbody>
               </table>
-            )}
-          </div>
+              {pastLessons.length === 0 && (
+                <div className="text-center py-8 text-gray-600 text-sm">Henüz tamamlanmış ders yok.</div>
+              )}
+            </div>
+          )}
         </>
       )}
     </div>

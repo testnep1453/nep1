@@ -1,8 +1,8 @@
 /**
  * NEP Ders Programı Konfigürasyonu
  * 
- * Ana Kural: Her hafta Perşembe 19:00 - 20:00 arası ders yapılır.
- * Bugünden itibaren sonraki perşembe günleri otomatik hesaplanır.
+ * Ana Kural: Her hafta Perşembe saat 19.00–20.00 arası ders yapılır.
+ * Bugünden itibaren sonraki Perşembe günleri otomatik hesaplanır.
  */
 
 import { Lesson } from '../types/student';
@@ -11,8 +11,8 @@ import { Lesson } from '../types/student';
 const DEFAULT_ZOOM_LINK = 'https://us06web.zoom.us/j/4379624331?pwd=0FNDyMVqBM7FooqqiOz1zz3efzYDIJ.1';
 
 // Ders saatleri (Türkiye saati - UTC+3)
-const LESSON_HOUR_START = 19; // 19:00
-const LESSON_HOUR_END = 20;   // 20:00
+const LESSON_HOUR_START = 19; // 19.00
+const LESSON_HOUR_END = 20;   // 20.00
 const LESSON_DAY = 4;         // Perşembe (0=Pazar, 4=Perşembe)
 
 // Sabit Ders Takvimi (Modül 2.2 / Emir 8)
@@ -106,7 +106,7 @@ export const getNextLesson = (): Lesson => {
 };
 
 /**
- * Şu an ders aktif mi? (Perşembe 19:00 - 20:00 arası)
+ * Şu an ders aktif mi? (Perşembe 19.00–20.00 arası)
  */
 export const isLessonActive = (): boolean => {
   const now = new Date();
@@ -120,7 +120,7 @@ export const isLessonActive = (): boolean => {
 };
 
 /**
- * Şu an ders saati geldi mi? (Perşembe 19:00 - 19:59:59)
+ * Şu an ders saati geldi mi? (Perşembe 19.00–19.59)
  * Zero-click yönlendirme için kullanılır
  */
 export const shouldAutoRedirectToZoom = (): boolean => {
@@ -149,7 +149,7 @@ export const isLessonEnded = (): boolean => {
 };
 
 /**
- * Hatırlatma mesajı zamanı mı? (Çarşamba 19:00)
+ * Hatırlatma mesajı zamanı mı? (Çarşamba saat 19.00)
  */
 export const isReminderTime = (): boolean => {
   const now = new Date();
@@ -159,7 +159,7 @@ export const isReminderTime = (): boolean => {
 };
 
 /**
- * Ders başlangıç mesajı zamanı mı? (Perşembe 19:00)
+ * Ders başlangıç mesajı zamanı mı? (Perşembe saat 19.00)
  */
 export const isLessonStartTime = (): boolean => {
   const now = new Date();

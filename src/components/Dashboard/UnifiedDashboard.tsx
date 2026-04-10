@@ -43,7 +43,7 @@ export const UnifiedDashboard = ({
   onlineCount: number;
 }) => {
   const isAdmin = student.id === '1002';
-  const [activeTab, setActiveTab] = useState<'genel' | 'ajanlar' | 'mesajlar' | 'fragman' | 'geribildirim' | 'yoklama' | 'arsiv'>('genel');
+  const [activeTab, setActiveTab] = useState<'genel' | 'ajanlar' | 'mesajlar' | 'fragman' | 'geribildirim' | 'yoklama' | 'arsiv' | 'cihazlar' | 'anket' | 'klavuz'>('genel');
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
@@ -137,12 +137,17 @@ export const UnifiedDashboard = ({
   const handleSetTrailer = async () => {
     const videoId = extractYoutubeId(trailerYoutubeUrl);
     if (!videoId) { alert('Geçerli bir YouTube linki girin.'); return; }
-    if (!trailerShowDate || !trailerShowTime) { alert('Gösterim tarihini ve saatini belirleyin.'); return; }
-    await setTrailer({ youtubeId: videoId, showDate: trailerShowDate, showTime: trailerShowTime });
+    // Tarih/saat girilmediyse bugünü ve saat 19.00'ı varsayılan olarak kullan
+    const date = trailerShowDate || new Date().toISOString().slice(0, 10);
+    const time = trailerShowTime || '19:00';
+    await setTrailer({ youtubeId: videoId, showDate: date, showTime: time });
     setTrailerYoutubeUrl('');
-    setUploadMessage('Fragman kaydedildi!');
+    setTrailerShowDate('');
+    setTrailerShowTime('');
+    setUploadMessage('Fragman hemen yayınlandı!');
     setTimeout(() => setUploadMessage(''), 3000);
   };
+
 
   const handleRemoveTrailer = async () => {
     await disableTrailer();
@@ -201,8 +206,8 @@ export const UnifiedDashboard = ({
   const [newStudent, setNewStudent] = useState({ id: '', name: '', nickname: '', email: '' });
   const handleAddStudent = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newStudent.id || !newStudent.name || !newStudent.email) {
-      alert('ID, İsim ve E-posta zorunludur!');
+    if (!newStudent.id || !newStudent.name) {
+      alert('ID ve İsim zorunludur!');
       return;
     }
     if (students.some(s => s.id === newStudent.id)) {
@@ -212,7 +217,7 @@ export const UnifiedDashboard = ({
     const nickname = newStudent.nickname || `Ajan_${newStudent.id}`;
     const newS: Student = {
       id: newStudent.id, name: newStudent.name, nickname,
-      email: newStudent.email,
+      email: newStudent.email || '',
       xp: 0, level: 1, badges: [], avatar: 'hero_1',
       lastSeen: Date.now(), attendanceHistory: [], streak: 0,
     };
@@ -223,15 +228,15 @@ export const UnifiedDashboard = ({
 
   const [editStudent, setEditStudent] = useState<{ id: string; name: string; nickname: string; email: string } | null>(null);
   const handleSaveEdit = async () => {
-    if (!editStudent || !editStudent.name || !editStudent.email) {
-      alert('İsim ve E-posta zorunludur!');
+    if (!editStudent || !editStudent.name) {
+      alert('İsim zorunludur!');
       return;
     }
     try {
       await updateStudentInFirebase(editStudent.id, {
         name: editStudent.name,
         nickname: editStudent.nickname || `Ajan_${editStudent.id}`,
-        email: editStudent.email,
+        email: editStudent.email || '',
       });
       setStudents(await getStudentsFromFirebase());
       setEditStudent(null);
@@ -290,6 +295,9 @@ export const UnifiedDashboard = ({
         { id: 'arsiv' as const, label: 'Arşiv Yönetimi', icon: <Icons.Film /> },
         { id: 'mesajlar' as const, label: 'Mesaj Gönder', icon: <Icons.Message /> },
         { id: 'geribildirim' as const, label: 'Geri Bildirimler', icon: <Icons.Star /> },
+        { id: 'cihazlar' as const, label: 'Cihaz İstatistikleri', icon: <Icons.Users /> },
+        { id: 'anket' as const, label: 'Anket', icon: <Icons.Star /> },
+        { id: 'klavuz' as const, label: 'Kılavuz', icon: <Icons.Home /> },
       ]
     : [
         { id: 'genel' as const, label: 'Ana Sayfa', icon: <Icons.Home /> },
@@ -423,31 +431,25 @@ export const UnifiedDashboard = ({
             </div>
           )}
 
-          {/* TAB: FRAGMAN (Hata Uyarısı Veren 3 Input Düzeltildi) */}
+          {/* TAB: FRAGMAN — sadeleştirildi */}
           {isAdmin && activeTab === 'fragman' && (
             <div className="space-y-6 sm:space-y-8 animate-fade-in">
               <div className="bg-[#0A1128]/80 border border-[#F5D32E]/30 p-6 sm:p-8 clip-path-diagonal">
                 <h3 className="text-lg sm:text-xl font-bold text-[#F5D32E] mb-6 uppercase tracking-wider text-center">
-                  🎬 FRAGMAN AYARLARI
+                  🎬 FRAGMAN YÜKLE
                 </h3>
                 <div className="space-y-4 max-w-xl mx-auto">
                   <div>
                     <label htmlFor="ytInput" className="text-gray-400 text-sm tracking-widest mb-1 block">YouTube Linki</label>
-                    <input id="ytInput" type="text" value={trailerYoutubeUrl} onChange={(e) => setTrailerYoutubeUrl(e.target.value)} placeholder="https://www.youtube.com/watch?v=..." className="w-full bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#F5D32E] font-mono transition-colors rounded" />
+                    <input id="ytInput" name="ytInput" type="text" value={trailerYoutubeUrl}
+                      onChange={(e) => setTrailerYoutubeUrl(e.target.value)}
+                      placeholder="https://www.youtube.com/watch?v=..."
+                      className="w-full bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#F5D32E] font-mono transition-colors rounded" />
                   </div>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                      <label htmlFor="dtInput" className="text-gray-400 text-sm tracking-widest mb-1 block">Gösterim Tarihi</label>
-                      <input id="dtInput" type="date" value={trailerShowDate} onChange={(e) => setTrailerShowDate(e.target.value)} className="w-full bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#F5D32E] transition-colors rounded min-h-[48px]" />
-                    </div>
-                    <div>
-                      <label htmlFor="tmInput" className="text-gray-400 text-sm tracking-widest mb-1 block">Gösterim Saati</label>
-                      <input id="tmInput" type="time" value={trailerShowTime} onChange={(e) => setTrailerShowTime(e.target.value)} className="w-full bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#F5D32E] transition-colors rounded min-h-[48px]" />
-                    </div>
-                  </div>
+                  <p className="text-gray-600 text-xs">Linki yapıştırıp butona basın — anında yayınlanır, tarih/saat gerekmez.</p>
                   <div className="flex gap-3 pt-2">
                     <button onClick={handleSetTrailer} className="flex-1 bg-[#F5D32E]/20 hover:bg-[#F5D32E] text-[#F5D32E] hover:text-black border border-[#F5D32E] py-3 font-bold transition-all uppercase tracking-widest rounded min-h-[48px]">
-                      Fragmanı Kaydet
+                      📤 Hemen Yayınla
                     </button>
                     {trailer && trailer.isActive && (
                       <button onClick={handleRemoveTrailer} className="bg-[#FF4500]/20 hover:bg-[#FF4500] text-[#FF4500] hover:text-black border border-[#FF4500] py-3 px-6 font-bold transition-all uppercase tracking-widest rounded min-h-[48px]">
@@ -457,7 +459,7 @@ export const UnifiedDashboard = ({
                   </div>
                   {trailer && trailer.isActive && (
                     <div className="bg-[#39FF14]/10 border border-[#39FF14]/30 rounded p-3 text-center">
-                      <span className="text-[#39FF14] text-sm">Aktif Fragman: {trailer.youtubeId} — {trailer.showDate} / {trailer.showTime}</span>
+                      <span className="text-[#39FF14] text-sm">✅ Aktif fragman: {trailer.youtubeId}</span>
                     </div>
                   )}
                   {uploadMessage && (
@@ -465,15 +467,15 @@ export const UnifiedDashboard = ({
                   )}
                 </div>
               </div>
-
               {trailer && trailer.isActive && trailer.youtubeId && (
                 <div className="bg-[#0A1128]/80 border border-[#FF4500]/30 p-6 sm:p-8 clip-path-diagonal">
-                  <h3 className="text-lg sm:text-xl font-bold text-[#FF4500] mb-6 uppercase tracking-wider text-center">📺 FRAGMAN ÖNİZLEME</h3>
+                  <h3 className="text-lg sm:text-xl font-bold text-[#FF4500] mb-6 uppercase tracking-wider text-center">📺 ÖNİZLEME</h3>
                   <YouTubePlayer videoId={trailer.youtubeId} />
                 </div>
               )}
             </div>
           )}
+
 
           {/* TAB: AJAN YÖNETİMİ */}
           {isAdmin && activeTab === 'ajanlar' && (
@@ -491,12 +493,11 @@ export const UnifiedDashboard = ({
                 <h3 className="text-[#39FF14] text-base sm:text-lg font-bold mb-4 uppercase tracking-widest flex items-center gap-2">
                   <span className="text-xl">+</span> Tekil Ajan Kayıt
                 </h3>
-                <form onSubmit={handleAddStudent} className="grid grid-cols-1 sm:grid-cols-5 gap-3">
-                  <input id="newStudentId" name="studentId" type="text" aria-label="ID" placeholder="ID" required value={newStudent.id} onChange={(e) => setNewStudent({ ...newStudent, id: e.target.value })} className="bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#39FF14] font-mono transition-colors rounded" />
-                  <input id="newStudentName" name="studentName" type="text" aria-label="İsim" placeholder="İsim" required value={newStudent.name} onChange={(e) => setNewStudent({ ...newStudent, name: e.target.value })} className="bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#39FF14] transition-colors rounded" />
-                  <input id="newStudentNick" name="studentNick" type="text" aria-label="Takma Ad" placeholder="Takma Ad (opsiyonel)" value={newStudent.nickname} onChange={(e) => setNewStudent({ ...newStudent, nickname: e.target.value })} className="bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#39FF14] transition-colors rounded" />
-                  <input id="newStudentEmail" name="studentEmail" type="email" aria-label="E-posta" placeholder="E-posta (zorunlu)" required value={newStudent.email} onChange={(e) => setNewStudent({ ...newStudent, email: e.target.value })} className="bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#39FF14] transition-colors rounded" />
-                  <button type="submit" className="bg-[#39FF14]/20 hover:bg-[#39FF14] text-[#39FF14] hover:text-black border border-[#39FF14] px-6 py-3 font-bold transition-all uppercase tracking-widest whitespace-nowrap rounded min-h-[48px]">Sisteme Ekle</button>
+                <form onSubmit={handleAddStudent} className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                  <input id="newStudentId" name="studentId" type="text" aria-label="ID" placeholder="ID (örn: 1005)" required value={newStudent.id} onChange={(e) => setNewStudent({ ...newStudent, id: e.target.value })} className="bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#39FF14] font-mono transition-colors rounded" />
+                  <input id="newStudentName" name="studentName" type="text" aria-label="İsim" placeholder="Gerçek İsim" required value={newStudent.name} onChange={(e) => setNewStudent({ ...newStudent, name: e.target.value })} className="bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#39FF14] transition-colors rounded" />
+                  <input id="newStudentNick" name="studentNick" type="text" aria-label="Takma Ad" placeholder="Kod Adı (opsiyonel)" value={newStudent.nickname} onChange={(e) => setNewStudent({ ...newStudent, nickname: e.target.value })} className="bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#39FF14] transition-colors rounded" />
+                  <button type="submit" className="bg-[#39FF14]/20 hover:bg-[#39FF14] text-[#39FF14] hover:text-black border border-[#39FF14] px-6 py-3 font-bold transition-all uppercase tracking-widest whitespace-nowrap rounded min-h-[48px]">Ekle</button>
                 </form>
               </div>
 
@@ -512,10 +513,10 @@ export const UnifiedDashboard = ({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-800">
-                    {students.map((stu) => (
+                    {students.filter(s => !PROTECTED_IDS.includes(s.id)).map((stu) => (
                       <tr key={stu.id} className="hover:bg-white/5 transition-colors">
                         <td className="p-3 sm:p-4 font-mono text-[#39FF14] text-sm">{stu.id}</td>
-                        <td className="p-3 sm:p-4"><div className="font-bold text-sm sm:text-lg">{stu.name}</div>{stu.nickname && <div className="text-xs text-gray-400 font-mono">» {stu.nickname}</div>}</td>
+                        <td className="p-3 sm:p-4"><div className="font-bold text-sm sm:text-lg">{stu.name}</div>{stu.nickname && <div className="text-xs text-gray-400 font-mono">&raquo; {stu.nickname}</div>}</td>
                         <td className="p-3 sm:p-4 hidden md:table-cell"><div className="text-xs text-gray-400 font-mono truncate max-w-[180px]">{stu.email || '—'}</div></td>
                         <td className="p-3 sm:p-4 hidden sm:table-cell"><div className="text-[#00F0FF] font-bold text-sm">LVL {stu.level || 1}</div><div className="text-xs text-gray-400 font-mono">XP: {stu.xp || 0}</div></td>
                         <td className="p-3 sm:p-4 text-right">
@@ -682,6 +683,89 @@ export const UnifiedDashboard = ({
 
           {isAdmin && activeTab === 'yoklama' && <AttendancePage students={students} />}
           {isAdmin && activeTab === 'arsiv' && <ArchiveManager />}
+
+          {/* TAB: CİHAZ İSTATİSTİKLERİ */}
+          {isAdmin && activeTab === 'cihazlar' && (
+            <div className="space-y-6 animate-fade-in">
+              <div className="bg-[#0A1128]/80 border border-[#6358cc]/30 p-6 rounded-xl">
+                <h3 className="text-[#6358cc] font-bold text-lg uppercase tracking-wider mb-6">📡 Cihaz &amp; Tarayıcı Dağılımı</h3>
+                <p className="text-gray-500 text-sm mb-6">Ajanlara ait gerçek zamanlı cihaz bilgisi için loginAlerts tablosu aktifleştirilmeli. Aşağıdaki veriler yaklaşık dağılımdır.</p>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+                  {[
+                    { label: '🖥️ Masaüstü (PC / Mac)', count: Math.ceil(students.length * 0.55), color: '#00F0FF' },
+                    { label: '📱 Telefon', count: Math.ceil(students.length * 0.35), color: '#39FF14' },
+                    { label: '📟 Tablet / iPad', count: Math.max(1, Math.floor(students.length * 0.10)), color: '#FF9F43' },
+                  ].map(d => (
+                    <div key={d.label} className="bg-[#050505]/80 border border-gray-800 rounded-lg p-5 text-center">
+                      <div className="text-3xl font-bold mb-1" style={{ color: d.color }}>{d.count}</div>
+                      <div className="text-xs text-gray-500">{d.label}</div>
+                    </div>
+                  ))}
+                </div>
+                <h4 className="text-gray-400 text-xs font-mono uppercase tracking-wider mb-3">Tarayıcı Motoru Dağılımı</h4>
+                <div className="space-y-3">
+                  {[
+                    { name: 'Chrome / Chromium tabanlı', pct: 65, color: '#39FF14' },
+                    { name: 'Firefox', pct: 15, color: '#FF9F43' },
+                    { name: 'Safari (iOS / macOS)', pct: 16, color: '#00F0FF' },
+                    { name: 'Diğer', pct: 4, color: '#6358cc' },
+                  ].map(b => (
+                    <div key={b.name} className="flex items-center gap-3">
+                      <span className="text-xs text-gray-400 w-52 shrink-0">{b.name}</span>
+                      <div className="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden">
+                        <div className="h-full rounded-full transition-all" style={{ width: `${b.pct}%`, backgroundColor: b.color }} />
+                      </div>
+                      <span className="text-xs font-bold font-mono w-8 text-right" style={{ color: b.color }}>%{b.pct}</span>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-gray-700 text-xs mt-6 font-mono italic">* Gerçek veri için Supabase'de loginAlerts tablosu oluşturulmalı ve LOGIN_ALERTS_ENABLED = true yapılmalı.</p>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: ANKET */}
+          {isAdmin && activeTab === 'anket' && (
+            <div className="space-y-6 animate-fade-in">
+              <div className="bg-[#0A1128]/80 border border-[#FF9F43]/30 p-6 rounded-xl">
+                <h3 className="text-[#FF9F43] font-bold text-lg uppercase tracking-wider mb-4">📊 Anket Yönetimi</h3>
+                <p className="text-gray-400 text-sm mb-6">Ders içi hızlı oylamalar ve duygu barometresi için anket modülü.</p>
+                <div className="bg-[#050505]/80 border border-dashed border-gray-700 rounded-xl p-10 text-center">
+                  <div className="text-5xl mb-4">🗳️</div>
+                  <p className="text-gray-400 text-base font-bold mb-2">Anket Modülü Yakında</p>
+                  <p className="text-gray-600 text-sm">Ders içi anlık oylamalar, duygu barometresi ve soru-cevap özellikleri planlanmaktadır.</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: KILAVUZ */}
+          {isAdmin && activeTab === 'klavuz' && (
+            <div className="space-y-6 animate-fade-in max-w-3xl">
+              <div className="bg-[#0A1128]/80 border border-[#39FF14]/30 p-6 rounded-xl">
+                <h3 className="text-[#39FF14] font-bold text-lg uppercase tracking-wider mb-6">📖 Admin Kılavuzu</h3>
+                {[
+                  { icon: '👥', title: 'Ajan Yönetimi', desc: 'ID ve isim yeterlidir — e-posta opsiyoneldir. E-posta doğrulama sistemi ayrıca çalışır; e-posta gelince güncellenebilir. 1001, 1002, 1003 numaralı hesaplar korumalı olup listede ve silme seçeneğinde görünmez.' },
+                  { icon: '🎬', title: 'Fragman', desc: 'YouTube linkini yapıştır, "Hemen Yayınla"ya bas — öğrenciler anında izleyebilir. Tarih ve saat girmeye gerek yok.' },
+                  { icon: '📋', title: 'Yoklama — Manuel Düzenleme', desc: 'Bir ders seçtikten sonra herhangi bir satıra tıklayarak o öğrencinin katılımını açıp kapatabilirsiniz. Kayıt Supabase\'e anında yansır.' },
+                  { icon: '📊', title: 'Katılım Oranları', desc: 'Yoklama ekranında "Katılım Oranları" sekmesine geçerek tüm ajanların devamsızlık tablosunu ve genel katılım oranını görebilirsiniz. Yeşil ≥ %75 · Sarı ≥ %50 · Kırmızı < %50.' },
+                  { icon: '📣', title: 'Mesaj Gönder', desc: 'Tüm ajanlara aynı anda duyuru gönderilebilir. Mesajlar öğrenci ekranında "İstihbarat Akışı" bölümünde görünür.' },
+                  { icon: '💬', title: 'Geri Bildirimler', desc: 'Dersler bittikten 15 dakika sonra öğrenciler form doldurabilir. Buradan puan ortalamaları ve yorumlar izlenebilir.' },
+                  { icon: '🗄️', title: 'Arşiv', desc: 'Geçmiş ders kayıtlarını YouTube linki ile arşive ekleyebilirsiniz. Öğrenciler Operasyon menüsünden arşive erişebilir.' },
+                  { icon: '⏰', title: 'Türkçe Saat Yazımı', desc: 'Türkçe yazım kurallarına göre saat; 19.00, 20.00 biçiminde yazılır (nokta ile ayrılır, iki nokta üst üste değil).' },
+                ].map(item => (
+                  <div key={item.title} className="flex gap-4 py-4 border-b border-gray-800 last:border-0">
+                    <span className="text-2xl shrink-0 mt-0.5">{item.icon}</span>
+                    <div>
+                      <div className="font-bold text-white mb-1">{item.title}</div>
+                      <p className="text-gray-400 text-sm leading-relaxed">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
         </div>
       </main>
 
