@@ -39,7 +39,6 @@ export const getArchiveVideos = async (): Promise<ArchiveVideo[]> => {
       .order('addedAt', { ascending: false });
     if (error) {
       // Tablo henüz oluşturulmadıysa sessizce boş dizi döndür
-      console.warn('[Archive] Tablo erişim hatası (muhtemelen henüz oluşturulmadı):', error.message);
       return [];
     }
     return (data ?? []) as ArchiveVideo[];
