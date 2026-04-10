@@ -58,85 +58,87 @@ export const LevelProgress = ({ student }: { student: Student }) => {
         </p>
       </div>
 
-      {/* LEVEL YOL HARİTASI — Dikey zincir görsel */}
-      <div className="bg-[#0A1128]/80 border border-[#6358cc]/30 p-6 rounded-lg">
+      {/* LEVEL YOL HARİTASI — Battle Pass (Yatay Kaydırılabilir) */}
+      <div className="bg-[#0A1128]/80 border border-[#6358cc]/30 p-6 rounded-lg overflow-hidden">
         <h3 className="text-[#8b7fd8] font-bold text-sm uppercase tracking-wider mb-6">🗺️ Level Yol Haritası</h3>
         
-        <div className="relative flex flex-col items-center gap-0">
-          {LEVEL_THRESHOLDS.slice(0, 10).map((threshold, idx) => {
-            const lvl = idx + 1;
-            const isUnlocked = lvl <= currentLevel;
-            const isCurrent = lvl === currentLevel;
-            const color = LEVEL_COLORS[idx];
-            const isLast = lvl === 10;
+        {/* Yatay Scroll Container */}
+        <div className="flex items-center overflow-x-auto pb-6 relative snap-x snap-mandatory scrollbar-hide">
+          <div className="flex items-center px-4 w-max">
+            {LEVEL_THRESHOLDS.slice(0, 10).map((threshold, idx) => {
+              const lvl = idx + 1;
+              const isUnlocked = lvl <= currentLevel;
+              const isCurrent = lvl === currentLevel;
+              const color = LEVEL_COLORS[idx];
+              const isLast = lvl === 10;
 
-            return (
-              <div key={lvl} className="relative flex flex-col items-center w-full">
-                {/* Konnektör çizgi (üst) */}
-                {idx > 0 && (
-                  <div
-                    className="w-0.5 h-6"
-                    style={{ background: isUnlocked ? `linear-gradient(to bottom, ${LEVEL_COLORS[idx - 1]}, ${color})` : '#1f2937' }}
-                  />
-                )}
+              return (
+                <div key={lvl} className="flex items-center snap-center relative">
+                  {/* Düğüm (Node) */}
+                  <div className="flex flex-col items-center relative w-24">
+                    {/* Şu an işareti */}
+                    {isCurrent && (
+                      <div className="absolute -top-8 bg-[#00F0FF]/20 text-[#00F0FF] border border-[#00F0FF]/40 px-2 py-0.5 rounded text-[10px] uppercase font-bold animate-bounce min-w-max text-center">
+                        Sen Buradasın
+                      </div>
+                    )}
 
-                {/* Level Düğümü */}
-                <div className={`relative flex items-center gap-4 w-full max-w-sm px-3 py-3 rounded-xl border transition-all duration-300 ${
-                  isCurrent
-                    ? 'bg-[#00F0FF]/10 border-[#00F0FF]/50 shadow-[0_0_20px_rgba(0,240,255,0.15)]'
-                    : isUnlocked
-                    ? 'bg-white/5 border-white/10'
-                    : 'bg-[#050505] border-gray-800/50 opacity-50'
-                }`}>
-
-                  {/* Daire */}
-                  <div
-                    className="w-10 h-10 rounded-full flex items-center justify-center font-black text-sm flex-shrink-0 border-2"
-                    style={{
-                      background: isUnlocked ? `${color}22` : '#111827',
-                      borderColor: isUnlocked ? color : '#374151',
-                      color: isUnlocked ? color : '#6b7280',
-                      boxShadow: isCurrent ? `0 0 16px ${color}66` : 'none',
-                    }}
-                  >
-                    {isUnlocked && !isCurrent ? '✓' : lvl}
-                  </div>
-
-                  {/* Metin */}
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-sm" style={{ color: isUnlocked ? color : '#6b7280' }}>
-                        Level {lvl}
-                        {isLast && <span className="ml-1 text-[10px] text-yellow-400">👑 MAX</span>}
-                      </span>
-                      {isCurrent && (
-                        <span className="text-[9px] bg-[#00F0FF]/20 text-[#00F0FF] px-1.5 py-0.5 rounded-full font-bold uppercase tracking-wider animate-pulse">
-                          ŞU AN
-                        </span>
+                    {/* Daire */}
+                    <div
+                      className="w-14 h-14 rounded-full flex items-center justify-center font-black text-lg border-4 z-10 relative bg-[#050505] transition-transform duration-300"
+                      style={{
+                        borderColor: isUnlocked ? color : '#1f2937',
+                        color: isUnlocked ? color : '#4b5563',
+                        boxShadow: isCurrent ? `0 0 15px ${color}55` : 'none',
+                        transform: isCurrent ? 'scale(1.15)' : 'scale(1)',
+                      }}
+                    >
+                      {isUnlocked && !isCurrent ? '✓' : lvl}
+                      
+                      {/* MAX Tacı */}
+                      {isLast && (
+                        <div className="absolute -top-3 -right-2 text-xl drop-shadow-[0_0_8px_rgba(255,215,0,0.8)]">
+                          👑
+                        </div>
                       )}
                     </div>
-                    <div className="text-xs text-gray-600 font-mono">{threshold.toLocaleString()} XP</div>
+
+                    {/* Metin */}
+                    <div className="mt-4 text-center">
+                      <div className="text-xs font-bold" style={{ color: isUnlocked ? color : '#6b7280' }}>
+                        LEVEL {lvl}
+                      </div>
+                      <div className="text-[10px] text-gray-500 font-mono mt-0.5">
+                        {threshold.toLocaleString()} XP
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Sağ XP göstergesi (current) */}
-                  {isCurrent && (
-                    <div className="text-right flex-shrink-0">
-                      <div className="text-xs font-mono text-[#00F0FF]">{currentXP}</div>
-                      <div className="text-[10px] text-gray-600">/ {nextThreshold}</div>
+                  {/* Yatay Konnektör Çizgi */}
+                  {!isLast && (
+                    <div className="w-12 h-2 rounded-full mx-1 relative overflow-hidden bg-[#1f2937]">
+                      {isUnlocked && (
+                        <div
+                          className="absolute inset-0"
+                          style={{
+                            background: `linear-gradient(to right, ${color}, ${currentLevel > lvl ? LEVEL_COLORS[idx + 1] : 'transparent'})`,
+                            width: currentLevel > lvl ? '100%' : '50%'
+                          }}
+                        />
+                      )}
                     </div>
                   )}
                 </div>
-
-                {/* Konnektör (alt, son hariç) */}
-                {!isLast && (
-                  <div
-                    className="w-0.5 h-6"
-                    style={{ background: isUnlocked ? `linear-gradient(to bottom, ${color}, ${LEVEL_COLORS[idx + 1]})` : '#1f2937' }}
-                  />
-                )}
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
+        </div>
+        
+        {/* Scroll Hint */}
+        <div className="text-center mt-2 text-[10px] text-gray-600 uppercase tracking-widest animate-pulse flex items-center justify-center gap-2">
+          <span>←</span>
+          Haritayı Kaydır
+          <span>→</span>
         </div>
       </div>
 
