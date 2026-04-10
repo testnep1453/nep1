@@ -109,10 +109,23 @@ export const ArchiveManager = ({ isAdmin = false }: Props) => {
             {videos.map(v => (
               <div key={v.id} className="flex items-center gap-4 p-4 hover:bg-white/5 transition-colors">
                 <img
-                  src={v.thumbnailUrl}
+                  src={v.thumbnailUrl?.replace('hqdefault', 'mqdefault')}
                   alt={v.title}
-                  className="w-24 h-16 object-cover rounded flex-shrink-0"
+                  className="w-24 h-16 object-cover rounded flex-shrink-0 bg-gray-900"
+                  onError={(e) => {
+                    const img = e.target as HTMLImageElement;
+                    img.style.display = 'none';
+                    const placeholder = img.nextElementSibling as HTMLElement;
+                    if (placeholder) placeholder.style.display = 'flex';
+                  }}
                 />
+                <div
+                  className="w-24 h-16 rounded flex-shrink-0 bg-gray-900 items-center justify-center text-2xl"
+                  style={{ display: 'none' }}
+                >
+                  🎬
+                </div>
+
                 <div className="flex-1 min-w-0">
                   <div className="text-white font-bold text-sm truncate">{v.title}</div>
                   <div className="text-gray-600 text-xs font-mono mt-0.5 truncate">{v.youtubeUrl}</div>

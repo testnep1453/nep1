@@ -58,7 +58,8 @@ export const addArchiveVideo = async (
     title,
     youtubeUrl,
     youtubeId,
-    thumbnailUrl: `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`,
+    thumbnailUrl: `https://img.youtube.com/vi/${youtubeId}/mqdefault.jpg`,
+
     addedAt: Date.now(),
     addedBy,
   }]);

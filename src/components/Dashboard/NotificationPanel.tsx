@@ -1,5 +1,8 @@
 /**
- * Bildirimler Paneli - Supabase tabanlı
+ * Bildirimler Paneli
+ * NOT: 'notifications' tablosu Supabase'de henüz oluşturulmadı.
+ * Şimdilik yalnızca 'messages' tablosundan admin duyuruları gösterilir.
+ * Notifications tablosu oluşturulduğunda ilgili blok açılabilir.
  */
 
 import { useState, useEffect, useRef } from 'react';
@@ -37,69 +40,45 @@ export const NotificationPanel = ({ studentId, isOpen, onClose }: NotificationPa
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen, onClose]);
 
-  // Supabase'den bildirimleri ve mesajları çek
+  // Yalnızca 'messages' tablosundan admin duyurularını çek
+  // 'notifications' tablosu oluşturulduğunda buraya eklenebilir
   useEffect(() => {
-    if (!studentId) return;
+    if (!studentId || !isOpen) return;
 
     const fetchAll = async () => {
-      // Kişisel bildirimler
-      const { data: notifData } = await supabase
-        .from('notifications')
-        .select('*')
-        .eq('studentId', studentId)
-        .order('createdAt', { ascending: false })
-        .limit(30);
+      try {
+        const { data: msgData } = await supabase
+          .from('messages')
+          .select('*')
+          .order('date', { ascending: false })
+          .limit(20);
 
-      // Admin mesajları
-      const { data: msgData } = await supabase
-        .from('messages')
-        .select('*')
-        .order('date', { ascending: false })
-        .limit(20);
+        const msgNotifs: NotificationItem[] = (msgData || []).map((m: Record<string, unknown>) => ({
+          id: `msg_${m.id}`,
+          title: 'Admin Duyurusu',
+          body: String(m.text || ''),
+          type: 'admin' as const,
+          read: true,
+          createdAt: Number(m.date) || Date.now(),
+        }));
 
-      const personalNotifs: NotificationItem[] = (notifData || []).map((n: Record<string, unknown>) => ({
-        id: String(n.id),
-        title: String(n.title || ''),
-        body: String(n.body || ''),
-        type: (n.type as NotificationItem['type']) || 'system',
-        read: Boolean(n.read),
-        createdAt: Number(n.createdAt) || 0,
-      }));
-
-      const msgNotifs: NotificationItem[] = (msgData || []).map((m: Record<string, unknown>) => ({
-        id: `msg_${m.id}`,
-        title: 'Admin Duyurusu',
-        body: String(m.text || ''),
-        type: 'admin' as const,
-        read: true,
-        createdAt: Number(m.date) || Date.now(),
-      }));
-
-      const all = [...personalNotifs, ...msgNotifs].sort((a, b) => b.createdAt - a.createdAt);
-      setNotifications(all);
+        setNotifications(msgNotifs);
+      } catch {
+        // sessiz — tablo yoksa veya bağlantı yoksa boş göster
+        setNotifications([]);
+      }
     };
 
     fetchAll();
 
-    // Realtime
+    // Yalnızca messages tablosunu izle
     const channel = supabase
       .channel(`notif_panel_${studentId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'notifications' }, fetchAll)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, fetchAll)
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
-  }, [studentId]);
-
-  const markAsRead = async (notifId: string) => {
-    if (notifId.startsWith('msg_')) return;
-    try {
-      await supabase.from('notifications').update({ read: true }).eq('id', notifId);
-      setNotifications(prev => prev.map(n => n.id === notifId ? { ...n, read: true } : n));
-    } catch {
-      // sessiz
-    }
-  };
+  }, [studentId, isOpen]);
 
   const formatTime = (ts: number) => {
     const d = new Date(ts);
@@ -132,10 +111,7 @@ export const NotificationPanel = ({ studentId, isOpen, onClose }: NotificationPa
           notifications.map(n => (
             <div
               key={n.id}
-              onClick={() => markAsRead(n.id)}
-              className={`p-3 border-b border-white/5 cursor-pointer hover:bg-white/5 transition-colors ${
-                !n.read ? 'bg-[#00F0FF]/5 border-l-2 border-l-[#00F0FF]' : ''
-              }`}
+              className="p-3 border-b border-white/5 hover:bg-white/5 transition-colors"
             >
               <div className="flex items-start gap-2">
                 <span className="text-sm mt-0.5">
@@ -146,7 +122,6 @@ export const NotificationPanel = ({ studentId, isOpen, onClose }: NotificationPa
                   <p className="text-xs text-gray-400 mt-0.5 line-clamp-2">{n.body}</p>
                   <p className="text-[10px] text-gray-600 mt-1">{formatTime(n.createdAt)}</p>
                 </div>
-                {!n.read && <div className="w-2 h-2 rounded-full bg-[#00F0FF] mt-1 shrink-0" />}
               </div>
             </div>
           ))

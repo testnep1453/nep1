@@ -58,13 +58,12 @@ export const ProfileModal = ({ student, isOpen, onClose, theme, onThemeChange }:
 
   if (!isOpen) return null;
 
-  let previewUrl = `https://api.dicebear.com/9.x/${selectedStyle}/svg?seed=${selectedSeed}&backgroundColor=transparent`;
-  
+  // DiceBear v9 — avataaars için sadece geçerli tekil değerler kullan
+  // Virgülle ayrılmış çoklu değerler 400 hatası verir
+  let previewUrl = `https://api.dicebear.com/9.x/${selectedStyle}/svg?seed=${encodeURIComponent(selectedSeed)}&backgroundColor=b6e3f4,c0aede,d1d4f9`;
+
   if (selectedStyle === 'avataaars') {
-    previewUrl += '&top=shortHairShortFlat,shortHairShortRound,shortHairShortWaved,shortHairSides';
-    previewUrl += '&facialHairProbability=0';
-    previewUrl += '&clothing=hoodie,shirtCrewNeck,blazerAndShirt';
-    previewUrl += '&skinColor=light,pale,tanned'; 
+    previewUrl = `https://api.dicebear.com/9.x/avataaars/svg?seed=${encodeURIComponent(selectedSeed)}&backgroundColor=b6e3f4&top=shortHairShortFlat&facialHairProbability=0&clothing=hoodie`;
   }
 
   return (
@@ -75,35 +74,85 @@ export const ProfileModal = ({ student, isOpen, onClose, theme, onThemeChange }:
         
         <div className="flex flex-col items-center mb-8">
           <div className="w-32 h-32 rounded-2xl border-4 border-[#00F0FF]/50 bg-gradient-to-b from-slate-100 to-slate-300 p-2 mb-4 relative shadow-[0_0_15px_rgba(0,240,255,0.2)]">
-            <img src={previewUrl} alt="Önizleme" className="w-full h-full object-contain drop-shadow-xl" />
-            <button onClick={handleRandomize} className="absolute -bottom-3 -right-3 bg-[#FF9F43] p-2.5 rounded-full border-4 border-[#0A1128] hover:scale-110 transition-transform shadow-lg">
+            <img
+              src={previewUrl}
+              alt="Avatar Önizleme"
+              className="w-full h-full object-contain drop-shadow-xl"
+              onError={(e) => {
+                // Yükleme başarısız olursa placeholder göster
+                (e.target as HTMLImageElement).style.display = 'none';
+              }}
+            />
+            <button
+              onClick={handleRandomize}
+              aria-label="Rastgele avatar oluştur"
+              className="absolute -bottom-3 -right-3 bg-[#FF9F43] p-2.5 rounded-full border-4 border-[#0A1128] hover:scale-110 transition-transform shadow-lg"
+            >
               <Dices className="w-5 h-5 text-black" />
             </button>
           </div>
           
           <div className="grid grid-cols-4 gap-2 w-full mb-6">
             {STYLES.map(s => (
-              <button key={s.id} onClick={() => setSelectedStyle(s.id)} className={`py-2 text-[11px] font-bold rounded-lg border transition-all ${selectedStyle === s.id ? 'bg-[#00F0FF]/20 border-[#00F0FF] text-[#00F0FF] shadow-sm' : 'bg-black/50 border-gray-800 text-gray-500 hover:text-gray-300'}`}>
+              <button
+                key={s.id}
+                onClick={() => setSelectedStyle(s.id)}
+                className={`py-2 text-[11px] font-bold rounded-lg border transition-all ${selectedStyle === s.id ? 'bg-[#00F0FF]/20 border-[#00F0FF] text-[#00F0FF] shadow-sm' : 'bg-black/50 border-gray-800 text-gray-500 hover:text-gray-300'}`}
+              >
                 {s.name}
               </button>
             ))}
           </div>
 
           <div className="w-full space-y-5">
+            {/* FIX: label htmlFor ile input id eşleşiyor */}
             <div>
-              <label className="text-gray-500 text-[10px] uppercase font-bold mb-1.5 block">Ajan Takma Adı</label>
-              <input id="profileNickname" name="nickname" type="text" value={nickname} onChange={(e) => setNickname(e.target.value)} maxLength={20} className="w-full bg-[#050505] border border-gray-700 focus:border-[#00F0FF] outline-none text-white px-4 py-2 rounded-xl font-mono text-sm transition-colors" />
+              <label htmlFor="profileNickname" className="text-gray-500 text-[10px] uppercase font-bold mb-1.5 block">
+                Ajan Takma Adı
+              </label>
+              <input
+                id="profileNickname"
+                name="nickname"
+                type="text"
+                value={nickname}
+                onChange={(e) => setNickname(e.target.value)}
+                maxLength={20}
+                placeholder="Takma adını gir"
+                className="w-full bg-[#050505] border border-gray-700 focus:border-[#00F0FF] outline-none text-white px-4 py-2 rounded-xl font-mono text-sm transition-colors"
+              />
             </div>
 
             <div>
-              <label className="text-gray-500 text-[10px] uppercase font-bold mb-1.5 block">Arayüz Rengi</label>
-              <div className="flex gap-2">
-                <button onClick={() => onThemeChange('dark')} className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${theme === 'dark' ? 'bg-[#00F0FF]/20 text-[#00F0FF] border border-[#00F0FF]/50' : 'bg-white/5 text-gray-500 border border-gray-700'}`}>Gece</button>
-                <button onClick={() => onThemeChange('light')} className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${theme === 'light' ? 'bg-[#00F0FF]/20 text-[#00F0FF] border border-[#00F0FF]/50' : 'bg-white/5 text-gray-500 border border-gray-700'}`}>Gündüz</button>
-              </div>
+              <label htmlFor="themeSelect" className="text-gray-500 text-[10px] uppercase font-bold mb-1.5 block">
+                Arayüz Rengi
+              </label>
+              {/* Tema seçimi buton grubu — label field ilişkisi için fieldset kullanıldı */}
+              <fieldset id="themeSelect" className="border-0 p-0 m-0">
+                <legend className="sr-only">Tema seçimi</legend>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => onThemeChange('dark')}
+                    className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${theme === 'dark' ? 'bg-[#00F0FF]/20 text-[#00F0FF] border border-[#00F0FF]/50' : 'bg-white/5 text-gray-500 border border-gray-700'}`}
+                  >
+                    Gece
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => onThemeChange('light')}
+                    className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${theme === 'light' ? 'bg-[#00F0FF]/20 text-[#00F0FF] border border-[#00F0FF]/50' : 'bg-white/5 text-gray-500 border border-gray-700'}`}
+                  >
+                    Gündüz
+                  </button>
+                </div>
+              </fieldset>
             </div>
 
-            <button onClick={handleSave} disabled={saving} className="w-full mt-4 bg-[#39FF14]/20 hover:bg-[#39FF14]/30 text-[#39FF14] font-black uppercase tracking-widest py-3 rounded-xl border border-[#39FF14]/40 transition-all disabled:opacity-50">
+            <button
+              onClick={handleSave}
+              disabled={saving}
+              className="w-full mt-4 bg-[#39FF14]/20 hover:bg-[#39FF14]/30 text-[#39FF14] font-black uppercase tracking-widest py-3 rounded-xl border border-[#39FF14]/40 transition-all disabled:opacity-50"
+            >
               {saving ? 'Kaydediliyor...' : 'Değişiklikleri Onayla'}
             </button>
           </div>
