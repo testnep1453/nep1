@@ -1,29 +1,29 @@
+/**
+ * Arşiv Servisi — Supabase tabanlı
+ *
+ * Supabase'de 'archive' tablosu gereklidir.
+ * Tablo şeması:
+ *   id          bigserial PRIMARY KEY
+ *   title       text NOT NULL
+ *   youtubeUrl  text NOT NULL
+ *   youtubeId   text NOT NULL
+ *   thumbnailUrl text
+ *   addedAt     bigint
+ *   addedBy     text
+ *
+ * Tablo yoksa (404) işlemler sessizce başarısız olur, uygulama çökmez.
+ */
 import { supabase } from '../config/supabase';
 
 export interface ArchiveVideo {
-  id: string;
+  id: number;
   title: string;
   youtubeUrl: string;
   youtubeId: string;
   thumbnailUrl: string;
   addedAt: number;
   addedBy: string;
-  lessonDate?: string;
 }
-
-// archive tablosu var mı önbelleği (bir kez kontrol et, sonra hatırla)
-let archiveTableOk: boolean | null = null;
-
-const ensureTable = async (): Promise<boolean> => {
-  if (archiveTableOk !== null) return archiveTableOk;
-  try {
-    const { error } = await supabase.from('archive').select('id').limit(1);
-    archiveTableOk = !error || (error.code !== '42P01' && !error.message?.includes('does not exist'));
-  } catch {
-    archiveTableOk = false;
-  }
-  return archiveTableOk;
-};
 
 const extractYoutubeId = (url: string): string => {
   if (!url) return '';
@@ -32,15 +32,17 @@ const extractYoutubeId = (url: string): string => {
 };
 
 export const getArchiveVideos = async (): Promise<ArchiveVideo[]> => {
-  const ok = await ensureTable();
-  if (!ok) return [];
   try {
     const { data, error } = await supabase
       .from('archive')
       .select('*')
       .order('addedAt', { ascending: false });
-    if (error) return [];
-    return (data as ArchiveVideo[]) || [];
+    if (error) {
+      // Tablo henüz oluşturulmadıysa sessizce boş dizi döndür
+      console.warn('[Archive] Tablo erişim hatası (muhtemelen henüz oluşturulmadı):', error.message);
+      return [];
+    }
+    return (data ?? []) as ArchiveVideo[];
   } catch {
     return [];
   }
@@ -49,26 +51,22 @@ export const getArchiveVideos = async (): Promise<ArchiveVideo[]> => {
 export const addArchiveVideo = async (
   title: string,
   youtubeUrl: string,
-  addedBy: string,
-  lessonDate?: string
+  addedBy: string
 ): Promise<void> => {
-  const ok = await ensureTable();
-  if (!ok) throw new Error('Arşiv tablosu henüz oluşturulmadı.');
   const youtubeId = extractYoutubeId(youtubeUrl);
-  if (!youtubeId) throw new Error('Geçersiz YouTube URL');
-  await supabase.from('archive').insert([{
+  if (!youtubeId) throw new Error('Geçersiz YouTube URL — video ID bulunamadı.');
+  const { error } = await supabase.from('archive').insert([{
     title,
     youtubeUrl,
     youtubeId,
     thumbnailUrl: `https://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`,
     addedAt: Date.now(),
     addedBy,
-    lessonDate: lessonDate || '',
   }]);
+  if (error) throw new Error('Eklenemedi: ' + error.message);
 };
 
-export const removeArchiveVideo = async (id: string): Promise<void> => {
-  const ok = await ensureTable();
-  if (!ok) return;
-  await supabase.from('archive').delete().eq('id', id);
+export const removeArchiveVideo = async (id: number): Promise<void> => {
+  const { error } = await supabase.from('archive').delete().eq('id', id);
+  if (error) throw new Error('Silinemedi: ' + error.message);
 };

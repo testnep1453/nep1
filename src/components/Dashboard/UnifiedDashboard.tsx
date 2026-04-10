@@ -297,11 +297,12 @@ export const UnifiedDashboard = ({
         { id: 'geribildirim' as const, label: 'Geri Bildirimler', icon: <Icons.Star /> },
         { id: 'cihazlar' as const, label: 'Cihaz İstatistikleri', icon: <Icons.Users /> },
         { id: 'anket' as const, label: 'Anket', icon: <Icons.Star /> },
-        { id: 'klavuz' as const, label: 'Kılavuz', icon: <Icons.Home /> },
       ]
     : [
         { id: 'genel' as const, label: 'Ana Sayfa', icon: <Icons.Home /> },
+        { id: 'klavuz' as const, label: 'Kılavuz', icon: <Icons.Home /> },
       ];
+
 
   return (
     <div className="h-[100dvh] bg-[#050505] text-white flex flex-col md:flex-row font-['Rajdhani',sans-serif] selection:bg-[#39FF14]/30 overflow-hidden">
@@ -431,12 +432,12 @@ export const UnifiedDashboard = ({
             </div>
           )}
 
-          {/* TAB: FRAGMAN — sadeleştirildi */}
+          {/* TAB: FRAGMAN */}
           {isAdmin && activeTab === 'fragman' && (
             <div className="space-y-6 sm:space-y-8 animate-fade-in">
               <div className="bg-[#0A1128]/80 border border-[#F5D32E]/30 p-6 sm:p-8 clip-path-diagonal">
                 <h3 className="text-lg sm:text-xl font-bold text-[#F5D32E] mb-6 uppercase tracking-wider text-center">
-                  🎬 FRAGMAN YÜKLE
+                  🎬 FRAGMAN AYARLARI
                 </h3>
                 <div className="space-y-4 max-w-xl mx-auto">
                   <div>
@@ -446,10 +447,24 @@ export const UnifiedDashboard = ({
                       placeholder="https://www.youtube.com/watch?v=..."
                       className="w-full bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#F5D32E] font-mono transition-colors rounded" />
                   </div>
-                  <p className="text-gray-600 text-xs">Linki yapıştırıp butona basın — anında yayınlanır, tarih/saat gerekmez.</p>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="dtInput" className="text-gray-400 text-sm tracking-widest mb-1 block">Gösterim Tarihi</label>
+                      <input id="dtInput" name="trailerDate" type="date" value={trailerShowDate}
+                        onChange={(e) => setTrailerShowDate(e.target.value)}
+                        className="w-full bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#F5D32E] transition-colors rounded min-h-[48px]" />
+                    </div>
+                    <div>
+                      <label htmlFor="tmInput" className="text-gray-400 text-sm tracking-widest mb-1 block">Gösterim Saati</label>
+                      <input id="tmInput" name="trailerTime" type="time" value={trailerShowTime}
+                        onChange={(e) => setTrailerShowTime(e.target.value)}
+                        className="w-full bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#F5D32E] transition-colors rounded min-h-[48px]" />
+                    </div>
+                  </div>
+                  <p className="text-gray-600 text-xs">Tarih ve saat boş bırakılırsa fragman hemen yayınlanır.</p>
                   <div className="flex gap-3 pt-2">
                     <button onClick={handleSetTrailer} className="flex-1 bg-[#F5D32E]/20 hover:bg-[#F5D32E] text-[#F5D32E] hover:text-black border border-[#F5D32E] py-3 font-bold transition-all uppercase tracking-widest rounded min-h-[48px]">
-                      📤 Hemen Yayınla
+                      📤 Yayınla
                     </button>
                     {trailer && trailer.isActive && (
                       <button onClick={handleRemoveTrailer} className="bg-[#FF4500]/20 hover:bg-[#FF4500] text-[#FF4500] hover:text-black border border-[#FF4500] py-3 px-6 font-bold transition-all uppercase tracking-widest rounded min-h-[48px]">
@@ -459,7 +474,7 @@ export const UnifiedDashboard = ({
                   </div>
                   {trailer && trailer.isActive && (
                     <div className="bg-[#39FF14]/10 border border-[#39FF14]/30 rounded p-3 text-center">
-                      <span className="text-[#39FF14] text-sm">✅ Aktif fragman: {trailer.youtubeId}</span>
+                      <span className="text-[#39FF14] text-sm">✅ Aktif: {trailer.youtubeId}</span>
                     </div>
                   )}
                   {uploadMessage && (
@@ -682,7 +697,7 @@ export const UnifiedDashboard = ({
           )}
 
           {isAdmin && activeTab === 'yoklama' && <AttendancePage students={students} />}
-          {isAdmin && activeTab === 'arsiv' && <ArchiveManager />}
+          {isAdmin && activeTab === 'arsiv' && <ArchiveManager isAdmin={isAdmin} />}
 
           {/* TAB: CİHAZ İSTATİSTİKLERİ */}
           {isAdmin && activeTab === 'cihazlar' && (
@@ -739,20 +754,20 @@ export const UnifiedDashboard = ({
             </div>
           )}
 
-          {/* TAB: KILAVUZ */}
-          {isAdmin && activeTab === 'klavuz' && (
+          {/* TAB: KILAVUZ — tüm ajanlar (admin değil) */}
+          {!isAdmin && activeTab === 'klavuz' && (
             <div className="space-y-6 animate-fade-in max-w-3xl">
-              <div className="bg-[#0A1128]/80 border border-[#39FF14]/30 p-6 rounded-xl">
-                <h3 className="text-[#39FF14] font-bold text-lg uppercase tracking-wider mb-6">📖 Admin Kılavuzu</h3>
+              <div className="bg-[#0A1128]/80 border border-[#00F0FF]/30 p-6 rounded-xl">
+                <h3 className="text-[#00F0FF] font-bold text-lg uppercase tracking-wider mb-6">📖 Ajan Kılavuzu</h3>
                 {[
-                  { icon: '👥', title: 'Ajan Yönetimi', desc: 'ID ve isim yeterlidir — e-posta opsiyoneldir. E-posta doğrulama sistemi ayrıca çalışır; e-posta gelince güncellenebilir. 1001, 1002, 1003 numaralı hesaplar korumalı olup listede ve silme seçeneğinde görünmez.' },
-                  { icon: '🎬', title: 'Fragman', desc: 'YouTube linkini yapıştır, "Hemen Yayınla"ya bas — öğrenciler anında izleyebilir. Tarih ve saat girmeye gerek yok.' },
-                  { icon: '📋', title: 'Yoklama — Manuel Düzenleme', desc: 'Bir ders seçtikten sonra herhangi bir satıra tıklayarak o öğrencinin katılımını açıp kapatabilirsiniz. Kayıt Supabase\'e anında yansır.' },
-                  { icon: '📊', title: 'Katılım Oranları', desc: 'Yoklama ekranında "Katılım Oranları" sekmesine geçerek tüm ajanların devamsızlık tablosunu ve genel katılım oranını görebilirsiniz. Yeşil ≥ %75 · Sarı ≥ %50 · Kırmızı < %50.' },
-                  { icon: '📣', title: 'Mesaj Gönder', desc: 'Tüm ajanlara aynı anda duyuru gönderilebilir. Mesajlar öğrenci ekranında "İstihbarat Akışı" bölümünde görünür.' },
-                  { icon: '💬', title: 'Geri Bildirimler', desc: 'Dersler bittikten 15 dakika sonra öğrenciler form doldurabilir. Buradan puan ortalamaları ve yorumlar izlenebilir.' },
-                  { icon: '🗄️', title: 'Arşiv', desc: 'Geçmiş ders kayıtlarını YouTube linki ile arşive ekleyebilirsiniz. Öğrenciler Operasyon menüsünden arşive erişebilir.' },
-                  { icon: '⏰', title: 'Türkçe Saat Yazımı', desc: 'Türkçe yazım kurallarına göre saat; 19.00, 20.00 biçiminde yazılır (nokta ile ayrılır, iki nokta üst üste değil).' },
+                  { icon: '🔐', title: 'Giriş', desc: 'Sana verilen 3–4 haneli ajan ID’nle giriş yap. ID’ni kimseyle paylaşma.' },
+                  { icon: '🎮', title: 'XP ve Seviye', desc: 'Derse katıldığında XP kazanırsın. XP birikmesi Seviye atlamanı sağlar. Profilinde kazanımlarını takip edebilirsin.' },
+                  { icon: '📅', title: 'Ders Programı', desc: 'Dersler her Perşembe saat 19.00–20.00 arası yapılır. Giriş ekranında bir sonraki derse ne kadar kaldığını görebilirsin.' },
+                  { icon: '🚀', title: 'Derse Katılma', desc: '“Derse Katıl” butonuna basınca seni Zoom toplantısına yönlendirir. Dersin başladığı saatte buton aktif olur.' },
+                  { icon: '🎬', title: 'Fragman', desc: 'Adminler yeni ders fragmanı paylaştığında ana sayfaında otomatik görünür.' },
+                  { icon: '🗄️', title: 'Arşiv', desc: 'Geçmiş ders kayıtlarına erişmek için Operasyon menüsündeki Arşiv bölümüne bak.' },
+                  { icon: '💬', title: 'Geri Bildirim', desc: 'Her dersten 15 dakika sonra değerlendirme formu açılır. Düşüncelerini paylasmayı unutma!' },
+                  { icon: '📣', title: 'Duyurular', desc: 'Admin duyuruları ana sayfanda “İstihbarat Akışı” bölümünde görünür.' },
                 ].map(item => (
                   <div key={item.title} className="flex gap-4 py-4 border-b border-gray-800 last:border-0">
                     <span className="text-2xl shrink-0 mt-0.5">{item.icon}</span>
