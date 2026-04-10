@@ -55,7 +55,10 @@ const Icons = {
   ),
 };
 
-// Avatar emoji map
+import { SurveyManager } from './SurveyManager';
+import { KnowledgeManager } from './KnowledgeManager';
+
+// ── Avatar emoji map ──────────────────────────────────────────────────────────────────────
 const AVATARS: Record<string, string> = {
   hero_1: '🥷', hero_2: '🧑‍💻', hero_3: '👨‍🚀', hero_4: '🦺',
   default: '🤖',
@@ -63,7 +66,7 @@ const AVATARS: Record<string, string> = {
 
 // ── Component ──────────────────────────────────────────────────────────────────
 export const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
-  const [activeTab, setActiveTab] = useState<'genel' | 'ajanlar' | 'mesajlar'>('genel');
+  const [activeTab, setActiveTab] = useState<'genel' | 'ajanlar' | 'mesajlar' | 'anketler' | 'bilgi'>('genel');
   const [students, setStudents] = useState<Student[]>([]);
   const [loading, setLoading] = useState(true);
   const [newStudent, setNewStudent] = useState({ id: '', name: '', nickname: '' });
@@ -229,7 +232,7 @@ export const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
         </div>
 
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto flex md:block flex-row gap-2 overflow-x-auto">
-          {(['genel', 'ajanlar', 'mesajlar'] as const).map((tab) => (
+          {(['genel', 'ajanlar', 'mesajlar', 'anketler', 'bilgi'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -242,10 +245,14 @@ export const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
               {tab === 'genel' && <Icons.Home />}
               {tab === 'ajanlar' && <Icons.Users />}
               {tab === 'mesajlar' && <Icons.Message />}
+              {tab === 'anketler' && <span className="text-xl">📋</span>}
+              {tab === 'bilgi' && <span className="text-xl">📚</span>}
               <span className="font-semibold tracking-wide">
                 {tab === 'genel' && 'Genel Durum'}
                 {tab === 'ajanlar' && 'Ajan Yönetimi'}
                 {tab === 'mesajlar' && 'İstihbarat (Duyuru)'}
+                {tab === 'anketler' && 'Sorgu Odası'}
+                {tab === 'bilgi' && 'Bilgi Odası'}
               </span>
             </button>
           ))}
@@ -269,8 +276,24 @@ export const AdminDashboard = ({ onLogout }: { onLogout: () => void }) => {
             {activeTab === 'genel' && 'Sistem Özeti'}
             {activeTab === 'ajanlar' && 'Ajan Veritabanı'}
             {activeTab === 'mesajlar' && 'Siber İstihbarat'}
+            {activeTab === 'anketler' && 'Sorgu Odası Yönetimi'}
+            {activeTab === 'bilgi' && 'Bilgi Odası Yönetimi'}
           </h1>
         </header>
+
+        {/* ── TAB: BİLGİ ── */}
+        {activeTab === 'bilgi' && (
+          <div className="max-w-4xl">
+            <KnowledgeManager />
+          </div>
+        )}
+
+        {/* ── TAB: ANKETLER ── */}
+        {activeTab === 'anketler' && (
+          <div className="max-w-4xl">
+            <SurveyManager />
+          </div>
+        )}
 
         {/* ── TAB: GENEL ── */}
         {activeTab === 'genel' && (

@@ -95,3 +95,18 @@ export const getAdminAuth = async (): Promise<{ passwordHash: string } | null> =
   const { data } = await supabase.from('settings').select('data').eq('id', 'admin_auth').single();
   return data ? data.data as any : null;
 };
+
+// ── Generic Settings Database ──
+export const getSettingStore = async <T>(id: string, defaultData: T): Promise<T> => {
+  try {
+    const { data, error } = await supabase.from('settings').select('data').eq('id', id).maybeSingle();
+    if (error || !data) return defaultData;
+    return (data.data as T) || defaultData;
+  } catch {
+    return defaultData;
+  }
+};
+
+export const saveSettingStore = async <T>(id: string, dataObj: T): Promise<void> => {
+  await supabase.from('settings').upsert({ id, data: dataObj as any });
+};
