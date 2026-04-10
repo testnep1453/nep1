@@ -58,13 +58,28 @@ export const LevelProgress = ({ student }: { student: Student }) => {
         </p>
       </div>
 
-      {/* LEVEL YOL HARİTASI — Battle Pass (Yatay Kaydırılabilir) */}
-      <div className="bg-[#0A1128]/80 border border-[#6358cc]/30 p-6 rounded-lg overflow-hidden">
-        <h3 className="text-[#8b7fd8] font-bold text-sm uppercase tracking-wider mb-6">🗺️ Level Yol Haritası</h3>
+      {/* LEVEL YOL HARİTASI — Cyber-Rank Sistemi */}
+      <div className="bg-gradient-to-br from-[#0A1128] to-[#050505] border-t-2 border-[#6358cc]/30 p-6 rounded-2xl relative overflow-hidden shadow-2xl">
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(99,88,204,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(99,88,204,0.05)_1px,transparent_1px)] bg-[length:20px_20px] pointer-events-none" />
+        
+        <div className="relative z-10 flex items-center justify-between mb-8">
+          <h3 className="text-white font-black text-xl tracking-[4px] uppercase flex items-center gap-3">
+            <span className="text-[#00F0FF] text-2xl">⚡</span>
+            Siber Rütbe Haritası
+          </h3>
+        </div>
         
         {/* Yatay Scroll Container */}
-        <div className="flex items-center overflow-x-auto pb-6 relative snap-x snap-mandatory scrollbar-hide">
-          <div className="flex items-center px-4 w-max">
+        <div className="flex items-center overflow-x-auto pb-8 pt-4 relative snap-x snap-mandatory scrollbar-hide">
+          {/* Arka Plan Ana Yolu (Siber Kablo) */}
+          <div className="absolute top-1/2 left-0 right-0 h-1 bg-[#1a1f33] -translate-y-1/2 rounded-full overflow-hidden">
+            <div 
+              className="h-full bg-gradient-to-r from-[#00F0FF] via-[#6358cc] to-[#39FF14] transition-all duration-1000"
+              style={{ width: `${Math.min((currentLevel / 10) * 100, 100)}%` }}
+            />
+          </div>
+
+          <div className="flex items-center px-4 w-max gap-8 relative z-10">
             {LEVEL_THRESHOLDS.slice(0, 10).map((threshold, idx) => {
               const lvl = idx + 1;
               const isUnlocked = lvl <= currentLevel;
@@ -73,61 +88,55 @@ export const LevelProgress = ({ student }: { student: Student }) => {
               const isLast = lvl === 10;
 
               return (
-                <div key={lvl} className="flex items-center snap-center relative">
-                  {/* Düğüm (Node) */}
-                  <div className="flex flex-col items-center relative w-24">
-                    {/* Şu an işareti */}
+                <div key={lvl} className="flex flex-col items-center snap-center relative w-20">
+                  
+                  {/* Etiket — Sadece Mevcut Level'da veya MAX'ta göster */}
+                  <div className="h-6 mb-4 flex items-end">
                     {isCurrent && (
-                      <div className="absolute -top-8 bg-[#00F0FF]/20 text-[#00F0FF] border border-[#00F0FF]/40 px-2 py-0.5 rounded text-[10px] uppercase font-bold animate-bounce min-w-max text-center">
-                        Sen Buradasın
+                      <div className="bg-[#00F0FF]/10 border border-[#00F0FF]/50 text-[#00F0FF] px-2 py-0.5 text-[9px] uppercase font-black tracking-widest animate-pulse whitespace-nowrap">
+                        Operatör
                       </div>
                     )}
+                    {isLast && !isCurrent && (
+                      <div className="text-yellow-500 text-lg drop-shadow-[0_0_8px_rgba(255,215,0,0.8)]">👑</div>
+                    )}
+                  </div>
 
-                    {/* Daire */}
+                  {/* Elmas Şekilli Düğüm (Cyber Diamond) */}
+                  <div className="relative flex justify-center items-center h-14 w-14">
+                    {/* Dış Elmas */}
                     <div
-                      className="w-14 h-14 rounded-full flex items-center justify-center font-black text-lg border-4 z-10 relative bg-[#050505] transition-transform duration-300"
+                      className="absolute inset-0 rotate-45 transition-transform duration-300"
                       style={{
-                        borderColor: isUnlocked ? color : '#1f2937',
-                        color: isUnlocked ? color : '#4b5563',
-                        boxShadow: isCurrent ? `0 0 15px ${color}55` : 'none',
-                        transform: isCurrent ? 'scale(1.15)' : 'scale(1)',
+                        background: isUnlocked ? `linear-gradient(135deg, ${color}44, ${color}11)` : '#0c1222',
+                        border: `2px solid ${isUnlocked ? color : '#1f2937'}`,
+                        transform: isCurrent ? 'rotate(45deg) scale(1.3)' : 'rotate(45deg) scale(1)',
+                        boxShadow: isCurrent ? `0 0 15px ${color}40` : 'none',
+                      }}
+                    />
+                    
+                    {/* İç Rakam (Düz Duran Rakam) */}
+                    <div className="relative z-10 font-bold text-lg flex items-center justify-center transform transition-transform"
+                      style={{
+                        color: isUnlocked ? (isCurrent ? '#fff' : color) : '#4b5563',
+                        textShadow: isCurrent ? `0 0 10px ${color}` : 'none',
+                        transform: isCurrent ? 'scale(1.2)' : 'scale(1)',
                       }}
                     >
                       {isUnlocked && !isCurrent ? '✓' : lvl}
-                      
-                      {/* MAX Tacı */}
-                      {isLast && (
-                        <div className="absolute -top-3 -right-2 text-xl drop-shadow-[0_0_8px_rgba(255,215,0,0.8)]">
-                          👑
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Metin */}
-                    <div className="mt-4 text-center">
-                      <div className="text-xs font-bold" style={{ color: isUnlocked ? color : '#6b7280' }}>
-                        LEVEL {lvl}
-                      </div>
-                      <div className="text-[10px] text-gray-500 font-mono mt-0.5">
-                        {threshold.toLocaleString()} XP
-                      </div>
                     </div>
                   </div>
 
-                  {/* Yatay Konnektör Çizgi */}
-                  {!isLast && (
-                    <div className="w-12 h-2 rounded-full mx-1 relative overflow-hidden bg-[#1f2937]">
-                      {isUnlocked && (
-                        <div
-                          className="absolute inset-0"
-                          style={{
-                            background: `linear-gradient(to right, ${color}, ${currentLevel > lvl ? LEVEL_COLORS[idx + 1] : 'transparent'})`,
-                            width: currentLevel > lvl ? '100%' : '50%'
-                          }}
-                        />
-                      )}
+                  {/* Alt Metin */}
+                  <div className="mt-5 text-center transition-all">
+                    <div className="text-[10px] font-black tracking-widest uppercase" style={{ color: isUnlocked ? color : '#4b5563' }}>
+                      LVL {lvl}
                     </div>
-                  )}
+                    <div className="text-[9px] text-gray-500 font-mono mt-1 w-16 px-1 rounded bg-black/50 border border-white/5">
+                      {threshold.toLocaleString()} XP
+                    </div>
+                  </div>
+
                 </div>
               );
             })}
@@ -135,10 +144,10 @@ export const LevelProgress = ({ student }: { student: Student }) => {
         </div>
         
         {/* Scroll Hint */}
-        <div className="text-center mt-2 text-[10px] text-gray-600 uppercase tracking-widest animate-pulse flex items-center justify-center gap-2">
-          <span>←</span>
+        <div className="text-center mt-2 text-[10px] text-white/30 uppercase tracking-widest flex items-center justify-center gap-4">
+          <span className="w-8 h-[1px] bg-white/20"></span>
           Haritayı Kaydır
-          <span>→</span>
+          <span className="w-8 h-[1px] bg-white/20"></span>
         </div>
       </div>
 
