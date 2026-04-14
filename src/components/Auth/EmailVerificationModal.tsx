@@ -31,15 +31,19 @@ export const EmailVerificationModal: React.FC<Props> = ({ studentId, onVerified,
     if (!email || cooldown > 0) return; // Süre bitmeden tekrar basılamaz!
     
     setStatus('sending');
-    const success = await sendVerificationCode(email);
-    if (success) {
+    
+    // Yeni authService fonksiyonu obje dönüyor: { success, message }
+    const result = await sendVerificationCode(email);
+    
+    if (result.success) {
       setStatus('idle');
       setStep('code');
       setErrorMessage('');
       setCooldown(60); // 60 saniye kilit!
     } else {
       setStatus('error');
-      setErrorMessage('Şu an yoğunluk var. Lütfen biraz bekleyip tekrar deneyin.');
+      // authService'den gelen özel hata mesajını (örn: "Kayıtlı değil!") gösteriyoruz
+      setErrorMessage(result.message || 'Şu an işlem yapılamıyor. Lütfen tekrar deneyin.');
     }
   };
 
@@ -72,7 +76,7 @@ export const EmailVerificationModal: React.FC<Props> = ({ studentId, onVerified,
         {step === 'email' ? (
           <form onSubmit={handleSendCode} className="space-y-5">
             <p className="text-slate-300 leading-relaxed">
-              Güvenliğiniz için lütfen e-posta adresinizi girin. Size bir onay kodu göndereceğiz.
+              Güvenliğiniz için lütfen sisteme kayıtlı e-posta adresinizi girin. Size bir onay kodu göndereceğiz.
             </p>
             <input
               id="email-input"
@@ -85,9 +89,10 @@ export const EmailVerificationModal: React.FC<Props> = ({ studentId, onVerified,
               className="w-full bg-slate-800 border border-slate-600 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-blue-500 outline-none transition-all"
               required
             />
-            {status === 'error' && <p className="text-red-400 text-sm">{errorMessage}</p>}
+            {status === 'error' && <p className="text-red-400 text-sm font-bold">{errorMessage}</p>}
             <div className="flex gap-3 pt-2">
-        <button type="button" onClick={() => window.location.reload()} className="flex-1 px-4 py-3 rounded-xl font-bold text-slate-300 bg-slate-800 hover:bg-slate-700 transition-colors flex items-center justify-center gap-2"> Geri Dön
+              <button type="button" onClick={() => window.location.reload()} className="flex-1 px-4 py-3 rounded-xl font-bold text-slate-300 bg-slate-800 hover:bg-slate-700 transition-colors flex items-center justify-center gap-2"> 
+                Geri Dön
               </button>
               <button type="submit" disabled={status === 'sending' || cooldown > 0} className={`flex-1 px-4 py-3 rounded-xl font-bold text-white transition-colors flex items-center justify-center gap-2 ${cooldown > 0 ? 'bg-slate-600 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-500'}`}>
                 {status === 'sending' ? <Loader2 className="w-5 h-5 animate-spin" /> : cooldown > 0 ? <><Clock className="w-4 h-4"/> {cooldown} sn</> : 'Kod Gönder'}
