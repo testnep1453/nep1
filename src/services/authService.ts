@@ -62,13 +62,30 @@ export const findStudentByEmail = async (email: string): Promise<string | null> 
 // YENİ: 6 HANELİ KOD (OTP) SİSTEMİ
 // ==========================================
 
-export const sendVerificationCode = async (email: string): Promise<boolean> => {
+export const sendVerificationCode = async (email: string): Promise<{ success: boolean; message?: string }> => {
   try {
-    // Sadece mail gönderir (Supabase standart olarak 6 haneli kod yollar)
+    // 1. ADIM: E-postanın veritabanında kayıtlı olup olmadığını kontrol et
+    const { data: student, error: dbError } = await supabase
+      .from('students')
+      .select('id')
+      .eq('email', email)
+      .single();
+
+    // 2. ADIM: Eğer sistemde yoksa, kod göndermeyi engelle ve uyarı ver
+    if (dbError || !student) {
+      return { success: false, message: 'Bu e-posta adresi sisteme kayıtlı değil!' };
+    }
+
+    // 3. ADIM: E-posta sistemde kayıtlıysa, 6 haneli kodu gönder
     const { error } = await supabase.auth.signInWithOtp({ email });
-    return !error;
+    
+    if (error) {
+      return { success: false, message: 'Kod gönderilirken bir sorun oluştu.' };
+    }
+
+    return { success: true };
   } catch {
-    return false;
+    return { success: false, message: 'Beklenmeyen bir bağlantı hatası oluştu.' };
   }
 };
 
