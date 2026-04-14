@@ -64,7 +64,7 @@ export const EmailVerificationModal: React.FC<Props> = ({ studentId, onVerified,
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#050505]/90 backdrop-blur-md overflow-hidden">
       
-      {/* Arka plan siber ızgara efekti (Login ekranıyla uyumlu) */}
+      {/* Arka plan siber ızgara efekti */}
       <div className="absolute inset-0 pointer-events-none z-0 opacity-20">
         <div className="absolute inset-0 bg-[linear-gradient(rgba(57,255,20,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(57,255,20,0.03)_1px,transparent_1px)] bg-[length:40px_40px]" />
       </div>
@@ -114,10 +114,10 @@ export const EmailVerificationModal: React.FC<Props> = ({ studentId, onVerified,
             )}
 
             <div className="flex flex-col sm:flex-row gap-3 pt-4">
-              {/* GERİ DÖN BUTONU DÜZELTİLDİ: onCancel çağrılıyor */}
+              {/* GERİ DÖN BUTONU SAYFAYI YENİLEYECEK ŞEKİLDE DÜZELTİLDİ */}
               <button 
                 type="button" 
-                onClick={onCancel} 
+                onClick={() => window.location.reload()} 
                 className="flex-1 px-4 py-3.5 rounded-xl font-medium text-slate-300 bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 transition-all flex items-center justify-center gap-2"
               > 
                 <ArrowLeft className="w-4 h-4" />
