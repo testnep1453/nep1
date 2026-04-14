@@ -5,7 +5,8 @@ import { sendVerificationCode, verifyEmailCode, notifyAdminSuspiciousActivity } 
 interface Props {
   studentId: string;
   onVerified: (email: string) => void;
-  onCancel: () => void;
+  // GÜVENLİK: onCancel artık zorunlu değil. Ana dosya göndermeyi unutsa bile sistem çökmeyecek.
+  onCancel?: () => void; 
 }
 
 export const EmailVerificationModal: React.FC<Props> = ({ studentId, onVerified, onCancel }) => {
@@ -76,10 +77,16 @@ export const EmailVerificationModal: React.FC<Props> = ({ studentId, onVerified,
     }
   };
 
-  // KESİN ÇÖZÜM: Form tetiklenmesini durdur ve sadece React'ın kapatma komutunu çalıştır
+  // ÇÖKME ENGELLEYİCİ: onCancel gelse de gelmese de seni ID ekranına götürecek zırhlı fonksiyon
   const handleGoBackToLogin = (e: React.MouseEvent) => {
-    e.preventDefault(); // Tıklamanın başka bir şeyi bozmasını engeller
-    onCancel(); // Modalı anında yok edip ID ekranına döndürür
+    e.preventDefault(); 
+    
+    if (typeof onCancel === 'function') {
+      onCancel(); // Eğer ana dosya görevini yaptıysa normal şekilde kapat
+    } else {
+      // Eğer ana dosya onCancel'ı unuttuysa (r is not a function hatası buradaydı), zorla ID ekranına dön!
+      window.location.href = window.location.pathname; 
+    }
   };
 
   return (
@@ -96,7 +103,6 @@ export const EmailVerificationModal: React.FC<Props> = ({ studentId, onVerified,
           <form onSubmit={handleSendCode} className="space-y-6">
             <p className="text-slate-400 text-sm text-center">Lütfen kayıtlı e-posta adresinizi doğrulayın.</p>
             
-            {/* ID ve NAME EKLENDİ (Autofill Hatası Çözüldü) */}
             <input
               id="student-email"
               name="student-email"
@@ -134,7 +140,6 @@ export const EmailVerificationModal: React.FC<Props> = ({ studentId, onVerified,
               {showSpamTip && <p className="text-[#39FF14] text-xs font-medium animate-pulse">Lütfen spam (gereksiz) kutunuzu kontrol edin.</p>}
             </div>
 
-            {/* ID ve NAME EKLENDİ (Autofill Hatası Çözüldü) */}
             <input
               id="otp-code"
               name="otp-code"
