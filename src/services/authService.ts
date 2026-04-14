@@ -1,7 +1,6 @@
 import { supabase } from '../config/supabase';
 import { Student } from '../types/student';
 
-// GÜVENLİK GÜNCELLEMESİ: Admin ID artık kodun içinde değil, gizli .env dosyasından çekiliyor.
 const ADMIN_STUDENT_ID = import.meta.env.VITE_ADMIN_ID || '';
 
 export const getStudentById = async (id: string): Promise<Student | null> => {
@@ -60,7 +59,7 @@ export const findStudentByEmail = async (email: string): Promise<string | null> 
 };
 
 // ==========================================
-// 6 HANELİ KOD (OTP) SİSTEMİ
+// 6 HANELİ KOD (OTP) VE GÜVENLİK SİSTEMİ
 // ==========================================
 
 export const sendVerificationCode = async (email: string): Promise<{ success: boolean; message?: string }> => {
@@ -93,6 +92,31 @@ export const verifyEmailCode = async (email: string, code: string): Promise<bool
     return !error && !!data.user;
   } catch {
     return false;
+  }
+};
+
+// YENİ: ŞÜPHELİ İŞLEM BİLDİRİMİ (IP VE BİLGİ TOPLAMA)
+export const notifyAdminSuspiciousActivity = async (email: string, reason: string): Promise<void> => {
+  try {
+    let ip = 'Bilinmiyor';
+    try {
+      // Kullanıcının IP adresini güvenli bir şekilde dış servisten çekiyoruz
+      const ipRes = await fetch('https://api.ipify.org?format=json');
+      const ipData = await ipRes.json();
+      ip = ipData.ip;
+    } catch {
+      console.warn("IP alınamadı, ancak bildirime devam ediliyor.");
+    }
+
+    // Supabase alert tablomuza kaydediyoruz
+    await supabase.from('security_alerts').insert({
+      email: email,
+      ip_address: ip,
+      reason: reason,
+      user_agent: navigator.userAgent
+    });
+  } catch (error) {
+    console.error('Güvenlik uyarısı kaydedilemedi:', error);
   }
 };
 
