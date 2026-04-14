@@ -76,10 +76,10 @@ export const EmailVerificationModal: React.FC<Props> = ({ studentId, onVerified,
     }
   };
 
-  // KESİN ÇÖZÜM: Burası seni doğrudan ID (Öğrenci Numarası) ekranına fırlatacak
-  const handleGoBackToLogin = () => {
-    if (onCancel) onCancel(); 
-    window.location.reload(); // Sistemi temizler ve ana numaralı giriş ekranına döndürür
+  // KESİN ÇÖZÜM: Form tetiklenmesini durdur ve sadece React'ın kapatma komutunu çalıştır
+  const handleGoBackToLogin = (e: React.MouseEvent) => {
+    e.preventDefault(); // Tıklamanın başka bir şeyi bozmasını engeller
+    onCancel(); // Modalı anında yok edip ID ekranına döndürür
   };
 
   return (
@@ -95,7 +95,12 @@ export const EmailVerificationModal: React.FC<Props> = ({ studentId, onVerified,
         {step === 'email' ? (
           <form onSubmit={handleSendCode} className="space-y-6">
             <p className="text-slate-400 text-sm text-center">Lütfen kayıtlı e-posta adresinizi doğrulayın.</p>
+            
+            {/* ID ve NAME EKLENDİ (Autofill Hatası Çözüldü) */}
             <input
+              id="student-email"
+              name="student-email"
+              autoComplete="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -104,8 +109,8 @@ export const EmailVerificationModal: React.FC<Props> = ({ studentId, onVerified,
               required
             />
             {status === 'error' && <p className="text-red-400 text-xs font-bold text-center">{errorMessage}</p>}
+            
             <div className="flex gap-3">
-              {/* "İptal Et" yerine "Geri Dön" yazıldı ve ID ekranına bağlandı */}
               <button 
                 type="button" 
                 onClick={handleGoBackToLogin} 
@@ -129,7 +134,11 @@ export const EmailVerificationModal: React.FC<Props> = ({ studentId, onVerified,
               {showSpamTip && <p className="text-[#39FF14] text-xs font-medium animate-pulse">Lütfen spam (gereksiz) kutunuzu kontrol edin.</p>}
             </div>
 
+            {/* ID ve NAME EKLENDİ (Autofill Hatası Çözüldü) */}
             <input
+              id="otp-code"
+              name="otp-code"
+              autoComplete="one-time-code"
               type="text"
               maxLength={8}
               value={code}
@@ -144,7 +153,13 @@ export const EmailVerificationModal: React.FC<Props> = ({ studentId, onVerified,
             <div className="flex gap-3">
               <button 
                 type="button" 
-                onClick={() => {setStep('email'); setCode(''); setShowSpamTip(false); setStatus('idle');}} 
+                onClick={(e) => {
+                  e.preventDefault(); 
+                  setStep('email'); 
+                  setCode(''); 
+                  setShowSpamTip(false); 
+                  setStatus('idle');
+                }} 
                 className="flex-1 py-3.5 rounded-xl font-medium text-slate-400 bg-white/5 hover:bg-white/10 transition-all flex items-center justify-center gap-2"
               >
                 <ArrowLeft size={16}/> Geri Dön
