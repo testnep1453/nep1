@@ -48,8 +48,9 @@ export const EmailVerificationModal: React.FC<Props> = ({ studentId, onVerified,
 
   const handleVerifyCode = async (e: React.FormEvent) => {
     e.preventDefault();
+    // Supabase kodları 6 ile 8 hane arası olabileceği için kontrolü esnettik
     if (code.length < 6) {
-      setErrorMessage('Lütfen 6 haneli kodu girin.');
+      setErrorMessage('Lütfen kodu eksiksiz girin.');
       return;
     }
     
@@ -58,21 +59,28 @@ export const EmailVerificationModal: React.FC<Props> = ({ studentId, onVerified,
     
     if (success) {
       setStatus('success');
+      setFailedAttempts(0);
       setTimeout(() => onVerified(email), 1000);
     } else {
       const newAttempts = failedAttempts + 1;
       setFailedAttempts(newAttempts);
       
+      // ÖĞRENCİ KONTROLÜ: 3 KEZ YANLIŞ GİRİLİRSE BİLDİR
       if (newAttempts >= 3) {
         setStatus('error');
-        setErrorMessage('Güvenlik kısıtlaması aktif.');
-        setCooldown(180);
-        notifyAdminSuspiciousActivity(email, '3 kez hatalı OTP girişi.');
+        setErrorMessage('Güvenlik kısıtlaması aktif. Sistem loglandı.');
+        setCooldown(180); // 3 dakika ceza
+        notifyAdminSuspiciousActivity(email, '3 kez hatalı OTP (doğrulama kodu) girildi.');
       } else {
         setStatus('error');
         setErrorMessage(`Hatalı kod. (Kalan hak: ${3 - newAttempts})`);
       }
     }
+  };
+
+  const handleGoBackToLogin = () => {
+    onCancel(); 
+    window.location.href = window.location.pathname; 
   };
 
   return (
@@ -98,8 +106,18 @@ export const EmailVerificationModal: React.FC<Props> = ({ studentId, onVerified,
             />
             {status === 'error' && <p className="text-red-400 text-xs font-bold text-center">{errorMessage}</p>}
             <div className="flex gap-3">
-              <button type="button" onClick={() => window.location.reload()} className="flex-1 py-3.5 rounded-xl font-medium text-slate-400 bg-white/5 hover:bg-white/10 transition-all">Geri Dön</button>
-              <button type="submit" disabled={status === 'sending' || cooldown > 0} className="flex-1 py-3.5 rounded-xl font-bold bg-[#39FF14]/10 text-[#39FF14] border border-[#39FF14]/30 hover:bg-[#39FF14]/20 disabled:opacity-50">
+              <button 
+                type="button" 
+                onClick={handleGoBackToLogin} 
+                className="flex-1 py-3.5 rounded-xl font-medium text-slate-400 bg-white/5 hover:bg-white/10 transition-all flex items-center justify-center gap-2"
+              >
+                <ArrowLeft size={16}/> İptal Et
+              </button>
+              <button 
+                type="submit" 
+                disabled={status === 'sending' || cooldown > 0} 
+                className="flex-1 py-3.5 rounded-xl font-bold bg-[#39FF14]/10 text-[#39FF14] border border-[#39FF14]/30 hover:bg-[#39FF14]/20 disabled:opacity-50"
+              >
                 {status === 'sending' ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : cooldown > 0 ? `${cooldown}s` : 'Kod Gönder'}
               </button>
             </div>
@@ -113,21 +131,29 @@ export const EmailVerificationModal: React.FC<Props> = ({ studentId, onVerified,
 
             <input
               type="text"
-              maxLength={6}
+              maxLength={8} // 8 haneli kodlara destek verildi
               value={code}
               onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
-              placeholder="••••••"
-              className="w-full bg-black/40 border border-white/10 rounded-xl py-4 text-center text-3xl tracking-[0.5em] font-mono text-white focus:border-[#39FF14]/50 outline-none uppercase"
+              placeholder="••••••••"
+              className="w-full bg-black/40 border border-white/10 rounded-xl py-4 text-center text-3xl tracking-[0.4em] font-mono text-white focus:border-[#39FF14]/50 outline-none uppercase"
               required
             />
 
             {status === 'error' && <p className="text-red-400 text-xs font-bold text-center">{errorMessage}</p>}
 
             <div className="flex gap-3">
-              <button type="button" onClick={() => {setStep('email'); setCode(''); setShowSpamTip(false);}} className="flex-1 py-3.5 rounded-xl font-medium text-slate-400 bg-white/5 hover:bg-white/10 transition-all flex items-center justify-center gap-2">
-                <ArrowLeft size={16}/> Geri
+              <button 
+                type="button" 
+                onClick={() => {setStep('email'); setCode(''); setShowSpamTip(false); setStatus('idle');}} 
+                className="flex-1 py-3.5 rounded-xl font-medium text-slate-400 bg-white/5 hover:bg-white/10 transition-all flex items-center justify-center gap-2"
+              >
+                <ArrowLeft size={16}/> E-postayı Değiş
               </button>
-              <button type="submit" disabled={status === 'verifying' || status === 'success'} className="flex-1 py-3.5 rounded-xl font-bold bg-[#39FF14] text-black hover:bg-[#32e011] transition-all">
+              <button 
+                type="submit" 
+                disabled={status === 'verifying' || status === 'success'} 
+                className="flex-1 py-3.5 rounded-xl font-bold bg-[#39FF14] text-black hover:bg-[#32e011] transition-all"
+              >
                 {status === 'verifying' ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : 'Doğrula'}
               </button>
             </div>
@@ -137,7 +163,7 @@ export const EmailVerificationModal: React.FC<Props> = ({ studentId, onVerified,
                 type="button" 
                 disabled={cooldown > 0}
                 onClick={() => setShowSpamTip(true)}
-                className={`text-xs font-medium transition-all flex items-center justify-center gap-1 mx-auto ${cooldown > 0 ? 'text-slate-600' : 'text-slate-400 hover:text-white'}`}
+                className={`text-xs font-medium transition-all flex items-center justify-center gap-1 mx-auto ${cooldown > 0 ? 'text-slate-600 cursor-not-allowed' : 'text-slate-400 hover:text-white'}`}
               >
                 {cooldown > 0 ? <><Clock size={12}/> Kodun gelmesine {cooldown} saniye var</> : <><HelpCircle size={12}/> Kod gelmedi mi?</>}
               </button>
