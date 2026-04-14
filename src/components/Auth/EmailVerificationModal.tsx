@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Mail, CheckCircle, XCircle, Loader2, ArrowLeft, Clock, ShieldCheck } from 'lucide-react';
-import { sendVerificationCode, verifyEmailCode } from '../../services/authService';
+import { sendVerificationCode, verifyEmailCode, notifyAdminSuspiciousActivity } from '../../services/authService';
 
 interface Props {
   studentId: string;
@@ -16,6 +16,8 @@ export const EmailVerificationModal: React.FC<Props> = ({ studentId, onVerified,
   const [errorMessage, setErrorMessage] = useState('');
   
   const [cooldown, setCooldown] = useState(0);
+  // YENİ: Hatalı deneme sayacı
+  const [failedAttempts, setFailedAttempts] = useState(0);
 
   useEffect(() => {
     let timer: NodeJS.Timeout;
@@ -36,6 +38,7 @@ export const EmailVerificationModal: React.FC<Props> = ({ studentId, onVerified,
       setStatus('idle');
       setStep('code');
       setErrorMessage('');
+      setFailedAttempts(0); // Yeni kod gönderilince sayacı sıfırla
       setCooldown(60); 
     } else {
       setStatus('error');
@@ -50,14 +53,30 @@ export const EmailVerificationModal: React.FC<Props> = ({ studentId, onVerified,
       setErrorMessage('Lütfen kodu eksiksiz girin.');
       return;
     }
+    
     setStatus('verifying');
     const success = await verifyEmailCode(email, code);
+    
     if (success) {
       setStatus('success');
+      setFailedAttempts(0);
       setTimeout(() => onVerified(email), 1000);
     } else {
-      setStatus('error');
-      setErrorMessage('Hatalı kod. Lütfen kontrol edip tekrar deneyin.');
+      // YENİ: Hatalı deneme limit ve loglama mantığı
+      const newAttempts = failedAttempts + 1;
+      setFailedAttempts(newAttempts);
+      
+      if (newAttempts >= 3) {
+        setStatus('error');
+        setErrorMessage('Çok fazla hatalı deneme! Güvenlik nedeniyle işlem kayıt altına alındı.');
+        setCooldown(180); // Cezalı süre: 3 dakika bekleme (180sn)
+        
+        // Admine IP ve bilgi ilet
+        notifyAdminSuspiciousActivity(email, 'Üst üste 3 kez hatalı doğrulama kodu girildi.');
+      } else {
+        setStatus('error');
+        setErrorMessage(`Hatalı kod. (Kalan deneme hakkı: ${3 - newAttempts})`);
+      }
     }
   };
 
@@ -71,7 +90,6 @@ export const EmailVerificationModal: React.FC<Props> = ({ studentId, onVerified,
 
       <div className="bg-white/[0.03] border border-white/10 p-8 rounded-2xl w-full max-w-md shadow-[0_0_40px_rgba(0,0,0,0.8)] relative z-10 backdrop-blur-xl">
         
-        {/* Üst Kısım Başlık */}
         <div className="flex flex-col items-center justify-center mb-8">
           <div className="w-16 h-16 rounded-full bg-[#39FF14]/10 border border-[#39FF14]/30 flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(57,255,20,0.15)]">
             <ShieldCheck className="text-[#39FF14] w-8 h-8" />
@@ -114,14 +132,14 @@ export const EmailVerificationModal: React.FC<Props> = ({ studentId, onVerified,
             )}
 
             <div className="flex flex-col sm:flex-row gap-3 pt-4">
-              {/* GERİ DÖN BUTONU SAYFAYI YENİLEYECEK ŞEKİLDE DÜZELTİLDİ */}
+              {/* E-POSTA ADIMINDA: Geri Dön -> Numara yazma ana ekranına atar */}
               <button 
                 type="button" 
                 onClick={() => window.location.reload()} 
                 className="flex-1 px-4 py-3.5 rounded-xl font-medium text-slate-300 bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 transition-all flex items-center justify-center gap-2"
               > 
                 <ArrowLeft className="w-4 h-4" />
-                İptal
+                Geri Dön
               </button>
               <button 
                 type="submit" 
@@ -179,17 +197,19 @@ export const EmailVerificationModal: React.FC<Props> = ({ studentId, onVerified,
             )}
 
             <div className="flex flex-col sm:flex-row gap-3 pt-2">
+              {/* KOD ADIMINDA: Geri Dön -> Sadece e-posta yazma ekranına döndürür (Ana Sayfaya atmaz) */}
               <button 
                 type="button" 
                 onClick={() => {setStep('email'); setCode(''); setStatus('idle');}} 
-                className="flex-1 px-4 py-3.5 rounded-xl font-medium text-slate-300 bg-white/5 hover:bg-white/10 border border-white/5 transition-all"
+                className="flex-1 px-4 py-3.5 rounded-xl font-medium text-slate-300 bg-white/5 hover:bg-white/10 border border-white/5 transition-all flex items-center justify-center gap-2"
               >
+                <ArrowLeft className="w-4 h-4" />
                 Geri Dön
               </button>
               <button 
                 type="submit" 
-                disabled={status === 'verifying' || status === 'success'} 
-                className="flex-1 px-4 py-3.5 rounded-xl font-bold text-[#050505] bg-[#39FF14] hover:bg-[#32e011] hover:shadow-[0_0_20px_rgba(57,255,20,0.4)] transition-all flex items-center justify-center gap-2"
+                disabled={status === 'verifying' || status === 'success' || cooldown > 60} 
+                className="flex-1 px-4 py-3.5 rounded-xl font-bold text-[#050505] bg-[#39FF14] hover:bg-[#32e011] hover:shadow-[0_0_20px_rgba(57,255,20,0.4)] disabled:opacity-50 disabled:hover:shadow-none transition-all flex items-center justify-center gap-2"
               >
                 {status === 'verifying' ? <Loader2 className="w-5 h-5 animate-spin text-[#050505]" /> : 'Giriş Yap'}
               </button>
