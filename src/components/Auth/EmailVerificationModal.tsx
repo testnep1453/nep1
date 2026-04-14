@@ -48,7 +48,6 @@ export const EmailVerificationModal: React.FC<Props> = ({ studentId, onVerified,
 
   const handleVerifyCode = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Supabase kodları 6 ile 8 hane arası olabileceği için kontrolü esnettik
     if (code.length < 6) {
       setErrorMessage('Lütfen kodu eksiksiz girin.');
       return;
@@ -65,11 +64,10 @@ export const EmailVerificationModal: React.FC<Props> = ({ studentId, onVerified,
       const newAttempts = failedAttempts + 1;
       setFailedAttempts(newAttempts);
       
-      // ÖĞRENCİ KONTROLÜ: 3 KEZ YANLIŞ GİRİLİRSE BİLDİR
       if (newAttempts >= 3) {
         setStatus('error');
         setErrorMessage('Güvenlik kısıtlaması aktif. Sistem loglandı.');
-        setCooldown(180); // 3 dakika ceza
+        setCooldown(180); 
         notifyAdminSuspiciousActivity(email, '3 kez hatalı OTP (doğrulama kodu) girildi.');
       } else {
         setStatus('error');
@@ -78,9 +76,10 @@ export const EmailVerificationModal: React.FC<Props> = ({ studentId, onVerified,
     }
   };
 
+  // KESİN ÇÖZÜM: Burası seni doğrudan ID (Öğrenci Numarası) ekranına fırlatacak
   const handleGoBackToLogin = () => {
-    onCancel(); 
-    window.location.href = window.location.pathname; 
+    if (onCancel) onCancel(); 
+    window.location.reload(); // Sistemi temizler ve ana numaralı giriş ekranına döndürür
   };
 
   return (
@@ -106,12 +105,13 @@ export const EmailVerificationModal: React.FC<Props> = ({ studentId, onVerified,
             />
             {status === 'error' && <p className="text-red-400 text-xs font-bold text-center">{errorMessage}</p>}
             <div className="flex gap-3">
+              {/* "İptal Et" yerine "Geri Dön" yazıldı ve ID ekranına bağlandı */}
               <button 
                 type="button" 
                 onClick={handleGoBackToLogin} 
                 className="flex-1 py-3.5 rounded-xl font-medium text-slate-400 bg-white/5 hover:bg-white/10 transition-all flex items-center justify-center gap-2"
               >
-                <ArrowLeft size={16}/> İptal Et
+                <ArrowLeft size={16}/> Geri Dön
               </button>
               <button 
                 type="submit" 
@@ -131,7 +131,7 @@ export const EmailVerificationModal: React.FC<Props> = ({ studentId, onVerified,
 
             <input
               type="text"
-              maxLength={8} // 8 haneli kodlara destek verildi
+              maxLength={8}
               value={code}
               onChange={(e) => setCode(e.target.value.replace(/\D/g, ''))}
               placeholder="••••••••"
@@ -147,7 +147,7 @@ export const EmailVerificationModal: React.FC<Props> = ({ studentId, onVerified,
                 onClick={() => {setStep('email'); setCode(''); setShowSpamTip(false); setStatus('idle');}} 
                 className="flex-1 py-3.5 rounded-xl font-medium text-slate-400 bg-white/5 hover:bg-white/10 transition-all flex items-center justify-center gap-2"
               >
-                <ArrowLeft size={16}/> E-postayı Değiş
+                <ArrowLeft size={16}/> Geri Dön
               </button>
               <button 
                 type="submit" 
