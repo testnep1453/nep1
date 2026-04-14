@@ -6,15 +6,14 @@ import {
   Database, 
   ShieldAlert, 
   LogOut, 
-  Bell, 
-  Settings,
-  LayoutDashboard,
   Search,
-  BellRing
+  BellRing,
+  LayoutDashboard,
+  Archive
 } from 'lucide-react';
 import { signOutUser } from '../../services/authService';
 import { getStudents } from '../../services/db';
-import { requestPermission } from '../../services/fcm'; // Firebase Bildirim İzni
+import { requestPermission } from '../../services/fcm';
 import { AdminSecurityNotifier } from './AdminSecurityNotifier';
 import { AttendancePage } from './AttendancePage';
 import { SurveyManager } from './SurveyManager';
@@ -22,17 +21,15 @@ import { KnowledgeManager } from './KnowledgeManager';
 import { ArchiveManager } from './ArchiveManager';
 
 export const AdminDashboard: React.FC = () => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'attendance' | 'surveys' | 'knowledge' | 'archive'>('overview');
+  // YENİ: 'security' sekmesi eklendi ve archive'dan tamamen ayrıldı
+  const [activeTab, setActiveTab] = useState<'overview' | 'attendance' | 'surveys' | 'knowledge' | 'archive' | 'security'>('overview');
   const [students, setStudents] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
-    // 1. Öğrenci verilerini çek
     const data = getStudents();
     setStudents(data);
 
-    // 2. Firebase Kilit Ekranı Bildirim İzni İste
-    // Bu işlem tarayıcıda "Bildirimlere izin verilsin mi?" kutusunu açar.
     const enableNotifications = async () => {
       try {
         const token = await requestPermission();
@@ -58,7 +55,6 @@ export const AdminDashboard: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[#020202] text-white flex overflow-hidden">
-      {/* SOL MENÜ (SIDEBAR) */}
       <aside className="w-64 bg-black/40 border-r border-white/5 flex flex-col backdrop-blur-xl">
         <div className="p-6 flex items-center gap-3 border-b border-white/5">
           <div className="w-10 h-10 bg-[#39FF14]/10 rounded-lg flex items-center justify-center border border-[#39FF14]/30">
@@ -67,7 +63,7 @@ export const AdminDashboard: React.FC = () => {
           <span className="font-bold tracking-widest text-sm">NEP ADMIN</span>
         </div>
 
-        <nav className="flex-1 p-4 space-y-2 mt-4">
+        <nav className="flex-1 p-4 space-y-2 mt-4 overflow-y-auto custom-scrollbar">
           <button 
             onClick={() => setActiveTab('overview')}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'overview' ? 'bg-[#39FF14]/10 text-[#39FF14] border border-[#39FF14]/20' : 'text-slate-400 hover:bg-white/5'}`}
@@ -92,11 +88,21 @@ export const AdminDashboard: React.FC = () => {
           >
             <Database size={20} /> <span className="text-sm font-medium">Bilgi Bankası</span>
           </button>
+          
+          {/* ARŞİV SEKMESİ (SADECE ARŞİV) */}
           <button 
             onClick={() => setActiveTab('archive')}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'archive' ? 'bg-[#39FF14]/10 text-[#39FF14] border border-[#39FF14]/20' : 'text-slate-400 hover:bg-white/5'}`}
           >
-            <ShieldAlert size={20} /> <span className="text-sm font-medium">Arşiv & Güvenlik</span>
+            <Archive size={20} /> <span className="text-sm font-medium">Sistem Arşivi</span>
+          </button>
+          
+          {/* YENİ: GÜVENLİK SEKMESİ */}
+          <button 
+            onClick={() => setActiveTab('security')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all mt-4 ${activeTab === 'security' ? 'bg-red-500/10 text-red-400 border border-red-500/30' : 'text-slate-400 hover:bg-white/5 hover:text-red-400'}`}
+          >
+            <ShieldAlert size={20} /> <span className="text-sm font-medium">Güvenlik Merkezi</span>
           </button>
         </nav>
 
@@ -110,9 +116,7 @@ export const AdminDashboard: React.FC = () => {
         </div>
       </aside>
 
-      {/* ANA İÇERİK ALANI */}
       <main className="flex-1 overflow-y-auto p-8 relative">
-        {/* Üst Bar */}
         <header className="flex items-center justify-between mb-10">
           <div>
             <h1 className="text-2xl font-bold tracking-tight">Kontrol Merkezi</h1>
@@ -137,11 +141,9 @@ export const AdminDashboard: React.FC = () => {
           </div>
         </header>
 
-        {/* Tab İçerikleri */}
         <section className="animate-in fade-in duration-500">
           {activeTab === 'overview' && (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              {/* İstatistik Kartları */}
               <div className="bg-white/[0.03] border border-white/5 p-6 rounded-2xl">
                 <p className="text-slate-500 text-sm font-medium mb-1">Toplam Öğrenci</p>
                 <h3 className="text-3xl font-bold">{students.length}</h3>
@@ -155,7 +157,6 @@ export const AdminDashboard: React.FC = () => {
                 <h3 className="text-3xl font-bold text-blue-400">12</h3>
               </div>
 
-              {/* Öğrenci Listesi */}
               <div className="col-span-1 md:col-span-3 bg-white/[0.02] border border-white/5 rounded-2xl overflow-hidden mt-4">
                 <div className="p-6 border-b border-white/5 flex items-center justify-between">
                   <h4 className="font-bold">Öğrenci Veritabanı</h4>
@@ -195,12 +196,31 @@ export const AdminDashboard: React.FC = () => {
           {activeTab === 'surveys' && <SurveyManager />}
           {activeTab === 'knowledge' && <KnowledgeManager />}
           {activeTab === 'archive' && <ArchiveManager />}
+          
+          {/* YENİ: GÜVENLİK MERKEZİ (Güvenlik olaylarını burada detaylandırabiliriz) */}
+          {activeTab === 'security' && (
+            <div className="space-y-6">
+              <div className="flex items-center justify-between border-b border-red-500/20 pb-4">
+                <div>
+                  <h3 className="text-2xl font-bold text-red-400 flex items-center gap-3">
+                    <ShieldAlert className="w-8 h-8" /> Güvenlik Merkezi
+                  </h3>
+                  <p className="text-slate-500 mt-1">Siber tehditleri ve loglanmış şüpheli IP adreslerini yönetin.</p>
+                </div>
+              </div>
+              <div className="bg-black/40 border border-white/5 p-8 rounded-2xl text-center">
+                 <ShieldAlert className="w-16 h-16 text-slate-700 mx-auto mb-4" />
+                 <h4 className="text-xl font-bold text-white mb-2">Güvenlik Logları (Canlı)</h4>
+                 <p className="text-slate-400 max-w-md mx-auto">
+                   Gerçek zamanlı olarak tespit edilen hatalı giriş denemeleri sağ alt köşede bildirim olarak gelmeye devam edecektir.
+                 </p>
+              </div>
+            </div>
+          )}
         </section>
 
-        {/* GÜVENLİK BİLDİRİM MODÜLÜ (Anlık Uyarılar) */}
         <AdminSecurityNotifier />
 
-        {/* ARKA PLAN DEKORU */}
         <div className="fixed top-0 right-0 -z-10 w-[500px] h-[500px] bg-[#39FF14]/5 blur-[120px] rounded-full pointer-events-none" />
       </main>
     </div>
