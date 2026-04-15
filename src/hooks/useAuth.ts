@@ -154,6 +154,15 @@ const loginWithGoogle = async () => {
     setNeedsAdminAuth(false);
   };
 
+  // E-posta doğrulama ekranından ID giriş ekranına güvenli geri dönüş
+  // logout()'un aksine window.location.reload() ÇAĞIRMAZ — sadece state'i temizler
+  const cancelEmailVerification = () => {
+    setPendingStudent(null);
+    setNeedsEmailVerification(false);
+    localStorage.removeItem('studentId');
+    sessionStorage.removeItem('emailVerified');
+  };
+
   const logout = () => {
     setStudent(null);
     setPendingStudent(null);
@@ -165,5 +174,5 @@ const loginWithGoogle = async () => {
     window.location.reload();
   };
 
-  return { student, loading, login, loginWithGoogle, logout, pendingStudent, needsAdminAuth, confirmAdminAuth, cancelAdminAuth, needsEmailVerification, confirmEmailVerification, googleError };
+  return { student, loading, login, loginWithGoogle, logout, pendingStudent, needsAdminAuth, confirmAdminAuth, cancelAdminAuth, needsEmailVerification, confirmEmailVerification, cancelEmailVerification, googleError };
 };

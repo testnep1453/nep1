@@ -27,6 +27,7 @@ function App() {
     cancelAdminAuth,
     needsEmailVerification,
     confirmEmailVerification,
+    cancelEmailVerification,
   } = useAuth();
 
   const onlineCount = usePresence(student?.id || null);
@@ -75,16 +76,15 @@ function App() {
     );
   }
 
-  // 2. Ekran: E-posta Doğrulama (Geri dön butonu onBack eklendi)
+  // 2. Ekran: E-posta Doğrulama
   if (needsEmailVerification && pendingStudent) {
     return (
       <EmailVerificationModal
         studentId={pendingStudent.id}
-        studentName={pendingStudent.name}
         onVerified={(email) => {
           confirmEmailVerification(email);
         }}
-        onBack={logout}
+        onCancel={cancelEmailVerification}
       />
     );
   }
