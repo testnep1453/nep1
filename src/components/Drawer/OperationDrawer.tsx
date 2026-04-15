@@ -7,6 +7,8 @@ import { Lesson, Trailer } from '../../types/student';
 import { CircularCountdown } from '../Countdown/CircularCountdown';
 import { YouTubePlayer } from '../VideoTheater/YouTubePlayer';
 import { isLessonActive, isLessonEnded, getNextLesson, FIXED_LESSON_SCHEDULE } from '../../config/lessonSchedule';
+import { subscribeToSettingStore } from '../../services/dbFirebase';
+import { getSystemConfig, setManualLessonActive } from '../../services/systemSettingsService';
 
 interface OperationDrawerProps {
   isOpen: boolean;
@@ -46,6 +48,33 @@ export const OperationDrawer = ({
     'countdown' | 'trailer' | 'lesson_active' | 'lesson_ended'
   >('countdown');
   const [now, setNow] = useState(new Date());
+  
+  // Manuel override states for Admin
+  const [manualLessonActive, setManualLessonActiveState] = useState(false);
+  const [overrideLoading, setOverrideLoading] = useState(false);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    getSystemConfig().then(cfg => {
+      setManualLessonActiveState(cfg.manual_lesson_active === true);
+    });
+
+    const unsub = subscribeToSettingStore<Record<string, unknown> | null>('system_config', null, (data) => {
+      setManualLessonActiveState(data?.manual_lesson_active === true);
+    });
+    return () => unsub();
+  }, [isAdmin]);
+
+  const handleToggleOverride = async () => {
+    setOverrideLoading(true);
+    try {
+      const newVal = !manualLessonActive;
+      await setManualLessonActive(newVal);
+      setManualLessonActiveState(newVal);
+    } finally {
+      setOverrideLoading(false);
+    }
+  };
 
   const isTrailerTime = useCallback((t: Trailer | null): boolean => {
     if (!t || !t.isActive || !t.youtubeId || !t.showDate || !t.showTime) return false;
@@ -98,8 +127,42 @@ export const OperationDrawer = ({
         </div>
 
         {/* İçerik */}
-        <div className="flex-1 flex items-center justify-center p-6 overflow-hidden">
-          <div className="w-full max-w-2xl mx-auto flex flex-col items-center gap-8">
+        <div className="flex-1 flex items-center justify-center p-6 overflow-y-auto overflow-x-hidden custom-scrollbar">
+          <div className="w-full max-w-2xl mx-auto flex flex-col items-center gap-8 py-4">
+
+            {/* ADMIN MANUAL OVERRIDE BUTTON */}
+            {isAdmin && (
+              <button
+                onClick={handleToggleOverride}
+                disabled={overrideLoading}
+                className={`w-full py-8 text-center px-6 rounded-2xl font-black text-xl md:text-2xl uppercase tracking-widest transition-all duration-300 flex flex-col items-center justify-center gap-4 border-2 shadow-2xl relative overflow-hidden disabled:opacity-50 mt-2 ${
+                  manualLessonActive
+                    ? 'bg-[#39FF14] border-white text-black shadow-[0_0_80px_rgba(57,255,20,0.4)] scale-[1.02]'
+                    : 'bg-[#FF4500] border-black text-white shadow-[0_0_40px_rgba(255,69,0,0.3)] hover:bg-[#ff5511]'
+                }`}
+              >
+                <div className="flex items-center gap-4 z-10 text-center flex-wrap justify-center">
+                  <span className="text-3xl md:text-4xl drop-shadow-lg">🚀</span>
+                  <span className="drop-shadow-sm w-full md:w-auto">DERSİ ŞİMDİ BAŞLAT<br/><span className="text-sm md:text-base opacity-80">(ZORUNLU GEÇİŞ)</span></span>
+                </div>
+                
+                <span className={`text-xs md:text-sm font-bold px-6 py-2 rounded-full z-10 shadow-inner mt-2 ${
+                  manualLessonActive 
+                    ? 'bg-black text-[#39FF14] border-2 border-black' 
+                    : 'bg-black/40 text-white border-2 border-white'
+                }`}>
+                  {overrideLoading 
+                    ? 'İŞLENİYOR...' 
+                    : manualLessonActive 
+                      ? 'DURUM: AÇIK — KAPATMAK İÇİN TIKLAYIN' 
+                      : 'DURUM: KAPALI — AÇMAK İÇİN TIKLAYIN'}
+                </span>
+
+                {manualLessonActive && (
+                  <div className="absolute inset-0 bg-white opacity-20 animate-pulse pointer-events-none" />
+                )}
+              </button>
+            )}
 
             {/* GERİ SAYIM */}
             {currentView === 'countdown' && lesson && (
