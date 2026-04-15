@@ -14,10 +14,12 @@ import { OperationDrawer } from '../Drawer/OperationDrawer';
 import { FeedbackForm, isFeedbackTime } from '../Feedback/FeedbackForm';
 import { AttendancePage } from '../Admin/AttendancePage';
 import { ArchiveManager } from '../Admin/ArchiveManager';
-import { ArchiveManager } from '../Admin/ArchiveManager';
 import { SurveyManager } from '../Admin/SurveyManager';
 import { getAllLoginLogs } from '../../services/loginAlertService';
 import { useAutoMessages } from '../../hooks/useAutoMessages';
+import { useNotifications, sendNotificationToAll } from '../../hooks/useNotifications';
+import { useAutoZoom } from '../../hooks/useAutoZoom';
+import { LESSON_CONFIG, formatLessonDate } from '../../config/lessonSchedule';
 
 const Icons = {
   Home: () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m19 8.71l-5.333-4.148a2.666 2.666 0 0 0-3.274 0L5.059 8.71a2.665 2.665 0 0 0-1.029 2.105v7.2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.2c0-.823-.38-1.6-1.03-2.105"/><path d="M16 15c-2.21 1.333-5.792 1.333-8 0"/></svg>,
