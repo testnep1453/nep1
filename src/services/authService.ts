@@ -1,7 +1,7 @@
 import { supabase } from '../config/supabase';
 import { Student } from '../types/student';
 
-const ADMIN_STUDENT_ID = '1002';
+const ADMIN_STUDENT_ID = import.meta.env.VITE_ADMIN_ID || '';
 
 export const getStudentById = async (id: string): Promise<Student | null> => {
   try {
@@ -59,24 +59,21 @@ export const findStudentByEmail = async (email: string): Promise<string | null> 
 };
 
 // ==========================================
-// YENİ: 6 HANELİ KOD (OTP) SİSTEMİ
+// OTP VE GÜVENLİK
 // ==========================================
 
 export const sendVerificationCode = async (email: string): Promise<{ success: boolean; message?: string }> => {
   try {
-    // 1. ADIM: E-postanın veritabanında kayıtlı olup olmadığını kontrol et
     const { data: student, error: dbError } = await supabase
       .from('students')
       .select('id')
       .eq('email', email)
       .single();
 
-    // 2. ADIM: Eğer sistemde yoksa, kod göndermeyi engelle ve uyarı ver
     if (dbError || !student) {
       return { success: false, message: 'Bu e-posta adresi sisteme kayıtlı değil!' };
     }
 
-    // 3. ADIM: E-posta sistemde kayıtlıysa, 6 haneli kodu gönder
     const { error } = await supabase.auth.signInWithOtp({ email });
     
     if (error) {
@@ -96,6 +93,33 @@ export const verifyEmailCode = async (email: string, code: string): Promise<bool
   } catch {
     return false;
   }
+};
+
+export const notifyAdminSuspiciousActivity = async (email: string, reason: string): Promise<void> => {
+  try {
+    let ip = 'Bilinmiyor';
+    try {
+      const ipRes = await fetch('https://api.ipify.org?format=json');
+      const ipData = await ipRes.json();
+      ip = ipData.ip;
+    } catch {
+      console.warn("IP alınamadı, bildirime devam ediliyor.");
+    }
+
+    await supabase.from('security_alerts').insert({
+      email: email,
+      ip_address: ip,
+      reason: reason,
+      user_agent: navigator.userAgent
+    });
+  } catch (error) {
+    console.error('Güvenlik uyarısı kaydedilemedi:', error);
+  }
+};
+
+export const deleteSecurityAlert = async (alertId: string) => {
+  const { error } = await supabase.from('security_alerts').delete().eq('id', alertId);
+  return !error;
 };
 
 // Çökmeyi engelleyen köprüler
