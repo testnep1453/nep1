@@ -50,9 +50,9 @@ export const SurveysClient = () => {
     // Anonim kaydet
     try {
       await supabase.from('survey_results').insert([{
-        surveyId: activeSurvey.id,
+        surveyid: activeSurvey.id,
         answers,
-        createdAt: Date.now(),
+        createdat: Date.now(),
       }]);
 
       const newCompleted = new Set(completed).add(activeSurvey.id);
@@ -60,6 +60,8 @@ export const SurveysClient = () => {
 
       // Tamamlananları Supabase'e yaz (localStorage değil)
       await saveSettingStore(COMPLETED_KEY(), Array.from(newCompleted));
+
+      window.dispatchEvent(new CustomEvent('surveyCompleted'));
 
       setActiveSurvey(null);
       setAnswers({});

@@ -66,7 +66,7 @@ export const SystemConfigManager = () => {
         <div className="flex items-center justify-between gap-4">
           <div className="flex-1">
             <h3 className={`text-lg font-bold mb-1 uppercase tracking-widest flex items-center gap-2 ${manualLessonActive ? 'text-[#39FF14]' : 'text-[#FF4500]'}`}>
-              <span className="text-xl">{manualLessonActive ? '🟢' : '🔴'}</span>
+              <span className="text-xl">🚀</span>
               Dersi Şimdi Başlat (Manuel Override)
             </h3>
             <p className="text-gray-400 text-sm">
@@ -78,16 +78,19 @@ export const SystemConfigManager = () => {
           <button
             onClick={handleToggleOverride}
             disabled={overrideLoading}
-            className={`relative w-16 h-8 rounded-full transition-all duration-300 shrink-0 border-2 disabled:opacity-70 ${
+            className={`relative w-24 h-12 rounded-full transition-all duration-300 shrink-0 border-2 disabled:opacity-70 ${
               manualLessonActive
                 ? 'bg-[#39FF14] border-[#39FF14] shadow-[0_0_20px_rgba(57,255,20,0.5)]'
                 : 'bg-gray-800 border-gray-600 hover:border-gray-400'
             }`}
             title={manualLessonActive ? 'Dersi Durdur' : 'Dersi Başlat'}
           >
+            <span className={`absolute inset-y-0 flex items-center text-xs font-bold ${manualLessonActive ? 'left-3 text-black' : 'right-3 text-gray-400'}`}>
+              {manualLessonActive ? 'AÇIK' : 'KAPALI'}
+            </span>
             <span
-              className={`absolute top-0.5 left-0.5 w-6 h-6 rounded-full bg-white shadow-md transition-transform duration-300 ${
-                manualLessonActive ? 'translate-x-8' : 'translate-x-0'
+              className={`absolute top-1 left-1 w-9 h-9 rounded-full bg-white shadow-md transition-transform duration-300 z-10 ${
+                manualLessonActive ? 'translate-x-12' : 'translate-x-0'
               }`}
             />
           </button>

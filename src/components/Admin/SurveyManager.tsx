@@ -144,8 +144,8 @@ const ResultsModal = ({ survey, onClose }: { survey: SurveyEntry; onClose: () =>
       const { data } = await supabase
         .from('survey_results')
         .select('*')
-        .eq('surveyId', survey.id)
-        .order('createdAt', { ascending: false });
+        .eq('surveyid', survey.id)
+        .order('createdat', { ascending: false });
       setResults(data || []);
       setLoading(false);
     };

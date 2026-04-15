@@ -105,6 +105,17 @@ export const AgentDashboard = ({
     return () => unsub();
   }, []);
 
+  useEffect(() => {
+    const handleSurveyComplete = () => {
+      setHasPendingSurvey(false);
+      if (activeTab === 'feedback') {
+        setActiveTab('home');
+      }
+    };
+    window.addEventListener('surveyCompleted', handleSurveyComplete);
+    return () => window.removeEventListener('surveyCompleted', handleSurveyComplete);
+  }, [activeTab]);
+
   let tabs: { id: AgentTab; label: string; icon: JSX.Element }[] = [
     { id: 'home', label: 'Ana Sayfa', icon: <Icons.Home /> },
     { id: 'levels', label: 'Level & Rozetler', icon: <Icons.Trophy /> },
