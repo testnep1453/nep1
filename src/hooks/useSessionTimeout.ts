@@ -1,9 +1,18 @@
 import { useEffect, useRef } from 'react';
 import { useAuth } from './useAuth';
 
-export const SESSION_TIMEOUT = 60 * 60 * 1000; // 1 Saat (App.tsx hata vermesin diye eklendi)
+export const SESSION_TIMEOUT = {
+  ADMIN: 60 * 60 * 1000, // 1 Saat — Admin için
+  AGENT: 60 * 60 * 1000, // 1 Saat — Ajan için
+};
 
-export const useSessionTimeout = () => {
+interface SessionTimeoutOptions {
+  timeoutMs?: number;
+  onTimeout?: () => void;
+  enabled?: boolean;
+}
+
+export const useSessionTimeout = (_options?: SessionTimeoutOptions) => {
   const { student, logout } = useAuth();
   const timeoutRef = useRef<NodeJS.Timeout>();
 

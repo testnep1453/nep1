@@ -13,9 +13,10 @@ const hashPin = async (pin: string) => {
 interface Props {
   onSuccess: () => void;
   onCancel: () => void;
+  adminName?: string;
 }
 
-export const AdminAuth: React.FC<Props> = ({ onSuccess, onCancel }) => {
+export const AdminAuth: React.FC<Props> = ({ onSuccess, onCancel, adminName: _adminName }) => {
   const [pin, setPin] = useState('');
   const [error, setError] = useState('');
   const [isFirstTime, setIsFirstTime] = useState(false);
