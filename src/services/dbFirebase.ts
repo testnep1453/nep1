@@ -11,7 +11,9 @@ export const subscribeToMessages = (callback: (messages: AppMessage[]) => void) 
   };
   fetchMessages();
   
-  const channel = supabase.channel('public:messages')
+  // Benzersiz kanal ismi çakışmayı önler
+  const channelName = `messages_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+  const channel = supabase.channel(channelName)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, fetchMessages)
     .subscribe();
     
@@ -45,8 +47,10 @@ export const subscribeToTrailer = (callback: (trailer: Trailer | null) => void) 
      callback(data ? data.data as Trailer : null);
    };
    fetchTrailer();
-   const channel = supabase.channel('public:settings')
-     .on('postgres_changes', { event: '*', schema: 'public', table: 'settings' }, fetchTrailer)
+   // Benzersiz kanal ismi: aynı tablo için birden fazla abone çakışmasını önler
+   const channelName = `settings_trailer_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+   const channel = supabase.channel(channelName)
+     .on('postgres_changes', { event: '*', schema: 'public', table: 'settings', filter: `id=eq.trailer` }, fetchTrailer)
      .subscribe();
    return () => { supabase.removeChannel(channel); };
 };
@@ -117,7 +121,10 @@ export const subscribeToSettingStore = <T>(id: string, defaultData: T, callback:
     callback((data ? data.data : defaultData) as T);
   };
   fetchSettings();
-  const channel = supabase.channel(`public:settings:${id}`)
+  // Benzersiz kanal ismi: React Strict Mode çift-mount ve çakışan aboneleri önler
+  const channelName = `settings_${id}_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+  const channel = supabase
+    .channel(channelName)
     .on('postgres_changes', { event: '*', schema: 'public', table: 'settings', filter: `id=eq.${id}` }, fetchSettings)
     .subscribe();
   return () => { supabase.removeChannel(channel); };
