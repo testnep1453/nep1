@@ -22,7 +22,17 @@ export const useAuth = () => {
       
       if (session?.user?.email) {
         const email = session.user.email;
-        // Supabase'de bu mailde bir öğrenci var mı bak
+
+        // 1. E-posta doğrulama kontrolü
+        const emailConfirmedAt = session.user.email_confirmed_at;
+        if (!emailConfirmedAt) {
+          await supabase.auth.signOut();
+          setGoogleError('E-posta adresiniz henüz doğrulanmamış. Lütfen giriş yapmadan önce e-posta adresinizi doğrulayın.');
+          setLoading(false);
+          return;
+        }
+
+        // 2. Supabase'de bu mailde bir öğrenci var mı bak
         const { data: matchedStudent } = await supabase.from('students').select('id').eq('email', email).single();
         
         if (matchedStudent) {
@@ -34,7 +44,7 @@ export const useAuth = () => {
         } else {
           // Bulunamadıysa oturumu kapat ve uyar
           await supabase.auth.signOut();
-          setGoogleError('Önce numaranla giriş yap.');
+          setGoogleError('Bu Google hesabı sisteme kayıtlı değil. Önce numaranla giriş yaparak e-postanı bağla.');
         }
       }
 

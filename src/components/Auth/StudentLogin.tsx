@@ -199,7 +199,7 @@ export const StudentLogin = ({
           />
 
           <div className={`mt-6 transition-all duration-300 ${error ? 'opacity-100' : 'opacity-0 h-0 overflow-hidden'}`}>
-            <p className="text-[#ff6b6e] text-sm font-bold tracking-widest uppercase text-center">
+            <p className={`text-[#ff6b6e] text-sm font-bold text-center ${googleError ? 'tracking-normal normal-case leading-relaxed' : 'tracking-widest uppercase'}`}>
               {error}
             </p>
           </div>
