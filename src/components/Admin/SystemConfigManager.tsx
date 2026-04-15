@@ -5,8 +5,7 @@
  * Supabase'deki settings tablosundan yönetir.
  */
 import { useState, useEffect } from 'react';
-import { getSystemConfig, saveSystemConfig, clearSystemConfigCache, getManualLessonActive, setManualLessonActive } from '../../services/systemSettingsService';
-import { subscribeToSettingStore } from '../../services/dbFirebase';
+import { getSystemConfig, saveSystemConfig, clearSystemConfigCache } from '../../services/systemSettingsService';
 
 export const SystemConfigManager = () => {
   const [zoomLink, setZoomLink] = useState('');
@@ -15,23 +14,12 @@ export const SystemConfigManager = () => {
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
 
-  // Manuel ders override
-  const [manualLessonActive, setManualLessonActiveState] = useState(false);
-  const [overrideLoading, setOverrideLoading] = useState(false);
-
   useEffect(() => {
     getSystemConfig().then(cfg => {
       setZoomLink(cfg.zoomLink || '');
       setLessonTitle(cfg.lessonTitle || '');
-      setManualLessonActiveState(cfg.manual_lesson_active === true);
       setLoading(false);
     });
-
-    // Gerçek zamanlı override takibi
-    const unsub = subscribeToSettingStore<Record<string, unknown> | null>('system_config', null, (data) => {
-      setManualLessonActiveState(data?.manual_lesson_active === true);
-    });
-    return () => unsub();
   }, []);
 
   const handleSave = async (e: React.FormEvent) => {
@@ -44,51 +32,8 @@ export const SystemConfigManager = () => {
     setTimeout(() => setSaved(false), 3000);
   };
 
-  const handleToggleOverride = async () => {
-    setOverrideLoading(true);
-    try {
-      const newVal = !manualLessonActive;
-      await setManualLessonActive(newVal);
-      setManualLessonActiveState(newVal);
-    } finally {
-      setOverrideLoading(false);
-    }
-  };
-
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* ── DEVASA MANUEL DERS BAŞLATMA BUTONU ── */}
-      <button
-        onClick={handleToggleOverride}
-        disabled={overrideLoading}
-        className={`w-full py-10 px-6 rounded-2xl font-black text-2xl md:text-4xl uppercase tracking-widest transition-all duration-300 flex flex-col items-center justify-center gap-4 border-4 shadow-2xl relative overflow-hidden disabled:opacity-50 ${
-          manualLessonActive
-            ? 'bg-[#39FF14] border-white text-black shadow-[0_0_80px_rgba(57,255,20,0.8)] scale-[1.02]'
-            : 'bg-[#FF4500] border-black text-white shadow-[0_0_40px_rgba(255,69,0,0.6)] hover:bg-[#ff5511]'
-        }`}
-      >
-        <div className="flex items-center gap-4 z-10 text-center flex-wrap justify-center">
-          <span className="text-5xl md:text-6xl drop-shadow-lg">🚀</span>
-          <span className="drop-shadow-sm">DERSİ ŞİMDİ BAŞLAT (ZORUNLU GEÇİŞ)</span>
-        </div>
-        
-        <span className={`text-base md:text-lg font-bold px-8 py-2 rounded-full z-10 shadow-inner mt-2 ${
-          manualLessonActive 
-            ? 'bg-black text-[#39FF14] border-2 border-black' 
-            : 'bg-black/40 text-white border-2 border-white'
-        }`}>
-          {overrideLoading 
-            ? 'İŞLENİYOR...' 
-            : manualLessonActive 
-              ? 'DURUM: AÇIK — KAPATMAK İÇİN TIKLAYIN' 
-              : 'DURUM: KAPALI — AÇMAK İÇİN TIKLAYIN'}
-        </span>
-
-        {manualLessonActive && (
-          <div className="absolute inset-0 bg-white opacity-20 animate-pulse pointer-events-none" />
-        )}
-      </button>
-
       {/* ── Sistem Konfigürasyonu ── */}
       <div className="bg-[#0A1128]/80 border border-[#00F0FF]/20 p-6 rounded-xl">
         <h3 className="text-[#00F0FF] text-lg font-bold mb-5 uppercase tracking-widest flex items-center gap-2">
