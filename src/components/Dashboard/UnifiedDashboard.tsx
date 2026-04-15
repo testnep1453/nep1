@@ -315,7 +315,6 @@ export const UnifiedDashboard = ({
         { id: 'arsiv' as const, label: 'Arşiv Yönetimi', icon: <Icons.Film /> },
         { id: 'mesajlar' as const, label: 'Mesaj Gönder', icon: <Icons.Message /> },
         { id: 'geribildirim' as const, label: 'Geri Bildirimler', icon: <Icons.Star /> },
-        { id: 'cihazlar' as const, label: 'Cihaz İstatistikleri', icon: <Icons.Users /> },
         { id: 'anket' as const, label: 'Anket', icon: <Icons.Star /> },
       ]
     : [
@@ -528,10 +527,11 @@ export const UnifiedDashboard = ({
                 <h3 className="text-[#39FF14] text-base sm:text-lg font-bold mb-4 uppercase tracking-widest flex items-center gap-2">
                   <span className="text-xl">+</span> Tekil Ajan Kayıt
                 </h3>
-                <form onSubmit={handleAddStudent} className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                <form onSubmit={handleAddStudent} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
                   <input id="newStudentId" name="studentId" type="text" aria-label="ID" placeholder="ID (örn: 1005)" required value={newStudent.id} onChange={(e) => setNewStudent({ ...newStudent, id: e.target.value })} className="bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#39FF14] font-mono transition-colors rounded" />
                   <input id="newStudentName" name="studentName" type="text" aria-label="İsim" placeholder="Gerçek İsim" required value={newStudent.name} onChange={(e) => setNewStudent({ ...newStudent, name: e.target.value })} className="bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#39FF14] transition-colors rounded" />
                   <input id="newStudentNick" name="studentNick" type="text" aria-label="Takma Ad" placeholder="Kod Adı (opsiyonel)" value={newStudent.nickname} onChange={(e) => setNewStudent({ ...newStudent, nickname: e.target.value })} className="bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#39FF14] transition-colors rounded" />
+                  <input id="newStudentEmail" name="studentEmail" type="email" aria-label="E-posta" placeholder="E-posta (opsiyonel)" value={newStudent.email} onChange={(e) => setNewStudent({ ...newStudent, email: e.target.value })} className="bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#39FF14] transition-colors rounded" />
                   <button type="submit" className="bg-[#39FF14]/20 hover:bg-[#39FF14] text-[#39FF14] hover:text-black border border-[#39FF14] px-6 py-3 font-bold transition-all uppercase tracking-widest whitespace-nowrap rounded min-h-[48px]">Ekle</button>
                 </form>
               </div>
@@ -722,66 +722,6 @@ export const UnifiedDashboard = ({
 
           {isAdmin && activeTab === 'yoklama' && <AttendancePage students={students} />}
           {isAdmin && activeTab === 'arsiv' && <ArchiveManager isAdmin={isAdmin} />}
-
-          {/* TAB: CİHAZ İSTATİSTİKLERİ */}
-          {isAdmin && activeTab === 'cihazlar' && (() => {
-            // Gruplama işlemleri:
-            const total = loginAlerts.length;
-            const browsers: Record<string, number> = {};
-            const devices: Record<string, number> = {};
-            
-            // Eğer giriş yapan öğrenci login_alerts'te yoksa, o kişileri bilinmeyen kategorisinde ekleyebiliriz (email onayı vs.)
-            const loggedStudentIds = new Set(loginAlerts.map(a => a.student_id));
-            const unverifiedOrUnknownCount = students.filter(s => !loggedStudentIds.has(s.id)).length;
-
-            loginAlerts.forEach(a => {
-              const b = a.browser || 'Diğer';
-              browsers[b] = (browsers[b] || 0) + 1;
-              const d = a.device_name || (a.is_desktop ? 'Masaüstü (PC/Mac)' : 'Telefon/Tablet');
-              devices[d] = (devices[d] || 0) + 1;
-            });
-
-            if (unverifiedOrUnknownCount > 0) {
-              devices['Bilinmeyen Cihaz / Doğrulanmamış'] = (devices['Bilinmeyen Cihaz / Doğrulanmamış'] || 0) + unverifiedOrUnknownCount;
-            }
-
-            return (
-              <div className="space-y-6 animate-fade-in">
-                <div className="bg-[#0A1128]/80 border border-[#6358cc]/30 p-6 rounded-xl">
-                  <h3 className="text-[#6358cc] font-bold text-lg uppercase tracking-wider mb-6">📡 Gerçek Zamanlı Cihaz Dağılımı</h3>
-                  {total === 0 && unverifiedOrUnknownCount === 0 ? (
-                    <div className="p-8 text-center text-gray-500 animate-pulse">Veri toplanıyor...</div>
-                  ) : (
-                    <>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-                        {Object.entries(devices).map(([label, count], i) => (
-                          <div key={label} className="bg-[#050505]/80 border border-gray-800 rounded-lg p-5 text-center transition-all hover:border-[#00F0FF]/50">
-                            <div className="text-3xl font-bold mb-1 text-[#00F0FF]">{count}</div>
-                            <div className="text-xs text-gray-500">{label}</div>
-                          </div>
-                        ))}
-                      </div>
-                      <h4 className="text-gray-400 text-xs font-mono uppercase tracking-wider mb-3">Tarayıcı Motoru Dağılımı</h4>
-                      <div className="space-y-3">
-                        {Object.entries(browsers).map(([bName, bCount]) => {
-                          const pct = Math.round((bCount / total) * 100);
-                          return (
-                            <div key={bName} className="flex items-center gap-3">
-                              <span className="text-xs text-gray-400 w-52 shrink-0">{bName}</span>
-                              <div className="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden">
-                                <div className="h-full rounded-full transition-all bg-[#39FF14]" style={{ width: `${pct}%` }} />
-                              </div>
-                              <span className="text-xs font-bold font-mono w-8 text-right text-[#39FF14]">% {pct}</span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-            );
-          })()}
 
           {/* TAB: ANKET */}
           {isAdmin && activeTab === 'anket' && (

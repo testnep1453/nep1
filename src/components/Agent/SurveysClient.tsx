@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { subscribeToSettingStore, getSettingStore, saveSettingStore } from '../../services/dbFirebase';
-import type { SurveyEntry } from '../Admin/SurveyManager';
+import type { SurveyEntry, SurveyQuestion } from '../Admin/SurveyManager';
 import { supabase } from '../../config/supabase';
 
 /**
@@ -70,6 +70,15 @@ export const SurveysClient = () => {
     }
   };
 
+  // Kaç soruya cevap verildiğini hesapla (açık uçlu boş değilse)
+  const answeredCount = activeSurvey
+    ? activeSurvey.questions.filter((q, i) => {
+        const ans = answers[i];
+        return typeof ans === 'string' && ans.trim().length > 0;
+      }).length
+    : 0;
+  const allAnswered = activeSurvey ? answeredCount === (activeSurvey.questions?.length || 0) : false;
+
   if (activeSurvey) {
     return (
       <div className="space-y-6 animate-fade-in">
@@ -81,22 +90,41 @@ export const SurveysClient = () => {
           <p className="text-gray-400 mb-8">{activeSurvey.description}</p>
 
           <div className="space-y-6">
-            {activeSurvey.questions?.map((q, i) => (
-              <div key={i} className="bg-black/50 p-4 rounded-lg border border-gray-800">
-                <p className="font-bold text-[#cda7f3] mb-4">{i + 1}. {q.text}</p>
-                <div className="space-y-2">
-                  {q.options.map((opt, j) => (
-                    <label key={j} className="flex items-center gap-3 p-3 rounded bg-white/5 hover:bg-white/10 cursor-pointer transition-colors border border-transparent hover:border-[#8a2be2]/50">
-                      <input type="radio" name={`q-${i}`} value={opt} checked={answers[i] === opt} onChange={() => setAnswers({...answers, [i]: opt})} className="accent-[#8a2be2]" />
-                      <span className="text-sm text-gray-200">{opt}</span>
-                    </label>
-                  ))}
+            {activeSurvey.questions?.map((q: SurveyQuestion, i: number) => {
+              const qType = q.type || 'multiple_choice';
+              return (
+                <div key={i} className="bg-black/50 p-4 rounded-lg border border-gray-800">
+                  <p className="font-bold text-[#cda7f3] mb-4">{i + 1}. {q.text}</p>
+
+                  {qType === 'multiple_choice' ? (
+                    <div className="space-y-2">
+                      {q.options.map((opt, j) => (
+                        <label key={j} className="flex items-center gap-3 p-3 rounded bg-white/5 hover:bg-white/10 cursor-pointer transition-colors border border-transparent hover:border-[#8a2be2]/50">
+                          <input type="radio" name={`q-${i}`} value={opt} checked={answers[i] === opt} onChange={() => setAnswers({...answers, [i]: opt})} className="accent-[#8a2be2]" />
+                          <span className="text-sm text-gray-200">{opt}</span>
+                        </label>
+                      ))}
+                    </div>
+                  ) : (
+                    /* Klasik / Açık Uçlu */
+                    <textarea
+                      placeholder="Cevabınızı buraya yazın..."
+                      value={answers[i] || ''}
+                      onChange={e => setAnswers({ ...answers, [i]: e.target.value })}
+                      rows={3}
+                      className="w-full bg-[#050505] border border-gray-700 focus:border-[#8a2be2] text-gray-200 p-3 rounded-lg resize-none focus:outline-none text-sm transition-colors"
+                    />
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
-          <button onClick={handleSubmit} disabled={submitting || Object.keys(answers).length !== (activeSurvey.questions?.length || 0)} className="w-full mt-6 bg-[#8a2be2] hover:bg-[#a14df3] text-white py-4 rounded-lg font-bold uppercase tracking-widest transition-all disabled:opacity-50">
+          <button
+            onClick={handleSubmit}
+            disabled={submitting || !allAnswered}
+            className="w-full mt-6 bg-[#8a2be2] hover:bg-[#a14df3] text-white py-4 rounded-lg font-bold uppercase tracking-widest transition-all disabled:opacity-50"
+          >
             {submitting ? 'GÖNDERİLİYOR...' : 'GÖREVİ TAMAMLA'}
           </button>
         </div>
@@ -104,6 +132,8 @@ export const SurveysClient = () => {
     );
   }
 
+  // Tüm aktif anketler tamamlandıysa null dön — sekme gizlenecek
+  if (!loading && surveys.length > 0 && surveys.every(s => completed.has(s.id))) return null;
   if (!loading && surveys.length === 0) return null;
 
   return (

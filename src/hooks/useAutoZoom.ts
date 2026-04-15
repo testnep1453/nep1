@@ -1,11 +1,7 @@
-/**
- * Auto Zoom Hook - Supabase tabanlı
- * Perşembe 19:00:00 - 19:59:59 arası otomatik Zoom yönlendirmesi
- */
-
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../config/supabase';
 import { isLessonActive, isLessonEnded, getNextLesson } from '../config/lessonSchedule';
+import { subscribeToSettingStore } from '../services/dbFirebase';
 
 interface AutoZoomState {
   status: 'waiting' | 'redirecting' | 'in_lesson' | 'lesson_ended' | 'feedback';
@@ -27,14 +23,24 @@ export const useAutoZoom = (
   const hasRedirected = useRef(false);
   const hasRecordedAttendance = useRef(false);
   const checkInterval = useRef<ReturnType<typeof setInterval> | null>(null);
+  const manualOverrideRef = useRef(false);
+
+  // Manuel override ayarını Supabase'den gerçek zamanlı dinle
+  useEffect(() => {
+    const unsub = subscribeToSettingStore<Record<string, unknown> | null>('system_config', null, (data) => {
+      manualOverrideRef.current = data?.manual_lesson_active === true;
+    });
+    return () => unsub();
+  }, []);
 
   useEffect(() => {
     if (!studentId) return;
 
     const checkLesson = () => {
       const lesson = getNextLesson();
+      const isActive = isLessonActive() || manualOverrideRef.current;
       
-      if (isLessonActive()) {
+      if (isActive) {
         if (!hasRedirected.current) {
           setState({ status: 'redirecting', redirected: false, lessonDate: lesson.date });
           
@@ -51,16 +57,18 @@ export const useAutoZoom = (
             window.location.href = finalLink;
           }, 3200);
         }
-      } else if (isLessonEnded()) {
+      } else if (isLessonEnded() && !manualOverrideRef.current) {
         if (hasRedirected.current || hasRecordedAttendance.current) {
           setState({ status: 'feedback', redirected: true, lessonDate: lesson.date });
         } else {
           setState({ status: 'lesson_ended', redirected: false, lessonDate: lesson.date });
         }
       } else {
-        setState({ status: 'waiting', redirected: false, lessonDate: lesson.date });
-        hasRedirected.current = false;
-        hasRecordedAttendance.current = false;
+        if (!manualOverrideRef.current) {
+          setState({ status: 'waiting', redirected: false, lessonDate: lesson.date });
+          hasRedirected.current = false;
+          hasRecordedAttendance.current = false;
+        }
       }
     };
 

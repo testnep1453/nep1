@@ -13,6 +13,7 @@ import { supabase } from '../config/supabase';
 export interface SystemConfig {
   zoomLink: string;
   lessonTitle?: string;
+  manual_lesson_active?: boolean;
 }
 
 const FALLBACK_CONFIG: SystemConfig = {
@@ -70,4 +71,20 @@ export const saveSystemConfig = async (config: Partial<SystemConfig>): Promise<v
  */
 export const clearSystemConfigCache = () => {
   cachedConfig = null;
+};
+
+/**
+ * Manuel ders override durumunu okur.
+ */
+export const getManualLessonActive = async (): Promise<boolean> => {
+  const cfg = await getSystemConfig();
+  return cfg.manual_lesson_active === true;
+};
+
+/**
+ * Manuel ders override ayarını Supabase'e yazar.
+ */
+export const setManualLessonActive = async (active: boolean): Promise<void> => {
+  clearSystemConfigCache();
+  await saveSystemConfig({ manual_lesson_active: active });
 };

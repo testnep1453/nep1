@@ -8,6 +8,7 @@ import { ArchivePage } from '../Archive/ArchivePage';
 import { LevelProgress } from './LevelProgress';
 import { ActivityPage } from './ActivityPage';
 import { SurveysClient } from './SurveysClient';
+import { getSettingStore } from '../../services/dbFirebase';
 
 import { useAutoZoom } from '../../hooks/useAutoZoom';
 import { useNotifications } from '../../hooks/useNotifications';
@@ -39,7 +40,7 @@ export const AgentDashboard = ({
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [trailer, setTrailerState] = useState<Trailer | null>(null);
-  const [hasActiveSurvey, setHasActiveSurvey] = useState(false);
+  const [hasPendingSurvey, setHasPendingSurvey] = useState(false);
   const [zoomLink, setZoomLink] = useState(lesson?.zoomLink || LESSON_CONFIG.zoomLink);
   // Tema: sadece dark mod
 
@@ -83,8 +84,23 @@ export const AgentDashboard = ({
   }, []);
 
   useEffect(() => {
+    // Hem aktif anket var mı hem de tamamlanmamış var mı kontrol et
+    const checkPendingSurveys = async (data: SurveyEntry[]) => {
+      const activeSurveys = Array.isArray(data) ? data.filter(s => s.isActive) : [];
+      if (activeSurveys.length === 0) {
+        setHasPendingSurvey(false);
+        return;
+      }
+      const sid = sessionStorage.getItem('_survey_sid') || '';
+      const completedKey = `completed_surveys_${sid}`;
+      const completedArr = await getSettingStore<string[]>(completedKey, []);
+      const completedSet = new Set(Array.isArray(completedArr) ? completedArr : []);
+      const hasAnyPending = activeSurveys.some(s => !completedSet.has(s.id));
+      setHasPendingSurvey(hasAnyPending);
+    };
+
     const unsub = subscribeToSettingStore<SurveyEntry[]>('surveys', [], (data) => {
-      setHasActiveSurvey(Array.isArray(data) && data.some(s => s.isActive));
+      checkPendingSurveys(data);
     });
     return () => unsub();
   }, []);
@@ -97,7 +113,7 @@ export const AgentDashboard = ({
     { id: 'feedback', label: 'Sorgu Odası', icon: <span className="text-xl -mt-1 -ml-0.5">📋</span> },
   ];
 
-  if (!hasActiveSurvey) {
+  if (!hasPendingSurvey) {
     tabs = tabs.filter(t => t.id !== 'feedback');
   }
 
@@ -234,7 +250,7 @@ export const AgentDashboard = ({
           { id: 'home' as AgentTab, icon: <Icons.Home />, label: 'LOBİ' },
           { id: 'operation' as AgentTab, icon: <Icons.Target />, label: 'OPE', action: () => setDrawerOpen(true) },
           { id: 'levels' as AgentTab, icon: <Icons.Trophy />, label: 'LEVEL' },
-          ...(hasActiveSurvey ? [{ id: 'feedback' as AgentTab, icon: <span className="text-xl leading-none">📋</span>, label: 'SORGU' }] : []),
+          ...(hasPendingSurvey ? [{ id: 'feedback' as AgentTab, icon: <span className="text-xl leading-none">📋</span>, label: 'SORGU' }] : []),
         ].map(item => (
           <button key={item.id}
             onClick={item.action || (() => setActiveTab(item.id))}
