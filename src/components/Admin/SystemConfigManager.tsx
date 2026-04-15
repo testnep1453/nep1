@@ -57,54 +57,37 @@ export const SystemConfigManager = () => {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* ── Manuel Ders Override ── */}
-      <div className={`border p-6 rounded-xl transition-all duration-300 ${
-        manualLessonActive
-          ? 'bg-[#39FF14]/5 border-[#39FF14]/40 shadow-[0_0_30px_rgba(57,255,20,0.15)]'
-          : 'bg-[#0A1128]/80 border-[#FF4500]/20'
-      }`}>
-        <div className="flex items-center justify-between gap-4">
-          <div className="flex-1">
-            <h3 className={`text-lg font-bold mb-1 uppercase tracking-widest flex items-center gap-2 ${manualLessonActive ? 'text-[#39FF14]' : 'text-[#FF4500]'}`}>
-              <span className="text-xl">🚀</span>
-              Dersi Şimdi Başlat (Manuel Override)
-            </h3>
-            <p className="text-gray-400 text-sm">
-              {manualLessonActive
-                ? 'Ders şu anda manuel olarak aktif — saat kaç olursa olsun tüm ajanlar Zoom\'a yönlendiriliyor.'
-                : 'Bu toggle aktifleştirildiğinde ders saatine bakılmaksızın ajanlar otomatik Zoom\'a yönlendirilir.'}
-            </p>
-          </div>
-          <button
-            onClick={handleToggleOverride}
-            disabled={overrideLoading}
-            className={`relative w-24 h-12 rounded-full transition-all duration-300 shrink-0 border-2 disabled:opacity-70 ${
-              manualLessonActive
-                ? 'bg-[#39FF14] border-[#39FF14] shadow-[0_0_20px_rgba(57,255,20,0.5)]'
-                : 'bg-gray-800 border-gray-600 hover:border-gray-400'
-            }`}
-            title={manualLessonActive ? 'Dersi Durdur' : 'Dersi Başlat'}
-          >
-            <span className={`absolute inset-y-0 flex items-center text-xs font-bold ${manualLessonActive ? 'left-3 text-black' : 'right-3 text-gray-400'}`}>
-              {manualLessonActive ? 'AÇIK' : 'KAPALI'}
-            </span>
-            <span
-              className={`absolute top-1 left-1 w-9 h-9 rounded-full bg-white shadow-md transition-transform duration-300 z-10 ${
-                manualLessonActive ? 'translate-x-12' : 'translate-x-0'
-              }`}
-            />
-          </button>
+      {/* ── DEVASA MANUEL DERS BAŞLATMA BUTONU ── */}
+      <button
+        onClick={handleToggleOverride}
+        disabled={overrideLoading}
+        className={`w-full py-10 px-6 rounded-2xl font-black text-2xl md:text-4xl uppercase tracking-widest transition-all duration-300 flex flex-col items-center justify-center gap-4 border-4 shadow-2xl relative overflow-hidden disabled:opacity-50 ${
+          manualLessonActive
+            ? 'bg-[#39FF14] border-white text-black shadow-[0_0_80px_rgba(57,255,20,0.8)] scale-[1.02]'
+            : 'bg-[#FF4500] border-black text-white shadow-[0_0_40px_rgba(255,69,0,0.6)] hover:bg-[#ff5511]'
+        }`}
+      >
+        <div className="flex items-center gap-4 z-10 text-center flex-wrap justify-center">
+          <span className="text-5xl md:text-6xl drop-shadow-lg">🚀</span>
+          <span className="drop-shadow-sm">DERSİ ŞİMDİ BAŞLAT (ZORUNLU GEÇİŞ)</span>
         </div>
+        
+        <span className={`text-base md:text-lg font-bold px-8 py-2 rounded-full z-10 shadow-inner mt-2 ${
+          manualLessonActive 
+            ? 'bg-black text-[#39FF14] border-2 border-black' 
+            : 'bg-black/40 text-white border-2 border-white'
+        }`}>
+          {overrideLoading 
+            ? 'İŞLENİYOR...' 
+            : manualLessonActive 
+              ? 'DURUM: AÇIK — KAPATMAK İÇİN TIKLAYIN' 
+              : 'DURUM: KAPALI — AÇMAK İÇİN TIKLAYIN'}
+        </span>
 
         {manualLessonActive && (
-          <div className="mt-4 bg-[#39FF14]/10 border border-[#39FF14]/30 rounded-lg px-4 py-3 flex items-center gap-3">
-            <span className="inline-block w-2 h-2 bg-[#39FF14] rounded-full animate-pulse" />
-            <span className="text-[#39FF14] text-sm font-mono font-bold tracking-wider">
-              MANUEL DERS AKTİF — AJANLAR YÖNLENDİRİLİYOR
-            </span>
-          </div>
+          <div className="absolute inset-0 bg-white opacity-20 animate-pulse pointer-events-none" />
         )}
-      </div>
+      </button>
 
       {/* ── Sistem Konfigürasyonu ── */}
       <div className="bg-[#0A1128]/80 border border-[#00F0FF]/20 p-6 rounded-xl">
