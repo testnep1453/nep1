@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { Student } from '../../types/student';
 import { Shield, Lock, Zap } from 'lucide-react';
-import { updateNickname, updateStudentInFirebase } from '../../services/dbFirebase';
+import { updateNickname } from '../../services/dbFirebase';
 
 interface ProfileSectionProps {
   student: Student;
@@ -17,38 +17,12 @@ const INVENTORY_ITEMS = [
   { id: 'item_6', name: 'Hayalet Pelerini', reqLevel: 10, icon: '🥷' },
 ];
 
-const AVATAR_IDS = Array.from({ length: 30 }, (_, i) => `av${i + 1}`);
 
-const normalizeAvatarId = (avatarId: string): string => {
-  if (!avatarId) return 'av1';
-  // Eski 'hero_1' formatını 'av1'e çevir
-  if (avatarId.startsWith('hero_')) {
-    const num = parseInt(avatarId.replace('hero_', ''), 10);
-    return `av${isNaN(num) ? 1 : Math.min(num, 30)}`;
-  }
-  // URL veya bilinmeyen format - fallback
-  if (avatarId.includes(':') || avatarId.includes('/')) return 'av1';
-  // Geçerli av{n} formatı
-  if (/^av\d+$/.test(avatarId)) return avatarId;
-  return 'av1';
-};
-
-const getAvatarUrl = (avatarId: string) => {
-  const normalized = normalizeAvatarId(avatarId);
-  const base = import.meta.env.BASE_URL || '/';
-  return `${base.endsWith('/') ? base : base + '/'}avatars/${normalized}.svg`;
-};
 
 export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps) => {
   const [isEditingNickname, setIsEditingNickname] = useState(false);
   const [nicknameValue, setNicknameValue] = useState(student.nickname || '');
   const [saving, setSaving] = useState(false);
-  const [showPicker, setShowPicker] = useState(false);
-  const [localAvatar, setLocalAvatar] = useState(() => normalizeAvatarId(student.avatar || ''));
-
-  useEffect(() => {
-    setLocalAvatar(normalizeAvatarId(student.avatar || ''));
-  }, [student.avatar]);
 
   const xpForNextLevel = student.level * 200;
   const xpProgress = (student.xp % 200) / 200 * 100;
@@ -70,88 +44,17 @@ export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps
     }
   };
 
-  const handleSelectAvatar = async (avatarId: string) => {
-    if (isAdmin) return;
-    setLocalAvatar(avatarId); // Optimistic update
-    setShowPicker(false);
-    try {
-      await updateStudentInFirebase(student.id, { avatar: avatarId });
-      student.avatar = avatarId;
-    } catch (error) {
-      console.error('Karakter güncellenemedi', error);
-      // Hata durumunda eski avatara dön
-      setLocalAvatar(normalizeAvatarId(student.avatar || ''));
-    }
-  };
+
 
   return (
     <div className="bg-gradient-to-br from-[#1a1d2e] to-[#0A1128] rounded-3xl p-5 md:p-10 border border-[#00F0FF]/30 shadow-[0_0_40px_rgba(0,240,255,0.05)] w-full h-full flex flex-col lg:flex-row items-center justify-center gap-6 lg:gap-16 overflow-hidden">
 
-      {/* Avatar Picker Modal */}
-      {showPicker && (
-        <div
-          className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4"
-          onClick={() => setShowPicker(false)}
-        >
-          <div
-            className="bg-[#0A1128] border border-[#00F0FF]/40 rounded-2xl p-6 w-full max-w-lg shadow-[0_0_40px_rgba(0,240,255,0.2)]"
-            onClick={e => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-[#00F0FF] font-black text-lg tracking-widest uppercase">Karakter Seç</h3>
-              <button onClick={() => setShowPicker(false)} className="text-gray-400 hover:text-white text-xl">✕</button>
-            </div>
-            <div className="grid grid-cols-6 gap-2 max-h-[60vh] overflow-y-auto custom-scrollbar pr-1">
-              {AVATAR_IDS.map(id => (
-                <button
-                  key={id}
-                  onClick={() => handleSelectAvatar(id)}
-                  className={`relative rounded-xl border-2 p-1 transition-all hover:scale-110 ${
-                    localAvatar === id
-                      ? 'border-[#00F0FF] shadow-[0_0_12px_rgba(0,240,255,0.6)] bg-[#00F0FF]/10'
-                      : 'border-gray-700 hover:border-[#00F0FF]/50 bg-black/30'
-                  }`}
-                >
-                  <img
-                    src={getAvatarUrl(id)}
-                    alt={id}
-                    className="w-full aspect-square object-contain"
-                    loading="lazy"
-                  />
-                  {localAvatar === id && (
-                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-[#00F0FF] rounded-full flex items-center justify-center">
-                      <span className="text-[8px] text-black font-black">✓</span>
-                    </div>
-                  )}
-                </button>
-              ))}
-            </div>
-            <p className="text-gray-500 text-xs text-center mt-3 tracking-wider">30 farklı ajan karakteri</p>
-          </div>
-        </div>
-      )}
 
-      {/* SOL: AVATAR VE KİMLİK */}
+
+      {/* SOL: KİMLİK */}
       <div className="flex flex-col items-center text-center w-full lg:w-1/3 shrink-0">
-        <div
-          className={`relative mb-4 ${!isAdmin ? 'cursor-pointer group' : ''}`}
-          onClick={() => !isAdmin && setShowPicker(true)}
-          title={!isAdmin ? 'Karakter Seç' : ''}
-        >
-          <div className="w-24 h-24 md:w-40 md:h-40 rounded-3xl bg-gradient-to-b from-slate-100 to-slate-300 border-4 border-[#00F0FF] p-2 shadow-[0_0_30px_rgba(0,240,255,0.4)] relative overflow-hidden">
-            <img
-              src={getAvatarUrl(localAvatar)}
-              alt="Avatar"
-              className="w-full h-full object-contain drop-shadow-xl"
-            />
-            {!isAdmin && (
-              <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl">
-                <span className="text-[#39FF14] text-2xl mb-1">🎭</span>
-                <span className="text-[#39FF14] text-[10px] font-black tracking-widest">DEĞİŞTİR</span>
-              </div>
-            )}
-          </div>
-          <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 bg-[#00F0FF] text-[#0A1128] font-black text-xs md:text-sm px-4 py-1 rounded-lg border-2 border-[#0A1128] shadow-lg whitespace-nowrap z-10">
+        <div className="relative mb-4">
+          <div className="bg-[#00F0FF] text-[#0A1128] font-black text-sm md:text-base px-6 py-2 rounded-xl border-2 border-[#0A1128] shadow-lg whitespace-nowrap">
             LVL {student.level}
           </div>
         </div>
