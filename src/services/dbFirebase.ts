@@ -44,23 +44,24 @@ export const removeStudentFromFirebase = async (id: string) => {
 export const subscribeToTrailer = (callback: (trailer: Trailer | null) => void) => {
    const fetchTrailer = async () => {
      const { data } = await supabase.from('settings').select('data').eq('id', 'trailer').maybeSingle();
+     const { data } = await supabase.from('system_settings').select('data').eq('id', 'trailer').maybeSingle();
      callback(data ? data.data as Trailer : null);
    };
    fetchTrailer();
    // Benzersiz kanal ismi: aynı tablo için birden fazla abone çakışmasını önler
-   const channelName = `settings_trailer_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+   const channelName = `system_settings_trailer_${Date.now()}_${Math.random().toString(36).slice(2)}`;
    const channel = supabase.channel(channelName)
-     .on('postgres_changes', { event: '*', schema: 'public', table: 'settings', filter: `id=eq.trailer` }, fetchTrailer)
+     .on('postgres_changes', { event: '*', schema: 'public', table: 'system_settings', filter: `id=eq.trailer` }, fetchTrailer)
      .subscribe();
    return () => { supabase.removeChannel(channel); };
 };
 
 export const setTrailer = async (trailer: Omit<Trailer, 'isActive'>) => {
-  await supabase.from('settings').upsert({ id: 'trailer', data: { ...trailer, isActive: true } });
+  await supabase.from('system_settings').upsert({ id: 'trailer', data: { ...trailer, isActive: true } });
 };
 
 export const disableTrailer = async () => {
-  await supabase.from('settings').upsert({ id: 'trailer', data: { youtubeId: '', showDate: '', showTime: '', isActive: false } });
+  await supabase.from('system_settings').upsert({ id: 'trailer', data: { youtubeId: '', showDate: '', showTime: '', isActive: false } });
 };
 
 export const extractYoutubeId = (url: string): string => {
@@ -92,18 +93,18 @@ export const updateNickname = async (studentId: string, nickname: string) => {
 };
 
 export const saveAdminPassword = async (hashedPassword: string) => {
-  await supabase.from('settings').upsert({ id: 'admin_auth', data: { passwordHash: hashedPassword, createdAt: Date.now() } });
+  await supabase.from('system_settings').upsert({ id: 'admin_auth', data: { passwordHash: hashedPassword, createdAt: Date.now() } });
 };
 
 export const getAdminAuth = async (): Promise<{ passwordHash: string } | null> => {
-  const { data } = await supabase.from('settings').select('data').eq('id', 'admin_auth').single();
+  const { data } = await supabase.from('system_settings').select('data').eq('id', 'admin_auth').single();
   return data ? data.data as any : null;
 };
 
 // ── Generic Settings Database ──
 export const getSettingStore = async <T>(id: string, defaultData: T): Promise<T> => {
   try {
-    const { data, error } = await supabase.from('settings').select('data').eq('id', id).maybeSingle();
+    const { data, error } = await supabase.from('system_settings').select('data').eq('id', id).maybeSingle();
     if (error || !data) return defaultData;
     return (data.data as T) || defaultData;
   } catch {
@@ -112,21 +113,20 @@ export const getSettingStore = async <T>(id: string, defaultData: T): Promise<T>
 };
 
 export const saveSettingStore = async <T>(id: string, dataObj: T): Promise<void> => {
-  await supabase.from('settings').upsert({ id, data: dataObj as any }, { onConflict: 'id' });
+  await supabase.from('system_settings').upsert({ id, data: dataObj as any }, { onConflict: 'id' });
 };
 
 export const subscribeToSettingStore = <T>(id: string, defaultData: T, callback: (data: T) => void) => {
   const fetchSettings = async () => {
-    const { data } = await supabase.from('settings').select('data').eq('id', id).maybeSingle();
+    const { data } = await supabase.from('system_settings').select('data').eq('id', id).maybeSingle();
     callback((data ? data.data : defaultData) as T);
   };
   fetchSettings();
   // Benzersiz kanal ismi: React Strict Mode çift-mount ve çakışan aboneleri önler
-  const channelName = `settings_${id}_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+  const channelName = `system_settings_${id}_${Date.now()}_${Math.random().toString(36).slice(2)}`;
   const channel = supabase
     .channel(channelName)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'settings', filter: `id=eq.${id}` }, fetchSettings)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'system_settings', filter: `id=eq.${id}` }, fetchSettings)
     .subscribe();
   return () => { supabase.removeChannel(channel); };
 };
-

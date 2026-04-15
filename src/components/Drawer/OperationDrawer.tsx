@@ -59,7 +59,7 @@ export const OperationDrawer = ({
       setManualLessonActiveState(cfg.manual_lesson_active === true);
     });
 
-    const unsub = subscribeToSettingStore<Record<string, unknown> | null>('system_config', null, (data) => {
+    const unsub = subscribeToSettingStore<Record<string, unknown> | null>('zoom_link', null, (data) => {
       setManualLessonActiveState(data?.manual_lesson_active === true);
     });
     return () => unsub();

@@ -30,15 +30,22 @@ export const useAutoZoom = (
 
   // Verileri Supabase'den gerçek zamanlı dinle
   useEffect(() => {
-    const unsub = subscribeToSettingStore<Record<string, any> | null>('system_config', null, (data) => {
+    const unsub = subscribeToSettingStore<Record<string, any> | null>('zoom_link', null, (data) => {
       manualOverrideRef.current = data?.manual_lesson_active === true;
-      if (data?.zoomLink) {
-        setLiveZoomLink(data.zoomLink);
+      if (data?.zoom_link) {
+        setLiveZoomLink(data.zoom_link);
       }
       setIsLoading(false);
     });
     return () => unsub();
   }, []);
+
+  // Link eksikliği uyarısını sadece veri yüklendiğinde ve link gerçekten yoksa 1 kez ver
+  useEffect(() => {
+    if (!isLoading && !liveZoomLink && !zoomLinkProp && (isLessonActive() || manualOverrideRef.current)) {
+      console.warn("Geçerli bir Zoom linki bulunamadı. Lütfen sistem ayarlarından ekleyin.");
+    }
+  }, [isLoading, liveZoomLink, zoomLinkProp]);
 
   useEffect(() => {
     if (!studentId) return;
@@ -85,15 +92,13 @@ export const useAutoZoom = (
                 window.location.href = finalUrl.toString();
               } catch (err) {
                 console.error("Link oluşturma hatası:", err);
+                hasRedirected.current = true; // Hata durumunda da tekrar denememesi için
                 setState(prev => ({ ...prev, status: 'waiting', redirected: false }));
               }
             } else {
-              // Sadece veri yüklendiyse ve link kesinlikle yoksa uyarı ver
-              if (!isLoading) {
-                console.warn("Geçerli bir Zoom linki bulunamadı. Lütfen sistem ayarlarından ekleyin.");
-                hasRedirected.current = true; // Tekrar tekrar uyarı vermemesi için
-                setState(prev => ({ ...prev, status: 'waiting', redirected: false }));
-              }
+              // Uyarı useEffect içinde halledildi, burada sadece state'i güncelle
+              hasRedirected.current = true; // Tekrar tekrar girmeye çalışmaması için
+              setState(prev => ({ ...prev, status: 'waiting', redirected: false }));
             }
           }, 3200);
         }

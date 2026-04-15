@@ -16,8 +16,8 @@ export const SystemConfigManager = () => {
 
   useEffect(() => {
     getSystemConfig().then(cfg => {
-      setZoomLink(cfg.zoomLink || '');
-      setLessonTitle(cfg.lessonTitle || '');
+      setZoomLink(cfg.zoom_link || '');
+      setLessonTitle(cfg.lesson_title || '');
       setLoading(false);
     });
   }, []);
@@ -26,7 +26,7 @@ export const SystemConfigManager = () => {
     e.preventDefault();
     setSaving(true);
     clearSystemConfigCache();
-    await saveSystemConfig({ zoomLink: zoomLink.trim(), lessonTitle: lessonTitle.trim() });
+    await saveSystemConfig({ zoom_link: zoomLink.trim(), lesson_title: lessonTitle.trim() });
     setSaving(false);
     setSaved(true);
     setTimeout(() => setSaved(false), 3000);
@@ -93,9 +93,9 @@ export const SystemConfigManager = () => {
       {/* Bilgi kutusu */}
       <div className="bg-[#0A1128]/40 border border-gray-800 rounded-xl p-4 text-xs text-gray-500 space-y-1 font-mono">
         <p className="text-gray-400 font-bold mb-2">📋 Supabase Tablo Gereksinimleri</p>
-        <p>• <span className="text-[#00F0FF]">settings</span> tablosunda {`id="system_config"`} satırı kullanılır</p>
+        <p>• <span className="text-[#00F0FF]">system_settings</span> tablosunda {`id="zoom_link"`} satırı kullanılır</p>
         <p>• <span className="text-[#39FF14]">login_alerts</span> tablosu oluşturulduğunda loginAlertService içindeki <span className="text-[#FF4500]">LOGIN_ALERTS_ENABLED=false</span> → <span className="text-[#39FF14]">true</span> yap</p>
-        <p>• <span className="text-[#00F0FF]">auto_messages_sent</span> → settings tablosunda saklanır (key: auto_messages_sent)</p>
+        <p>• <span className="text-[#00F0FF]">auto_messages_sent</span> → system_settings tablosunda saklanır (key: auto_messages_sent)</p>
       </div>
     </div>
   );

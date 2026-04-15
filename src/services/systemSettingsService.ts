@@ -2,23 +2,23 @@
  * Sistem Ayarları Servisi
  * 
  * Hardcoded (el yazımı) değerleri ortadan kaldırmak için Supabase'deki
- * `settings` tablosundan dinamik olarak çeker.
+ * `system_settings` tablosundan dinamik olarak çeker.
  * 
  * Konfigürasyon anahtarları:
- *   settings/{id: 'system_config'}  → { zoomLink, lessonTitle, ... }
+ *   system_settings/{id: 'zoom_link'}  → { zoomLink, lessonTitle, ... }
  */
 
 import { supabase } from '../config/supabase';
 
 export interface SystemConfig {
-  zoomLink: string;
-  lessonTitle?: string;
+  zoom_link: string;
+  lesson_title?: string;
   manual_lesson_active?: boolean;
 }
 
 const FALLBACK_CONFIG: SystemConfig = {
-  zoomLink: '',
-  lessonTitle: 'NEP Haftalık Ders',
+  zoom_link: '',
+  lesson_title: 'NEP Haftalık Ders',
 };
 
 let cachedConfig: SystemConfig | null = null;
@@ -32,9 +32,9 @@ export const getSystemConfig = async (): Promise<SystemConfig> => {
   if (cachedConfig) return cachedConfig;
   try {
     const { data, error } = await supabase
-      .from('settings')
+      .from('system_settings')
       .select('data')
-      .eq('id', 'system_config')
+      .eq('id', 'zoom_link')
       .maybeSingle();
 
     if (error || !data) {
@@ -53,7 +53,7 @@ export const getSystemConfig = async (): Promise<SystemConfig> => {
  */
 export const getZoomLink = async (): Promise<string> => {
   const cfg = await getSystemConfig();
-  return cfg.zoomLink;
+  return cfg.zoom_link;
 };
 
 /**
@@ -66,8 +66,8 @@ export const saveSystemConfig = async (config: Partial<SystemConfig>): Promise<v
     
     // Upsert: 'id' çakışması durumunda güncelleme yapar, yoksa yeni satır ekler
     const { error } = await supabase
-      .from('settings')
-      .upsert({ id: 'system_config', data: merged }, { onConflict: 'id' });
+      .from('system_settings')
+      .upsert({ id: 'zoom_link', data: merged }, { onConflict: 'id' });
 
     if (error) throw error;
     
