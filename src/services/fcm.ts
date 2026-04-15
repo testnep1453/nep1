@@ -95,3 +95,16 @@ export const setupNotificationListener = async (
     // Listener kurulamadı
   }
 };
+
+/**
+ * FCM Push gönderme (Sistem tetikleyicisi)
+ * Supabase fcm_queue tablosuna push isteği atar, veya direkt fonksiyon çağırır.
+ */
+export const sendPushNotification = async (title: string, body: string) => {
+  try {
+    // Bu tablo/kanal üzerinden backend (Edge function veya benzeri) FCM atabilir.
+    await supabase.from('fcm_queue').insert([{ title, body, createdAt: Date.now() }]);
+  } catch {
+    // sessiz
+  }
+};

@@ -11,9 +11,9 @@ import { SurveysClient } from './SurveysClient';
 
 import { useAutoZoom } from '../../hooks/useAutoZoom';
 import { useNotifications } from '../../hooks/useNotifications';
-import { subscribeToTrailer } from '../../services/dbFirebase';
+import { subscribeToTrailer, recordAttendanceToFirebase, subscribeToSettingStore } from '../../services/dbFirebase';
+import type { SurveyEntry } from '../Admin/SurveyManager';
 import { LESSON_CONFIG } from '../../config/lessonSchedule';
-import { recordAttendance } from '../../services/db';
 
 type AgentTab = 'home' | 'operation' | 'levels' | 'archive' | 'activity' | 'feedback';
 const Icons = {
@@ -38,6 +38,7 @@ export const AgentDashboard = ({
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [trailer, setTrailerState] = useState<Trailer | null>(null);
+  const [hasActiveSurvey, setHasActiveSurvey] = useState(false);
   // Tema: sadece dark mod
 
   const { unreadCount } = useNotifications(student.id);
@@ -45,31 +46,47 @@ export const AgentDashboard = ({
 
   useEffect(() => {
     if (autoZoomState.status === 'feedback' && isFeedbackTime(autoZoomState.lessonDate)) {
-      const feedbackShown = sessionStorage.getItem(`feedback_${autoZoomState.lessonDate}`);
+      const feedbackShown = localStorage.getItem(`feedback_${autoZoomState.lessonDate}_${student.id}`);
       if (!feedbackShown) setShowFeedback(true);
     }
-  }, [autoZoomState.status, autoZoomState.lessonDate]);
+  }, [autoZoomState.status, autoZoomState.lessonDate, student.id]);
 
   const attendanceRecorded = useRef(false);
   useEffect(() => {
     if (student && !attendanceRecorded.current) {
-      attendanceRecorded.current = true;
-      void recordAttendance(student.id);
+      if (autoZoomState.status === 'active' || autoZoomState.status === 'trailer' || trailer?.isActive) {
+        attendanceRecorded.current = true;
+        void recordAttendanceToFirebase(student.id, autoZoomState.lessonDate, true);
+      }
     }
-  }, [student?.id]);
+  }, [student?.id, autoZoomState.status, autoZoomState.lessonDate, trailer?.isActive]);
 
   useEffect(() => {
-    const unsub = subscribeToTrailer(t => setTrailerState(t));
+    const unsub = subscribeToTrailer(t => {
+      setTrailerState(t);
+      if (t?.isActive) setDrawerOpen(true);
+    });
     return () => { unsub && unsub(); };
   }, []);
 
-  const tabs: { id: AgentTab; label: string; icon: JSX.Element }[] = [
+  useEffect(() => {
+    const unsub = subscribeToSettingStore<SurveyEntry[]>('surveys', [], (data) => {
+      setHasActiveSurvey(Array.isArray(data) && data.some(s => s.isActive));
+    });
+    return () => unsub();
+  }, []);
+
+  let tabs: { id: AgentTab; label: string; icon: JSX.Element }[] = [
     { id: 'home', label: 'Ana Sayfa', icon: <Icons.Home /> },
     { id: 'levels', label: 'Level & Rozetler', icon: <Icons.Trophy /> },
     { id: 'archive', label: 'Arşiv', icon: <Icons.Film /> },
     { id: 'activity', label: 'Etkinlik', icon: <Icons.Calendar /> },
     { id: 'feedback', label: 'Sorgu Odası', icon: <span className="text-xl -mt-1 -ml-0.5">📋</span> },
   ];
+
+  if (!hasActiveSurvey) {
+    tabs = tabs.filter(t => t.id !== 'feedback');
+  }
 
   const tabTitles: Record<AgentTab, string> = {
     home: 'AJAN KARARGAHI', operation: 'OPERASYON', levels: 'LEVEL & ROZETLER',
@@ -91,7 +108,7 @@ export const AgentDashboard = ({
 
       {showFeedback && (
         <FeedbackForm lessonDate={autoZoomState.lessonDate} studentId={student.id}
-          onClose={() => { setShowFeedback(false); sessionStorage.setItem(`feedback_${autoZoomState.lessonDate}`, 'true'); }} />
+          onClose={() => { setShowFeedback(false); localStorage.setItem(`feedback_${autoZoomState.lessonDate}_${student.id}`, 'true'); }} />
       )}
 
       {/* Mobil Üst Bar */}
@@ -199,7 +216,7 @@ export const AgentDashboard = ({
           { id: 'home' as AgentTab, icon: <Icons.Home />, label: 'LOBİ' },
           { id: 'operation' as AgentTab, icon: <Icons.Target />, label: 'OPE', action: () => setDrawerOpen(true) },
           { id: 'levels' as AgentTab, icon: <Icons.Trophy />, label: 'LEVEL' },
-          { id: 'feedback' as AgentTab, icon: <span className="text-xl leading-none">📋</span>, label: 'SORGU' },
+          ...(hasActiveSurvey ? [{ id: 'feedback' as AgentTab, icon: <span className="text-xl leading-none">📋</span>, label: 'SORGU' }] : []),
         ].map(item => (
           <button key={item.id}
             onClick={item.action || (() => setActiveTab(item.id))}

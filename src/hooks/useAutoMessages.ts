@@ -1,66 +1,56 @@
 /**
- * Otomatik Mesaj Sistemi - Supabase tabanlı
- * - Çarşamba 19:00 → "Yarın ders var!" hatırlatması
- * - Perşembe 19:00 → "Ders başladı!" bildirimi
+ * Otomatik Mesaj Sistemi - Zamanlanmış Push ve Feed
+ * - H-24 (1 Gün Önce): "Yarın operasyon var!"
+ * - T-60 Dakika: "Son 1 saat, hazırlanın."
+ * - T-1 Dakika: "Fragman başlamak üzere, yerlerinizi alın."
+ * - T-0 (Başlangıç): "Ders başladı, operasyon alanına!"
  */
 
 import { useEffect, useRef } from 'react';
 import { addMessageToFirebase } from '../services/dbFirebase';
-import { isReminderTime, isLessonStartTime } from '../config/lessonSchedule';
-
-const REMINDER_MESSAGES = [
-  '📢 Ajanlar dikkat! Yarın saat 19:00\'da haftalık operasyon başlıyor. Hazırlıklarınızı tamamlayın!',
-  '⚡ Hatırlatma: Yarın akşam 19:00\'da NEP dersi var. Tüm ajanların hazır olması bekleniyor!',
-  '🔔 Yarınki operasyon için geri sayım başladı! Perşembe 19:00\'da buluşuyoruz.',
-];
-
-const LESSON_START_MESSAGES = [
-  '🚀 DERS BAŞLADI! Tüm ajanlar operasyon alanına geçiş yapıyor...',
-  '⏰ Operasyon saati geldi! Ders şu an aktif — Zoom\'a otomatik yönlendirme yapılıyor.',
-  '🎯 NEP Haftalık Ders başladı! Ajanlar, görev alanına hoş geldiniz!',
-];
+import { getNextLesson } from '../config/lessonSchedule';
+import { sendPushNotification } from '../services/fcm';
 
 export const useAutoMessages = (isAdmin: boolean) => {
-  const reminderSentRef = useRef(false);
-  const lessonStartSentRef = useRef(false);
   const checkInterval = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
+    // Sadece admin hesabında tetiklenir, böylece sadece 1 kez atılır.
     if (!isAdmin) return;
 
     const checkAndSendMessages = async () => {
-      const now = new Date();
-      const today = now.toISOString().slice(0, 10);
+      const lesson = getNextLesson();
+      if (!lesson) return;
+      
+      const now = Date.now();
+      const t0 = lesson.startTime;
+      const diffMin = Math.round((t0 - now) / 60000); // Kalan dakika
 
-      // Çarşamba 19:00 hatırlatması
-      if (isReminderTime() && !reminderSentRef.current) {
-        const sentKey = `autoMsg_reminder_${today}`;
-        const alreadySent = localStorage.getItem(sentKey);
-        if (!alreadySent) {
-          const msg = REMINDER_MESSAGES[Math.floor(Math.random() * REMINDER_MESSAGES.length)];
-          await addMessageToFirebase(msg);
-          localStorage.setItem(sentKey, '1');
-          reminderSentRef.current = true;
+      const sendIfTime = async (keySuffix: string, activeCondition: boolean, title: string, body: string) => {
+        if (activeCondition) {
+          const sentKey = `autoMsg_${keySuffix}_${lesson.date}`;
+          if (!localStorage.getItem(sentKey)) {
+            // Sisteme yaz
+            await addMessageToFirebase(`⚠️ ${title.toUpperCase()}: ${body}`);
+            // Push at
+            await sendPushNotification(title, body);
+            // Birden çok kez atmamak için kaydet
+            localStorage.setItem(sentKey, '1');
+          }
         }
-      }
+      };
 
-      // Perşembe 19:00 ders başlangıcı
-      if (isLessonStartTime() && !lessonStartSentRef.current) {
-        const sentKey = `autoMsg_start_${today}`;
-        const alreadySent = localStorage.getItem(sentKey);
-        if (!alreadySent) {
-          const msg = LESSON_START_MESSAGES[Math.floor(Math.random() * LESSON_START_MESSAGES.length)];
-          await addMessageToFirebase(msg);
-          localStorage.setItem(sentKey, '1');
-          lessonStartSentRef.current = true;
-        }
-      }
-
-      // Gün değişince flag'leri sıfırla
-      if (now.getHours() === 0 && now.getMinutes() === 0) {
-        reminderSentRef.current = false;
-        lessonStartSentRef.current = false;
-      }
+      // - H-24: "Yarın operasyon var!"
+      await sendIfTime('H24', diffMin <= 1440 && diffMin >= 1435, 'Operasyon Uyarısı', 'Yarın operasyon var!');
+      
+      // - T-60: "Son 1 saat, hazırlanın."
+      await sendIfTime('T60', diffMin <= 60 && diffMin >= 58, 'Operasyon Uyarısı', 'Son 1 saat, hazırlanın.');
+      
+      // - T-1: "Fragman başlamak üzere, yerlerinizi alın."
+      await sendIfTime('T1', diffMin <= 1 && diffMin >= 0, 'Fragman', 'Fragman başlamak üzere, yerlerinizi alın.');
+      
+      // - T-0: "Ders başladı, operasyon alanına!"
+      await sendIfTime('T0', diffMin < 0 && diffMin >= -2, 'Ders Başladı', 'Ders başladı, operasyon alanına!');
     };
 
     checkAndSendMessages();
@@ -71,3 +61,4 @@ export const useAutoMessages = (isAdmin: boolean) => {
     };
   }, [isAdmin]);
 };
+

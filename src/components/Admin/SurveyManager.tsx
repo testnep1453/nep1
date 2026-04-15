@@ -5,7 +5,7 @@ export interface SurveyEntry {
   id: string;
   title: string;
   description: string;
-  url: string;
+  questions: { text: string; options: string[] }[];
   isActive: boolean;
   createdAt: number;
 }
@@ -16,7 +16,7 @@ export const SurveyManager = () => {
   
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [url, setUrl] = useState('');
+  const [questionsJson, setQuestionsJson] = useState('[\n  {\n    "text": "Örnek Soru 1?",\n    "options": ["Seçenek A", "Seçenek B"]\n  }\n]');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -32,14 +32,24 @@ export const SurveyManager = () => {
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !url.trim()) return;
+    if (!title.trim()) return;
+    
+    let parsedQuestions = [];
+    try {
+      parsedQuestions = JSON.parse(questionsJson);
+      if (!Array.isArray(parsedQuestions)) throw new Error('Dizi olmalı');
+    } catch {
+      alert('Soru seti geçerli bir JSON dizisi deðil!');
+      return;
+    }
+
     setSaving(true);
     
     const newEntry: SurveyEntry = {
       id: Date.now().toString(),
       title: title.trim(),
       description: description.trim(),
-      url: url.trim(),
+      questions: parsedQuestions,
       isActive: true,
       createdAt: Date.now(),
     };
@@ -49,7 +59,7 @@ export const SurveyManager = () => {
     setSurveys(newArr);
     setTitle('');
     setDescription('');
-    setUrl('');
+    setQuestionsJson('[\n  {\n    "text": "Yeni Soru?",\n    "options": ["Evet", "Hayır"]\n  }\n]');
     setSaving(false);
   };
 
@@ -83,10 +93,10 @@ export const SurveyManager = () => {
             value={description} onChange={e => setDescription(e.target.value)}
             className="bg-[#050505] border border-gray-700 text-white p-3 w-full focus:outline-none focus:border-[#8a2be2] font-mono transition-colors resize-none"
           />
-          <input
-            type="url" placeholder="Anket Linki (Google Forms vb.)" required
-            value={url} onChange={e => setUrl(e.target.value)}
-            className="bg-[#050505] border border-gray-700 text-white p-3 w-full focus:outline-none focus:border-[#8a2be2] font-mono transition-colors"
+          <textarea
+            placeholder='Soru Seti JSON Formatında' rows={5} required
+            value={questionsJson} onChange={e => setQuestionsJson(e.target.value)}
+            className="bg-[#050505] border border-gray-700 text-white p-3 w-full focus:outline-none focus:border-[#8a2be2] font-mono transition-colors resize-none text-xs"
           />
           <button type="submit" disabled={saving} className="bg-[#8a2be2]/20 hover:bg-[#8a2be2] text-[#cda7f3] hover:text-black border border-[#8a2be2] px-6 py-3 font-bold transition-all uppercase tracking-widest rounded disabled:opacity-50">
             {saving ? 'Ekleniyor...' : 'Kayıt Ekle'}
@@ -112,9 +122,7 @@ export const SurveyManager = () => {
                     </span>
                   </div>
                   {s.description && <p className="text-gray-400 text-sm mb-1">{s.description}</p>}
-                  <a href={s.url} target="_blank" rel="noreferrer" className="text-[#8a2be2] hover:text-white text-xs font-mono break-all inline-block hover:underline">
-                    {s.url}
-                  </a>
+                  <p className="text-[#8a2be2] text-xs font-mono">{s.questions?.length || 0} Soru</p>
                 </div>
                 <div className="flex gap-2 shrink-0">
                   <button onClick={() => toggleActive(s.id)} className="px-4 py-2 border border-gray-600 hover:border-white text-xs font-bold transition-all uppercase rounded">

@@ -30,7 +30,11 @@ export function isFeedbackTime(lessonDate: string): boolean {
   const [y, m, d] = lessonDate.split('-').map(Number);
   // Ders sonu 20:00 + 15 dk = 20:15
   const openAt = new Date(y, m - 1, d, 20, 15, 0).getTime();
-  return now >= openAt;
+  
+  // Sonraki ders günü (haftaya) 19:00'da kapansın
+  const closeAt = new Date(y, m - 1, d + 7, 19, 0, 0).getTime();
+
+  return now >= openAt && now < closeAt;
 }
 
 export const FeedbackForm = ({ lessonDate, studentId: _studentId, onClose }: FeedbackFormProps) => {
@@ -55,7 +59,7 @@ export const FeedbackForm = ({ lessonDate, studentId: _studentId, onClose }: Fee
         anonymous: true,
       }]);
       // Bir kez gösterildi işaretle
-      sessionStorage.setItem(`feedback_${lessonDate}`, 'true');
+      localStorage.setItem(`feedback_${lessonDate}_${_studentId}`, 'true');
       setSubmitted(true);
     } catch (error) {
       console.error('Geri bildirim hatası:', error);

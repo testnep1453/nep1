@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Student } from '../../types/student';
 import { getAttendanceForLesson, recordAttendanceToFirebase } from '../../services/dbFirebase';
 import { FIXED_LESSON_SCHEDULE } from '../../config/lessonSchedule';
+import { supabase } from '../../config/supabase';
 
 interface AttendanceEntry {
   studentId: string;
@@ -70,6 +71,15 @@ export const AttendancePage = ({ students }: { students: Student[] }) => {
     getAttendanceForLesson(selectedDate)
       .then(r => { setRecords(r); setLoading(false); })
       .catch(() => setLoading(false));
+
+    // Realtime subscription
+    const channel = supabase.channel(`public:attendance:${selectedDate}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance', filter: `lessonDate=eq.${selectedDate}` }, () => {
+        getAttendanceForLesson(selectedDate).then(setRecords);
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, [selectedDate]);
 
   // Tüm dersler için kayıtları yükle (katılım oranları sekmesi)

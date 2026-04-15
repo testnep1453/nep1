@@ -1,4 +1,7 @@
+import { useEffect, useState } from 'react';
 import { Student } from '../../types/student';
+import confetti from 'canvas-confetti';
+import { updateStudentInFirebase } from '../../services/dbFirebase';
 
 const LEVEL_THRESHOLDS = [0, 200, 500, 1000, 2000, 3500, 5500, 8000, 12000, 18000, 25000];
 const BADGE_CONFIG = [
@@ -26,6 +29,26 @@ const LEVEL_COLORS = [
 export const LevelProgress = ({ student }: { student: Student }) => {
   const currentLevel = student.level || 1;
   const currentXP = student.xp || 0;
+  const [localBadges, setLocalBadges] = useState(student.badges || []);
+
+  useEffect(() => {
+    // Rozet 'first_login' kontrolü ve eklenmesi
+    if (!localBadges.includes('first_login')) {
+      const newBadges = [...localBadges, 'first_login'];
+      setLocalBadges(newBadges);
+      void updateStudentInFirebase(student.id, { badges: newBadges });
+      // Confetti efekti
+      confetti({
+        particleCount: 150,
+        spread: 100,
+        origin: { y: 0.6 },
+        colors: ['#00F0FF', '#39FF14', '#FF4500'],
+        zIndex: 200
+      });
+    } else {
+      setLocalBadges(student.badges || []);
+    }
+  }, [student.id, student.badges]);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -127,14 +150,14 @@ export const LevelProgress = ({ student }: { student: Student }) => {
         <h3 className="text-[#FF9F43] font-bold text-sm uppercase tracking-wider mb-4">🏅 Rozetler</h3>
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {BADGE_CONFIG.map(badge => {
-            const earned = student.badges?.includes(badge.id);
+            const earned = localBadges.includes(badge.id);
             return (
               <div key={badge.id} className={`p-4 rounded-lg border text-center transition-all ${
                 earned
-                  ? 'bg-[#FF9F43]/10 border-[#FF9F43]/30 hover:border-[#FF9F43]/60'
-                  : 'bg-gray-900/50 border-gray-800 opacity-40'
+                  ? 'bg-[#FF9F43]/10 border-[#FF9F43]/30 hover:border-[#FF9F43]/60 scale-105'
+                  : 'bg-gray-900/50 border-gray-800 opacity-40 grayscale'
               }`}>
-                <div className="text-3xl mb-2">{badge.emoji}</div>
+                <div className={`text-3xl mb-2 ${earned ? 'drop-shadow-[0_0_10px_rgba(255,159,67,0.8)] animate-bounce-once' : ''}`}>{badge.emoji}</div>
                 <div className={`text-xs font-bold ${earned ? 'text-[#FF9F43]' : 'text-gray-600'}`}>{badge.label}</div>
                 <div className="text-[10px] text-gray-600 mt-1">{badge.desc}</div>
               </div>
