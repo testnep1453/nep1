@@ -26,9 +26,17 @@ export const JoinClassButton = ({ zoomLink, studentName }: JoinClassButtonProps)
     });
 
     setTimeout(() => {
-      const encodedName = btoa(unescape(encodeURIComponent(studentName)));
-      const finalLink = `${zoomLink}&un=${encodedName}`;
-      window.location.href = finalLink;
+      const isValidUrl = zoomLink && (zoomLink.startsWith('http://') || zoomLink.startsWith('https://'));
+
+      if (isValidUrl) {
+        const encodedName = btoa(unescape(encodeURIComponent(studentName)));
+        const connector = zoomLink.includes('?') ? '&' : '?';
+        const finalLink = `${zoomLink}${connector}un=${encodedName}`;
+        window.location.href = finalLink;
+      } else {
+        setTerminalLines(prev => [...prev, '> KRİTİK HATA: GEÇERSİZ BAĞLANTI PROTOKOLÜ', '> Lütfen admin üzerinden Zoom linkini güncelleyin.']);
+        console.warn("Zoom linki geçersiz veya eksik:", zoomLink);
+      }
     }, 3200);
   };
 

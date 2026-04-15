@@ -50,11 +50,21 @@ export const useAutoZoom = (
           }
           
           setTimeout(() => {
-            hasRedirected.current = true;
-            setState(prev => ({ ...prev, status: 'in_lesson', redirected: true }));
-            const encodedName = btoa(unescape(encodeURIComponent(studentName)));
-            const finalLink = `${zoomLink}&un=${encodedName}`;
-            window.location.href = finalLink;
+            const isValidUrl = zoomLink && (zoomLink.startsWith('http://') || zoomLink.startsWith('https://'));
+
+            if (isValidUrl) {
+              hasRedirected.current = true;
+              setState(prev => ({ ...prev, status: 'in_lesson', redirected: true }));
+              const encodedName = btoa(unescape(encodeURIComponent(studentName)));
+              // URL'de halihazırda parametre olup olmadığını kontrol et
+              const connector = zoomLink.includes('?') ? '&' : '?';
+              const finalLink = `${zoomLink}${connector}un=${encodedName}`;
+              window.location.href = finalLink;
+            } else {
+              console.warn("Geçerli bir Zoom linki bulunamadı. Lütfen sistem ayarlarından ekleyin.");
+              hasRedirected.current = true; // Hatalı link için tekrar tekrar uyarı vermemesi için
+              setState(prev => ({ ...prev, status: 'waiting', redirected: false }));
+            }
           }, 3200);
         }
       } else if (isLessonEnded() && !manualOverrideRef.current) {
