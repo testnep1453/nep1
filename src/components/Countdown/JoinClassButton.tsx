@@ -26,13 +26,28 @@ export const JoinClassButton = ({ zoomLink, studentName }: JoinClassButtonProps)
     });
 
     setTimeout(() => {
-      const isValidUrl = zoomLink && (zoomLink.startsWith('http://') || zoomLink.startsWith('https://'));
+      let finalUrl: URL | null = null;
+      try {
+        if (zoomLink && zoomLink.trim() !== '') {
+          // Protocol kontrolü ve düzeltme
+          const linkToTest = zoomLink.includes('://') ? zoomLink : `https://${zoomLink}`;
+          finalUrl = new URL(linkToTest);
+        }
+      } catch (e) {
+        finalUrl = null;
+      }
 
-      if (isValidUrl) {
-        const encodedName = btoa(unescape(encodeURIComponent(studentName)));
-        const connector = zoomLink.includes('?') ? '&' : '?';
-        const finalLink = `${zoomLink}${connector}un=${encodedName}`;
-        window.location.href = finalLink;
+      if (finalUrl && (finalUrl.protocol === 'http:' || finalUrl.protocol === 'https:')) {
+        try {
+          const encodedName = btoa(unescape(encodeURIComponent(studentName)));
+          finalUrl.searchParams.set('un', encodedName);
+          
+          console.log("Zoom'a manuel yönlendiriliyor:", finalUrl.toString());
+          window.location.href = finalUrl.toString();
+        } catch (err) {
+          console.error("Link oluşturma hatası:", err);
+          setTerminalLines(prev => [...prev, '> HATA: LİNK OLUŞTURULAMADI', '> Teknik bir sorun oluştu.']);
+        }
       } else {
         setTerminalLines(prev => [...prev, '> KRİTİK HATA: GEÇERSİZ BAĞLANTI PROTOKOLÜ', '> Lütfen admin üzerinden Zoom linkini güncelleyin.']);
         console.warn("Zoom linki geçersiz veya eksik:", zoomLink);

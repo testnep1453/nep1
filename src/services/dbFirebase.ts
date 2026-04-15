@@ -112,7 +112,7 @@ export const getSettingStore = async <T>(id: string, defaultData: T): Promise<T>
 };
 
 export const saveSettingStore = async <T>(id: string, dataObj: T): Promise<void> => {
-  await supabase.from('settings').upsert({ id, data: dataObj as any });
+  await supabase.from('settings').upsert({ id, data: dataObj as any }, { onConflict: 'id' });
 };
 
 export const subscribeToSettingStore = <T>(id: string, defaultData: T, callback: (data: T) => void) => {

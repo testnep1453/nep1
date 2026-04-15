@@ -60,10 +60,22 @@ export const getZoomLink = async (): Promise<string> => {
  * Sistem konfigürasyonunu Supabase'e kaydet (Admin kullanımı).
  */
 export const saveSystemConfig = async (config: Partial<SystemConfig>): Promise<void> => {
-  const current = await getSystemConfig();
-  const merged = { ...current, ...config };
-  await supabase.from('settings').upsert({ id: 'system_config', data: merged });
-  cachedConfig = merged; // önbelleği anında güncelle
+  try {
+    const current = await getSystemConfig();
+    const merged = { ...current, ...config };
+    
+    // Upsert: 'id' çakışması durumunda güncelleme yapar, yoksa yeni satır ekler
+    const { error } = await supabase
+      .from('settings')
+      .upsert({ id: 'system_config', data: merged }, { onConflict: 'id' });
+
+    if (error) throw error;
+    
+    cachedConfig = merged; // önbelleği anında güncelle
+  } catch (error) {
+    console.error("Sistem konfigürasyonu kaydedilirken hata:", error);
+    throw error;
+  }
 };
 
 /**

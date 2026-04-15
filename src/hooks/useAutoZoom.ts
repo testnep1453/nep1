@@ -12,7 +12,7 @@ interface AutoZoomState {
 export const useAutoZoom = (
   studentId: string | null,
   studentName: string,
-  zoomLink: string
+  zoomLinkProp: string
 ) => {
   const [state, setState] = useState<AutoZoomState>({
     status: 'waiting',
@@ -20,15 +20,22 @@ export const useAutoZoom = (
     lessonDate: getNextLesson().date,
   });
   
+  const [liveZoomLink, setLiveZoomLink] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
   const hasRedirected = useRef(false);
   const hasRecordedAttendance = useRef(false);
   const checkInterval = useRef<ReturnType<typeof setInterval> | null>(null);
   const manualOverrideRef = useRef(false);
 
-  // Manuel override ayarını Supabase'den gerçek zamanlı dinle
+  // Verileri Supabase'den gerçek zamanlı dinle
   useEffect(() => {
-    const unsub = subscribeToSettingStore<Record<string, unknown> | null>('system_config', null, (data) => {
+    const unsub = subscribeToSettingStore<Record<string, any> | null>('system_config', null, (data) => {
       manualOverrideRef.current = data?.manual_lesson_active === true;
+      if (data?.zoomLink) {
+        setLiveZoomLink(data.zoomLink);
+      }
+      setIsLoading(false);
     });
     return () => unsub();
   }, []);
@@ -50,20 +57,43 @@ export const useAutoZoom = (
           }
           
           setTimeout(() => {
-            const isValidUrl = zoomLink && (zoomLink.startsWith('http://') || zoomLink.startsWith('https://'));
+            // Veriler henüz yükleniyorsa bekle
+            if (isLoading) return;
 
-            if (isValidUrl) {
+            const currentLink = liveZoomLink || zoomLinkProp;
+            
+            let finalUrl: URL | null = null;
+            try {
+              if (currentLink && currentLink.trim() !== '') {
+                // Link'in protocol'ü yoksa ekle (örn: zoom.us -> https://zoom.us)
+                const linkToTest = currentLink.includes('://') ? currentLink : `https://${currentLink}`;
+                finalUrl = new URL(linkToTest);
+              }
+            } catch (e) {
+              finalUrl = null;
+            }
+
+            if (finalUrl && (finalUrl.protocol === 'http:' || finalUrl.protocol === 'https:')) {
               hasRedirected.current = true;
               setState(prev => ({ ...prev, status: 'in_lesson', redirected: true }));
-              const encodedName = btoa(unescape(encodeURIComponent(studentName)));
-              // URL'de halihazırda parametre olup olmadığını kontrol et
-              const connector = zoomLink.includes('?') ? '&' : '?';
-              const finalLink = `${zoomLink}${connector}un=${encodedName}`;
-              window.location.href = finalLink;
+              
+              try {
+                const encodedName = btoa(unescape(encodeURIComponent(studentName)));
+                finalUrl.searchParams.set('un', encodedName);
+                
+                console.log("Zoom'a yönlendiriliyor:", finalUrl.toString());
+                window.location.href = finalUrl.toString();
+              } catch (err) {
+                console.error("Link oluşturma hatası:", err);
+                setState(prev => ({ ...prev, status: 'waiting', redirected: false }));
+              }
             } else {
-              console.warn("Geçerli bir Zoom linki bulunamadı. Lütfen sistem ayarlarından ekleyin.");
-              hasRedirected.current = true; // Hatalı link için tekrar tekrar uyarı vermemesi için
-              setState(prev => ({ ...prev, status: 'waiting', redirected: false }));
+              // Sadece veri yüklendiyse ve link kesinlikle yoksa uyarı ver
+              if (!isLoading) {
+                console.warn("Geçerli bir Zoom linki bulunamadı. Lütfen sistem ayarlarından ekleyin.");
+                hasRedirected.current = true; // Tekrar tekrar uyarı vermemesi için
+                setState(prev => ({ ...prev, status: 'waiting', redirected: false }));
+              }
             }
           }, 3200);
         }
@@ -88,7 +118,7 @@ export const useAutoZoom = (
     return () => {
       if (checkInterval.current) clearInterval(checkInterval.current);
     };
-  }, [studentId, studentName, zoomLink]);
+  }, [studentId, studentName, zoomLinkProp, isLoading, liveZoomLink]);
 
   return state;
 };
