@@ -19,7 +19,7 @@ type AgentTab = 'home' | 'operation' | 'levels' | 'archive' | 'activity' | 'feed
 
 const Icons = {
   Home: () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m19 8.71l-5.333-4.148a2.666 2.666 0 0 0-3.274 0L5.059 8.71a2.665 2.665 0 0 0-1.029 2.105v7.2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.2c0-.823-.38-1.6-1.03-2.105"/><path d="M16 15c-2.21 1.333-5.792 1.333-8 0"/></svg>,
-  Swords: () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 9.5l-9 9M9.5 14.5l-4-4M16 8l4-4M16 8a2 2 0 0 0 -2.828 -2.828L8 10l-4 4 4 4 4-4 4.828-5.172A2 2 0 0 0 16 8z"/></svg>,
+  Target: () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="22" y1="12" x2="18" y2="12"/><line x1="6" y1="12" x2="2" y2="12"/><line x1="12" y1="6" x2="12" y2="2"/><line x1="12" y1="22" x2="12" y2="18"/></svg>,
   Trophy: () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></svg>,
   Film: () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 3v18"/><path d="M3 7.5h4"/><path d="M3 12h18"/><path d="M3 16.5h4"/></svg>,
   Calendar: () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>,
@@ -99,7 +99,7 @@ export const AgentDashboard = ({
       {/* Mobil Üst Bar */}
       <div className="md:hidden flex-none z-30 bg-[#0A1128] border-b border-[#00F0FF]/20 flex items-center justify-between px-4 py-2">
         <button onClick={() => setDrawerOpen(true)} className="text-[#00F0FF] p-2 flex items-center justify-center">
-          <Icons.Swords />
+          <Icons.Target />
         </button>
         <img src={`${import.meta.env.BASE_URL}nep-logo.png`} alt="NEP" className="h-6 brightness-0 invert opacity-70" />
         <button onClick={() => setMobileNavOpen(!mobileNavOpen)} className="text-white p-2 flex items-center justify-center relative">
@@ -133,7 +133,7 @@ export const AgentDashboard = ({
         <div className="p-4 border-b border-[#6358cc]/20">
           <button onClick={() => setDrawerOpen(true)}
             className="flex items-center gap-3 w-full p-3 rounded-md bg-[#6358cc]/10 text-[#8b7fd8] hover:bg-[#6358cc]/20 border border-[#6358cc]/30 transition-all shadow-[0_0_15px_rgba(99,88,204,0.2)]">
-            <Icons.Swords />
+            <Icons.Target />
             <span className="font-bold tracking-wide text-sm">DERSE KATIL</span>
           </button>
         </div>
@@ -200,7 +200,7 @@ export const AgentDashboard = ({
       <div className="md:hidden flex-none bg-[#0A1128] border-t border-[#00F0FF]/20 z-20 flex items-center justify-around px-1 py-1 pb-safe overflow-x-auto">
         {[
           { id: 'home' as AgentTab, icon: <Icons.Home />, label: 'LOBİ' },
-          { id: 'operation' as AgentTab, icon: <Icons.Swords />, label: 'OPE', action: () => setDrawerOpen(true) },
+          { id: 'operation' as AgentTab, icon: <Icons.Target />, label: 'OPE', action: () => setDrawerOpen(true) },
           { id: 'levels' as AgentTab, icon: <Icons.Trophy />, label: 'LEVEL' },
           { id: 'knowledge' as AgentTab, icon: <span className="text-xl leading-none">📚</span>, label: 'BİLGİ' },
           { id: 'feedback' as AgentTab, icon: <span className="text-xl leading-none">📋</span>, label: 'SORGU' },
