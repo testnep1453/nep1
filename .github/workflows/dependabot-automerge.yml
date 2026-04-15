@@ -1,0 +1,23 @@
+﻿name: Otonom Güvenlik Yaması (Auto-Merge)
+
+on: pull_request
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  dependabot-merge:
+    runs-on: ubuntu-latest
+    if: github.actor == 'dependabot[bot]'
+    steps:
+      - name: Dependabot verilerini analiz et
+        id: metadata
+        uses: dependabot/fetch-metadata@v2
+        
+      - name: Yamayı Otomatik Onayla ve Birleştir
+        if: steps.metadata.outputs.update-type == 'version-update:semver-patch' || steps.metadata.outputs.update-type == 'version-update:semver-minor'
+        run: gh pr merge --auto --merge "$PR_URL"
+        env:
+          PR_URL: $\{{github.event.pull_request.html_url}}
+          GH_TOKEN: $\{{secrets.GITHUB_TOKEN}}
