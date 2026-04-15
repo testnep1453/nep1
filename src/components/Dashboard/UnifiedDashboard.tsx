@@ -21,7 +21,7 @@ import { formatLessonDate, LESSON_CONFIG } from '../../config/lessonSchedule';
 
 const Icons = {
   Home: () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m19 8.71l-5.333-4.148a2.666 2.666 0 0 0-3.274 0L5.059 8.71a2.665 2.665 0 0 0-1.029 2.105v7.2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.2c0-.823-.38-1.6-1.03-2.105"/><path d="M16 15c-2.21 1.333-5.792 1.333-8 0"/></svg>,
-  Swords: () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14.5 9.5l-9 9M9.5 14.5l-4-4M16 8l4-4M16 8a2 2 0 0 0 -2.828 -2.828L8 10l-4 4 4 4 4-4 4.828-5.172A2 2 0 0 0 16 8z"/></svg>,
+  Target: () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><path d="M22 12h-4M6 12H2M12 6V2M12 22v-4"/></svg>,
   Users: () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 7m-4 0a4 4 0 1 0 8 0a4 4 0 1 0 -8 0"/><path d="M3 21v-2a4 4 0 0 1 4 -4h4a4 4 0 0 1 4 4v2"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/><path d="M21 21v-2a4 4 0 0 0 -3 -3.85"/></svg>,
   Message: () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M8 9h8"/><path d="M8 13h6"/><path d="M18 4a3 3 0 0 1 3 3v8a3 3 0 0 1 -3 3h-5l-5 3v-3h-2a3 3 0 0 1 -3 -3v-8a3 3 0 0 1 3 -3h12z"/></svg>,
   Logout: () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M14 8v-2a2 2 0 0 0 -2 -2h-7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h7a2 2 0 0 0 2 -2v-2"/><path d="M9 12h12l-3 -3"/><path d="M18 15l3 -3"/></svg>,
@@ -318,7 +318,7 @@ export const UnifiedDashboard = ({
 
       <div className="md:hidden sticky top-0 z-30 bg-[#0A1128] border-b border-[#39FF14]/20 flex items-center justify-between px-4 py-3">
         <button onClick={() => setDrawerOpen(true)} className="text-[#00F0FF] p-2 min-w-[44px] min-h-[44px] flex items-center justify-center">
-          <Icons.Swords />
+          <Icons.Target />
         </button>
         <img src={`${import.meta.env.BASE_URL}nep-logo.png`} alt="NEP" className="h-7 brightness-0 invert opacity-70" />
         <button onClick={() => setMobileNavOpen(!mobileNavOpen)} className="text-white p-2 min-w-[44px] min-h-[44px] flex items-center justify-center">
@@ -350,7 +350,7 @@ export const UnifiedDashboard = ({
         </div>
         <div className="p-4 border-b border-[#6358cc]/20">
           <button onClick={() => setDrawerOpen(true)} className="flex items-center gap-3 w-full p-3 rounded-md bg-[#6358cc]/10 text-[#8b7fd8] hover:bg-[#6358cc]/20 border border-[#6358cc]/30 transition-all">
-            <Icons.Swords /> <span className="font-bold tracking-wide text-sm">{isAdmin ? '⚡ DERS YÖNETİMİ' : '⚡ DERSE KATIL'}</span>
+            <Icons.Target /> <span className="font-bold tracking-wide text-sm">{isAdmin ? '⚡ DERS YÖNETİMİ' : '⚡ DERSE KATIL'}</span>
           </button>
         </div>
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
@@ -784,7 +784,7 @@ export const UnifiedDashboard = ({
       {!isAdmin && (
         <div className="md:hidden fixed bottom-0 left-0 right-0 bg-[#0A1128] border-t border-[#00F0FF]/20 z-20 flex items-center justify-around px-2 py-2 safe-area-bottom">
           <button onClick={() => setActiveTab('genel')} className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-all min-w-[60px] min-h-[56px] ${activeTab === 'genel' ? 'text-[#00F0FF]' : 'text-gray-500'}`}><Icons.Home /><span className="text-[10px] font-bold">ANA SAYFA</span></button>
-          <button onClick={() => setDrawerOpen(true)} className="flex flex-col items-center gap-1 p-2 rounded-lg bg-[#6358cc]/20 text-[#8b7fd8] min-w-[60px] min-h-[56px]"><Icons.Swords /><span className="text-[10px] font-bold">OPERASYON</span></button>
+          <button onClick={() => setDrawerOpen(true)} className="flex flex-col items-center gap-1 p-2 rounded-lg bg-[#6358cc]/20 text-[#8b7fd8] min-w-[60px] min-h-[56px]"><Icons.Target /><span className="text-[10px] font-bold">OPERASYON</span></button>
         </div>
       )}
     </div>
