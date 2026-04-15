@@ -58,8 +58,7 @@ export const FeedbackForm = ({ lessonDate, studentId: _studentId, onClose }: Fee
         createdAt: Date.now(),
         anonymous: true,
       }]);
-      // Bir kez gösterildi işaretle
-      localStorage.setItem(`feedback_${lessonDate}_${_studentId}`, 'true');
+      // Gösterildi işareti artık AgentDashboard'da Supabase'e yazılır
       setSubmitted(true);
     } catch (error) {
       console.error('Geri bildirim hatası:', error);

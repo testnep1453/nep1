@@ -7,8 +7,11 @@
 
 import { Lesson } from '../types/student';
 
-// Sabit Zoom linki
-const DEFAULT_ZOOM_LINK = 'https://us06web.zoom.us/j/4379624331?pwd=0FNDyMVqBM7FooqqiOz1zz3efzYDIJ.1';
+/**
+ * NOT: Zoom linki artık buraya yazılmıyor.
+ * Lütfen `systemSettingsService.getZoomLink()` kullanın.
+ * Admin paneli üzerinden Supabase `settings` tablosuna kaydedilir.
+ */
 
 // Ders saatleri (Türkiye saati - UTC+3)
 const LESSON_HOUR_START = 19; // 19.00
@@ -68,7 +71,7 @@ export const createLessonForDate = (date: Date): Lesson => {
     startTime,
     endTime,
     title: `NEP Haftalık Ders — ${day} ${getMonthName(month)}`,
-    zoomLink: DEFAULT_ZOOM_LINK,
+    zoomLink: '', // systemSettingsService.getZoomLink() ile alınır
     date: dateStr
   };
 };
@@ -95,7 +98,7 @@ export const getNextLesson = (): Lesson => {
       startTime: upcoming.startTime,
       endTime:   upcoming.endTime,
       title:     `Ders ${upcoming.lessonNo}`,
-      zoomLink:  DEFAULT_ZOOM_LINK,
+      zoomLink:  '', // systemSettingsService.getZoomLink() ile alınır
       date:      upcoming.date,
     };
   }
@@ -218,10 +221,14 @@ export const formatLessonDate = (dateStr: string): string => {
   return `${d.getDate()} ${getMonthName(d.getMonth())} ${d.getFullYear()}, Perşembe`;
 };
 
+/**
+ * @deprecated zoomLink artık buradan okunmaz.
+ * Bunun yerine `systemSettingsService.getZoomLink()` kullanın.
+ */
 export const LESSON_CONFIG = {
   dayOfWeek: LESSON_DAY,
   startHour: LESSON_HOUR_START,
   endHour: LESSON_HOUR_END,
-  zoomLink: DEFAULT_ZOOM_LINK,
+  zoomLink: '', // Supabase'den çekilir — bak: systemSettingsService
   dayName: 'Perşembe',
 } as const;

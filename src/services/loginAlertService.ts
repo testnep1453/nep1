@@ -1,10 +1,24 @@
 import { supabase } from '../config/supabase';
 
-// Tablo hazır olduğunda bu flag'i true yap:
-const LOGIN_ALERTS_ENABLED = true;
+/**
+ * ⚠️ LOGIN_ALERTS_ENABLED:
+ * Supabase'de `login_alerts` tablosu oluşturulduktan sonra `true` yapın.
+ * Tablo yokken `true` bırakmak 404 konsol hatasına neden olur.
+ *
+ * Tablo şeması:
+ *   id           uuid primary key default gen_random_uuid()
+ *   student_id   text not null
+ *   browser      text
+ *   is_desktop   boolean
+ *   device_name  text
+ *   alert_reason text
+ *   created_at   timestamptz default now()
+ */
+const LOGIN_ALERTS_ENABLED = false;
 
 /**
- * Kullanıcı giriş yaptığında cihaz bilgilerini kaydeder
+ * Kullanıcı giriş yaptığında cihaz bilgilerini kaydeder.
+ * LOGIN_ALERTS_ENABLED false ise sessizce çıkar — konsola hata basmaz.
  */
 export const recordLoginAndCheckSuspicious = async (studentId: string): Promise<void> => {
   if (!LOGIN_ALERTS_ENABLED) return;
@@ -14,23 +28,19 @@ export const recordLoginAndCheckSuspicious = async (studentId: string): Promise<
     if (ua.includes('Chrome')) browser = 'Chrome';
     else if (ua.includes('Firefox')) browser = 'Firefox';
     else if (ua.includes('Safari')) browser = 'Safari';
-    
-    let isDesktop = true;
-    let deviceName = 'Masaüstü (PC/Mac)';
-    if (/Mobi|Android/i.test(ua)) {
-      isDesktop = false;
-      deviceName = 'Telefon/Tablet';
-    }
+
+    const isDesktop = !/Mobi|Android/i.test(ua);
+    const deviceName = isDesktop ? 'Masaüstü (PC/Mac)' : 'Telefon/Tablet';
 
     await supabase.from('login_alerts').insert([{
       student_id: studentId,
       browser,
       is_desktop: isDesktop,
       device_name: deviceName,
-      alert_reason: 'Normal Login'
+      alert_reason: 'Normal Login',
     }]);
-  } catch (error) {
-    console.error('Login alert kayıt hatası:', error);
+  } catch {
+    // Hata sessizce yutulur — tablo yoksa konsolu kirletme
   }
 };
 

@@ -11,9 +11,10 @@ import { SurveysClient } from './SurveysClient';
 
 import { useAutoZoom } from '../../hooks/useAutoZoom';
 import { useNotifications } from '../../hooks/useNotifications';
-import { subscribeToTrailer, recordAttendanceToFirebase, subscribeToSettingStore } from '../../services/dbFirebase';
+import { subscribeToTrailer, recordAttendanceToFirebase, subscribeToSettingStore, getSettingStore, saveSettingStore } from '../../services/dbFirebase';
 import type { SurveyEntry } from '../Admin/SurveyManager';
 import { LESSON_CONFIG } from '../../config/lessonSchedule';
+import { getZoomLink } from '../../services/systemSettingsService';
 
 type AgentTab = 'home' | 'operation' | 'levels' | 'archive' | 'activity' | 'feedback';
 const Icons = {
@@ -39,16 +40,28 @@ export const AgentDashboard = ({
   const [showFeedback, setShowFeedback] = useState(false);
   const [trailer, setTrailerState] = useState<Trailer | null>(null);
   const [hasActiveSurvey, setHasActiveSurvey] = useState(false);
+  const [zoomLink, setZoomLink] = useState(lesson?.zoomLink || LESSON_CONFIG.zoomLink);
   // Tema: sadece dark mod
 
+  // Zoom linkini Supabase'den yüKle
+  useEffect(() => {
+    getZoomLink().then(link => {
+      if (link) setZoomLink(link);
+    });
+  }, []);
+
   const { unreadCount } = useNotifications(student.id);
-  const autoZoomState = useAutoZoom(student.id, student.name, lesson?.zoomLink || LESSON_CONFIG.zoomLink);
+  const autoZoomState = useAutoZoom(student.id, student.name, zoomLink);
 
   useEffect(() => {
-    if (autoZoomState.status === 'feedback' && isFeedbackTime(autoZoomState.lessonDate)) {
-      const feedbackShown = localStorage.getItem(`feedback_${autoZoomState.lessonDate}_${student.id}`);
-      if (!feedbackShown) setShowFeedback(true);
-    }
+    if (autoZoomState.status !== 'feedback') return;
+    if (!isFeedbackTime(autoZoomState.lessonDate)) return;
+
+    // Supabase'den gösterim durumunu kontrol et
+    const feedbackKey = `feedback_shown_${autoZoomState.lessonDate}_${student.id}`;
+    getSettingStore<boolean>(feedbackKey, false).then((alreadyShown) => {
+      if (!alreadyShown) setShowFeedback(true);
+    });
   }, [autoZoomState.status, autoZoomState.lessonDate, student.id]);
 
   const attendanceRecorded = useRef(false);
@@ -104,11 +117,16 @@ export const AgentDashboard = ({
 
       <OperationDrawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)}
         lesson={lesson} trailer={trailer} isAdmin={false}
-        studentName={student.name} zoomLink={lesson?.zoomLink || LESSON_CONFIG.zoomLink} />
+        studentName={student.name} zoomLink={zoomLink} />
 
       {showFeedback && (
         <FeedbackForm lessonDate={autoZoomState.lessonDate} studentId={student.id}
-          onClose={() => { setShowFeedback(false); localStorage.setItem(`feedback_${autoZoomState.lessonDate}_${student.id}`, 'true'); }} />
+          onClose={async () => {
+            // Gösterim durumunu Supabase'e kaydet
+            const feedbackKey = `feedback_shown_${autoZoomState.lessonDate}_${student.id}`;
+            await saveSettingStore(feedbackKey, true);
+            setShowFeedback(false);
+          }} />
       )}
 
       {/* Mobil Üst Bar */}

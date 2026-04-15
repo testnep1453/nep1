@@ -1,7 +1,26 @@
 import { useState, useEffect } from 'react';
-import { subscribeToSettingStore } from '../../services/dbFirebase';
+import { subscribeToSettingStore, getSettingStore, saveSettingStore } from '../../services/dbFirebase';
 import type { SurveyEntry } from '../Admin/SurveyManager';
 import { supabase } from '../../config/supabase';
+
+/**
+ * Tamamlanan anket ID'leri Supabase'deki settings tablosunda tutulur.
+ * Key: 'completed_surveys_<anonymous_session_id>'
+ *
+ * Tam anonimlik için session başına rastgele bir ID üretilir ve
+ * sessionStorage'da yalnızca bu oturum süresince saklanır — hiçbir
+ * öğrenci verisi buluta gitmez.
+ */
+const getSessionId = (): string => {
+  let sid = sessionStorage.getItem('_survey_sid');
+  if (!sid) {
+    sid = Math.random().toString(36).slice(2);
+    sessionStorage.setItem('_survey_sid', sid);
+  }
+  return sid;
+};
+
+const COMPLETED_KEY = () => `completed_surveys_${getSessionId()}`;
 
 export const SurveysClient = () => {
   const [surveys, setSurveys] = useState<SurveyEntry[]>([]);
@@ -12,9 +31,10 @@ export const SurveysClient = () => {
   const [completed, setCompleted] = useState<Set<string>>(new Set());
 
   useEffect(() => {
-    // Okunan görevleri storage'dan çek
-    const saved = localStorage.getItem('completed_surveys');
-    if (saved) setCompleted(new Set(JSON.parse(saved)));
+    // Tamamlanan anketleri Supabase'den yükle
+    getSettingStore<string[]>(COMPLETED_KEY(), []).then((saved) => {
+      setCompleted(new Set(Array.isArray(saved) ? saved : []));
+    });
 
     const unsub = subscribeToSettingStore<SurveyEntry[]>('surveys', [], (data) => {
       setSurveys(Array.isArray(data) ? data.filter(s => s.isActive) : []);
@@ -26,18 +46,21 @@ export const SurveysClient = () => {
   const handleSubmit = async () => {
     if (!activeSurvey) return;
     setSubmitting(true);
-    
+
     // Anonim kaydet
     try {
       await supabase.from('survey_results').insert([{
         surveyId: activeSurvey.id,
         answers,
-        createdAt: Date.now()
+        createdAt: Date.now(),
       }]);
-      
+
       const newCompleted = new Set(completed).add(activeSurvey.id);
       setCompleted(newCompleted);
-      localStorage.setItem('completed_surveys', JSON.stringify(Array.from(newCompleted)));
+
+      // Tamamlananları Supabase'e yaz (localStorage değil)
+      await saveSettingStore(COMPLETED_KEY(), Array.from(newCompleted));
+
       setActiveSurvey(null);
       setAnswers({});
     } catch (e) {
@@ -72,7 +95,7 @@ export const SurveysClient = () => {
               </div>
             ))}
           </div>
-          
+
           <button onClick={handleSubmit} disabled={submitting || Object.keys(answers).length !== (activeSurvey.questions?.length || 0)} className="w-full mt-6 bg-[#8a2be2] hover:bg-[#a14df3] text-white py-4 rounded-lg font-bold uppercase tracking-widest transition-all disabled:opacity-50">
             {submitting ? 'GÖNDERİLİYOR...' : 'GÖREVİ TAMAMLA'}
           </button>
@@ -81,21 +104,20 @@ export const SurveysClient = () => {
     );
   }
 
-  // Koşullu görünüm (Eğer anket yoksa boş döner. AgentDashboard tabs kısmından gizleme ayrıntısı yapılacak)
   if (!loading && surveys.length === 0) return null;
 
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="bg-gradient-to-br from-[#0A1128] to-[#050505] border-t-2 border-[#8a2be2]/30 p-6 rounded-2xl relative overflow-hidden shadow-2xl">
         <div className="absolute inset-0 bg-[linear-gradient(rgba(138,43,226,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(138,43,226,0.05)_1px,transparent_1px)] bg-[length:20px_20px] pointer-events-none" />
-        
+
         <div className="relative z-10 flex items-center justify-between mb-8">
           <h3 className="text-white font-black text-xl tracking-[4px] uppercase flex items-center gap-3">
             <span className="text-[#8a2be2] text-2xl">📋</span>
             Sorgu Odası
           </h3>
         </div>
-        
+
         {loading ? (
           <div className="text-center py-10 text-[#8a2be2] animate-pulse relative z-10">Bağlantı Kuruluyor...</div>
         ) : (
@@ -122,4 +144,3 @@ export const SurveysClient = () => {
     </div>
   );
 };
-

@@ -9,7 +9,8 @@ import {
   Search,
   BellRing,
   LayoutDashboard,
-  Archive
+  Archive,
+  Settings
 } from 'lucide-react';
 import { signOutUser } from '../../services/authService';
 import { getStudents } from '../../services/db';
@@ -19,10 +20,11 @@ import { AttendancePage } from './AttendancePage';
 import { SurveyManager } from './SurveyManager';
 import { KnowledgeManager } from './KnowledgeManager';
 import { ArchiveManager } from './ArchiveManager';
+import { SystemConfigManager } from './SystemConfigManager';
 
 export const AdminDashboard: React.FC = () => {
   // YENİ: 'security' sekmesi eklendi ve archive'dan tamamen ayrıldı
-  const [activeTab, setActiveTab] = useState<'overview' | 'attendance' | 'surveys' | 'knowledge' | 'archive' | 'security'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'attendance' | 'surveys' | 'knowledge' | 'archive' | 'security' | 'config'>('overview');
   const [students, setStudents] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -103,6 +105,14 @@ export const AdminDashboard: React.FC = () => {
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all mt-4 ${activeTab === 'security' ? 'bg-red-500/10 text-red-400 border border-red-500/30' : 'text-slate-400 hover:bg-white/5 hover:text-red-400'}`}
           >
             <ShieldAlert size={20} /> <span className="text-sm font-medium">Güvenlik Merkezi</span>
+          </button>
+
+          {/* SİSTEM AYARLARI */}
+          <button 
+            onClick={() => setActiveTab('config')}
+            className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'config' ? 'bg-[#00F0FF]/10 text-[#00F0FF] border border-[#00F0FF]/20' : 'text-slate-400 hover:bg-white/5'}`}
+          >
+            <Settings size={20} /> <span className="text-sm font-medium">Sistem Ayarları</span>
           </button>
         </nav>
 
@@ -196,6 +206,7 @@ export const AdminDashboard: React.FC = () => {
           {activeTab === 'surveys' && <SurveyManager />}
           {activeTab === 'knowledge' && <KnowledgeManager />}
           {activeTab === 'archive' && <ArchiveManager />}
+          {activeTab === 'config' && <SystemConfigManager />}
           
           {/* YENİ: GÜVENLİK MERKEZİ (Güvenlik olaylarını burada detaylandırabiliriz) */}
           {activeTab === 'security' && (
