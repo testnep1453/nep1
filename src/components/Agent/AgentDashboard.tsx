@@ -8,15 +8,14 @@ import { ArchivePage } from '../Archive/ArchivePage';
 import { LevelProgress } from './LevelProgress';
 import { ActivityPage } from './ActivityPage';
 import { SurveysClient } from './SurveysClient';
-import { KnowledgeClient } from './KnowledgeClient';
+
 import { useAutoZoom } from '../../hooks/useAutoZoom';
 import { useNotifications } from '../../hooks/useNotifications';
 import { subscribeToTrailer } from '../../services/dbFirebase';
 import { LESSON_CONFIG } from '../../config/lessonSchedule';
 import { recordAttendance } from '../../services/db';
 
-type AgentTab = 'home' | 'operation' | 'levels' | 'archive' | 'activity' | 'feedback' | 'knowledge';
-
+type AgentTab = 'home' | 'operation' | 'levels' | 'archive' | 'activity' | 'feedback';
 const Icons = {
   Home: () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m19 8.71l-5.333-4.148a2.666 2.666 0 0 0-3.274 0L5.059 8.71a2.665 2.665 0 0 0-1.029 2.105v7.2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.2c0-.823-.38-1.6-1.03-2.105"/><path d="M16 15c-2.21 1.333-5.792 1.333-8 0"/></svg>,
   Target: () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="22" y1="12" x2="18" y2="12"/><line x1="6" y1="12" x2="2" y2="12"/><line x1="12" y1="6" x2="12" y2="2"/><line x1="12" y1="22" x2="12" y2="18"/></svg>,
@@ -69,13 +68,12 @@ export const AgentDashboard = ({
     { id: 'levels', label: 'Level & Rozetler', icon: <Icons.Trophy /> },
     { id: 'archive', label: 'Arşiv', icon: <Icons.Film /> },
     { id: 'activity', label: 'Etkinlik', icon: <Icons.Calendar /> },
-    { id: 'knowledge', label: 'Bilgi Odası', icon: <span className="text-xl -mt-1 -ml-0.5">📚</span> },
     { id: 'feedback', label: 'Sorgu Odası', icon: <span className="text-xl -mt-1 -ml-0.5">📋</span> },
   ];
 
   const tabTitles: Record<AgentTab, string> = {
     home: 'AJAN KARARGAHI', operation: 'OPERASYON', levels: 'LEVEL & ROZETLER',
-    archive: 'ARŞİV', activity: 'ETKİNLİK', feedback: 'SORGU ODASI', knowledge: 'BİLGİ ODASI',
+    archive: 'ARŞİV', activity: 'ETKİNLİK', feedback: 'SORGU ODASI',
   };
 
   return (
@@ -191,7 +189,6 @@ export const AgentDashboard = ({
             {activeTab === 'archive' && <div className="overflow-y-auto h-full pr-2 custom-scrollbar"><ArchivePage /></div>}
             {activeTab === 'activity' && <div className="overflow-y-auto h-full pr-2 custom-scrollbar"><ActivityPage student={student} /></div>}
             {activeTab === 'feedback' && <div className="overflow-y-auto h-full pr-2 custom-scrollbar"><SurveysClient /></div>}
-            {activeTab === 'knowledge' && <div className="overflow-hidden h-full"><KnowledgeClient /></div>}
           </div>
         </div>
       </main>
@@ -202,7 +199,6 @@ export const AgentDashboard = ({
           { id: 'home' as AgentTab, icon: <Icons.Home />, label: 'LOBİ' },
           { id: 'operation' as AgentTab, icon: <Icons.Target />, label: 'OPE', action: () => setDrawerOpen(true) },
           { id: 'levels' as AgentTab, icon: <Icons.Trophy />, label: 'LEVEL' },
-          { id: 'knowledge' as AgentTab, icon: <span className="text-xl leading-none">📚</span>, label: 'BİLGİ' },
           { id: 'feedback' as AgentTab, icon: <span className="text-xl leading-none">📋</span>, label: 'SORGU' },
         ].map(item => (
           <button key={item.id}

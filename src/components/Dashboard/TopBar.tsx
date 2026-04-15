@@ -112,20 +112,24 @@ export const TopBar = ({ student, unreadCount, theme = 'dark', onThemeChange }: 
           </div>
         )}
 
-        <button
-          onClick={() => { setShowNotifications(!showNotifications); setShowManualPrompt(false); }}
-          className="relative w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-all"
-        >
-          <BellIcon />
-          {unreadCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-[#FF4500] rounded-full flex items-center justify-center text-[10px] text-white font-bold px-1 shadow-[0_0_8px_rgba(255,69,0,0.6)]">
-              {unreadCount > 9 ? '9+' : unreadCount}
-            </span>
-          )}
-        </button>
+        {['1001', '1003'].includes(student.id) && (
+          <div className="relative">
+            <button
+              onClick={() => { setShowNotifications(!showNotifications); setShowManualPrompt(false); }}
+              className="relative w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-all"
+            >
+              <BellIcon />
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-[#FF4500] rounded-full flex items-center justify-center text-[10px] text-white font-bold px-1 shadow-[0_0_8px_rgba(255,69,0,0.6)]">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+            </button>
 
-        {showNotifications && (
-          <NotificationPanel studentId={student.id} isOpen={showNotifications} onClose={() => setShowNotifications(false)} unreadCount={unreadCount} />
+            {showNotifications && (
+              <NotificationPanel studentId={student.id} isOpen={showNotifications} onClose={() => setShowNotifications(false)} unreadCount={unreadCount} />
+            )}
+          </div>
         )}
       </div>
     </>

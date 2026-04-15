@@ -14,10 +14,10 @@ import { OperationDrawer } from '../Drawer/OperationDrawer';
 import { FeedbackForm, isFeedbackTime } from '../Feedback/FeedbackForm';
 import { AttendancePage } from '../Admin/AttendancePage';
 import { ArchiveManager } from '../Admin/ArchiveManager';
+import { ArchiveManager } from '../Admin/ArchiveManager';
+import { SurveyManager } from '../Admin/SurveyManager';
+import { getAllLoginLogs } from '../../services/loginAlertService';
 import { useAutoMessages } from '../../hooks/useAutoMessages';
-import { useAutoZoom } from '../../hooks/useAutoZoom';
-import { useNotifications, sendNotificationToAll } from '../../hooks/useNotifications';
-import { formatLessonDate, LESSON_CONFIG } from '../../config/lessonSchedule';
 
 const Icons = {
   Home: () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m19 8.71l-5.333-4.148a2.666 2.666 0 0 0-3.274 0L5.059 8.71a2.665 2.665 0 0 0-1.029 2.105v7.2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.2c0-.823-.38-1.6-1.03-2.105"/><path d="M16 15c-2.21 1.333-5.792 1.333-8 0"/></svg>,
@@ -42,7 +42,7 @@ export const UnifiedDashboard = ({
   onlineCount: number;
 }) => {
   const isAdmin = student.id === '1002';
-  const [activeTab, setActiveTab] = useState<'genel' | 'ajanlar' | 'mesajlar' | 'fragman' | 'geribildirim' | 'yoklama' | 'arsiv' | 'cihazlar' | 'anket' | 'klavuz'>('genel');
+  const [activeTab, setActiveTab] = useState<'genel' | 'ajanlar' | 'mesajlar' | 'fragman' | 'geribildirim' | 'yoklama' | 'arsiv' | 'cihazlar' | 'anket'>('genel');
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
@@ -93,6 +93,10 @@ export const UnifiedDashboard = ({
   // Admin State
   const [students, setStudents] = useState<Student[]>([]);
   const [messageText, setMessageText] = useState('');
+  const [messageTargetId, setMessageTargetId] = useState('');
+
+  // Device Stats Limit State
+  const [loginAlerts, setLoginAlerts] = useState<any[]>([]);
 
   // Fragman State
   const [trailer, setTrailerState] = useState<Trailer | null>(null);
@@ -111,6 +115,7 @@ export const UnifiedDashboard = ({
   useEffect(() => {
     if (isAdmin) {
       getStudentsFromFirebase().then(setStudents);
+      getAllLoginLogs().then((logs) => setLoginAlerts(logs));
     }
   }, [isAdmin]);
 
@@ -245,7 +250,8 @@ export const UnifiedDashboard = ({
     }
   };
 
-  const PROTECTED_IDS = ['1001', '1002', '1003'];
+  const EXCLUDE_FROM_COUNT = ['1001', '1002', '1003'];
+  const PROTECTED_IDS = ['1002'];
   const handleRemove = async (id: string, name: string) => {
     if (PROTECTED_IDS.includes(id)) {
       alert(`⚠️ Ajan ${name} (${id}) sistem tarafından korunan bir hesaptır ve silinemez.`);
@@ -266,15 +272,28 @@ export const UnifiedDashboard = ({
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (messageText.trim()) {
-      await addMessageToFirebase(messageText.trim());
-      const studentIds = students.map(s => s.id).filter(id => id !== '1002');
-      await sendNotificationToAll(studentIds, {
-        title: 'Admin Duyurusu',
-        body: messageText.trim(),
-        type: 'admin',
-      });
+      if (messageTargetId && messageTargetId.trim() !== '') {
+        // Özel mesaj/bildirim (Yalnızca notification olarak hedef ID'ye gidebilir veya tabloya yazılabilir)
+        // Mevcut addMessageToFirebase herksin okuduğu 'messages' tablosuna yazıyor.
+        // O yüzden sadece notification olarak gönderebiliriz.
+        await sendNotificationToAll([messageTargetId.trim()], {
+          title: 'Gizli Ajan Mesajı',
+          body: messageText.trim(),
+          type: 'admin',
+        });
+        alert(`Mesaj ${messageTargetId} ID'li ajana iletildi!`);
+      } else {
+        await addMessageToFirebase(messageText.trim());
+        const studentIds = students.map(s => s.id).filter(id => id !== '1002');
+        await sendNotificationToAll(studentIds, {
+          title: 'Admin Duyurusu',
+          body: messageText.trim(),
+          type: 'admin',
+        });
+        alert('Mesaj ve bildirimler tüm ajanlara iletildi!');
+      }
       setMessageText('');
-      alert('Mesaj ve bildirimler tüm ajanlara iletildi!');
+      setMessageTargetId('');
     }
   };
 
@@ -299,7 +318,6 @@ export const UnifiedDashboard = ({
       ]
     : [
         { id: 'genel' as const, label: 'Ana Sayfa', icon: <Icons.Home /> },
-        { id: 'klavuz' as const, label: 'Kılavuz', icon: <Icons.Home /> },
       ];
 
 
@@ -396,7 +414,9 @@ export const UnifiedDashboard = ({
                   <div className="clip-path-diagonal bg-[#0A1128]/80 border border-[#39FF14]/30 p-4 sm:p-6 relative group overflow-hidden">
                     <div className="absolute top-0 right-0 w-16 h-16 bg-[#39FF14]/5 rounded-bl-full transform origin-top-right group-hover:scale-150 transition-transform duration-500" />
                     <h3 className="text-gray-400 text-xs sm:text-sm tracking-widest mb-2 font-mono">TOPLAM AKTİF AJAN</h3>
-                    <p className="text-4xl sm:text-5xl font-bold text-[#39FF14] drop-shadow-[0_0_15px_rgba(57,255,20,0.5)]">{students.length || 0}</p>
+                    <p className="text-4xl sm:text-5xl font-bold text-[#39FF14] drop-shadow-[0_0_15px_rgba(57,255,20,0.5)]">
+                      {students.filter(s => !EXCLUDE_FROM_COUNT.includes(s.id)).length}
+                    </p>
                   </div>
                   <div className="clip-path-diagonal bg-[#0A1128]/80 border border-[#FFB000]/30 p-4 sm:p-6 relative group overflow-hidden">
                     <div className="absolute top-0 right-0 w-16 h-16 bg-[#FFB000]/5 rounded-bl-full transform origin-top-right group-hover:scale-150 transition-transform duration-500" />
@@ -563,8 +583,8 @@ export const UnifiedDashboard = ({
                         <input id="editNick" type="text" value={editStudent.nickname} onChange={(e) => setEditStudent({ ...editStudent, nickname: e.target.value })} className="bg-[#050505] border border-gray-700 text-white p-3 w-full rounded focus:outline-none focus:border-[#00F0FF] transition-colors" />
                       </div>
                       <div>
-                        <label htmlFor="editMail" className="text-gray-400 text-xs font-mono block mb-1">E-posta *</label>
-                        <input id="editMail" type="email" required value={editStudent.email} onChange={(e) => setEditStudent({ ...editStudent, email: e.target.value })} className="bg-[#050505] border border-gray-700 text-white p-3 w-full rounded focus:outline-none focus:border-[#00F0FF] transition-colors" />
+                        <label htmlFor="editMail" className="text-gray-400 text-xs font-mono block mb-1">E-posta</label>
+                        <input id="editMail" type="email" value={editStudent.email} onChange={(e) => setEditStudent({ ...editStudent, email: e.target.value })} className="bg-[#050505] border border-gray-700 text-white p-3 w-full rounded focus:outline-none focus:border-[#00F0FF] transition-colors" />
                       </div>
                     </div>
                     <div className="flex gap-3 mt-6">
@@ -581,10 +601,14 @@ export const UnifiedDashboard = ({
           {isAdmin && activeTab === 'mesajlar' && (
             <div className="max-w-2xl animate-fade-in">
               <div className="bg-[#0A1128]/80 border border-[#00F0FF]/30 p-4 sm:p-6 clip-path-diagonal relative">
-                <div className="absolute top-0 right-0 px-4 py-1 bg-[#00F0FF] text-black text-xs font-bold tracking-widest">BROADCAST</div>
-                <h3 className="text-[#00F0FF] text-base sm:text-lg font-bold mb-2 uppercase tracking-widest">Global Mesaj</h3>
-                <p className="text-gray-400 text-xs sm:text-sm mb-6">Firestore üzerinden tüm ajanların ekranına gönderilir.</p>
+                <div className="absolute top-0 right-0 px-4 py-1 bg-[#00F0FF] text-black text-xs font-bold tracking-widest">BROADCAST / DM</div>
+                <h3 className="text-[#00F0FF] text-base sm:text-lg font-bold mb-2 uppercase tracking-widest">Global veya Özel Mesaj</h3>
+                <p className="text-gray-400 text-xs sm:text-sm mb-6">Hedef ID boş bırakılırsa Firestore 'messages' aracılığıyla tüm ajanlara yayınlanır. Hedef ID belirtilirse yalnızca o ajana bildirim olarak ulaşır.</p>
                 <form onSubmit={handleSendMessage}>
+                  <div className="mb-4">
+                    <label className="block text-gray-400 text-xs font-mono mb-2">HEDEF AJAN ID (İsteğe Bağlı)</label>
+                    <input type="text" value={messageTargetId} onChange={(e) => setMessageTargetId(e.target.value)} placeholder="Tüm Ajanlar (Boş Bırakın) veya örn: 1005" className="w-full bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#00F0FF] font-mono text-sm transition-colors rounded" />
+                  </div>
                   <textarea id="broadcastMsg" name="broadcastMsg" aria-label="Mesaj Kutusu" value={messageText} onChange={(e) => setMessageText(e.target.value)} placeholder="Mesajınızı yazın..." required rows={4} className="w-full bg-[#050505] border border-gray-700 text-white p-4 focus:outline-none focus:border-[#00F0FF] font-mono text-sm mb-4 transition-colors resize-none rounded" />
                   <button type="submit" className="w-full bg-[#00F0FF]/20 hover:bg-[#00F0FF] text-[#00F0FF] hover:text-black border border-[#00F0FF] py-3 font-bold transition-all uppercase tracking-widest flex items-center justify-center gap-2 rounded min-h-[48px]"><Icons.Message /> GÖNDER</button>
                 </form>
@@ -698,85 +722,71 @@ export const UnifiedDashboard = ({
           {isAdmin && activeTab === 'arsiv' && <ArchiveManager isAdmin={isAdmin} />}
 
           {/* TAB: CİHAZ İSTATİSTİKLERİ */}
-          {isAdmin && activeTab === 'cihazlar' && (
-            <div className="space-y-6 animate-fade-in">
-              <div className="bg-[#0A1128]/80 border border-[#6358cc]/30 p-6 rounded-xl">
-                <h3 className="text-[#6358cc] font-bold text-lg uppercase tracking-wider mb-6">📡 Cihaz &amp; Tarayıcı Dağılımı</h3>
-                <p className="text-gray-500 text-sm mb-6">Ajanlara ait gerçek zamanlı cihaz bilgisi için loginAlerts tablosu aktifleştirilmeli. Aşağıdaki veriler yaklaşık dağılımdır.</p>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-                  {[
-                    { label: '🖥️ Masaüstü (PC / Mac)', count: Math.ceil(students.length * 0.55), color: '#00F0FF' },
-                    { label: '📱 Telefon', count: Math.ceil(students.length * 0.35), color: '#39FF14' },
-                    { label: '📟 Tablet / iPad', count: Math.max(1, Math.floor(students.length * 0.10)), color: '#FF9F43' },
-                  ].map(d => (
-                    <div key={d.label} className="bg-[#050505]/80 border border-gray-800 rounded-lg p-5 text-center">
-                      <div className="text-3xl font-bold mb-1" style={{ color: d.color }}>{d.count}</div>
-                      <div className="text-xs text-gray-500">{d.label}</div>
-                    </div>
-                  ))}
-                </div>
-                <h4 className="text-gray-400 text-xs font-mono uppercase tracking-wider mb-3">Tarayıcı Motoru Dağılımı</h4>
-                <div className="space-y-3">
-                  {[
-                    { name: 'Chrome / Chromium tabanlı', pct: 65, color: '#39FF14' },
-                    { name: 'Firefox', pct: 15, color: '#FF9F43' },
-                    { name: 'Safari (iOS / macOS)', pct: 16, color: '#00F0FF' },
-                    { name: 'Diğer', pct: 4, color: '#6358cc' },
-                  ].map(b => (
-                    <div key={b.name} className="flex items-center gap-3">
-                      <span className="text-xs text-gray-400 w-52 shrink-0">{b.name}</span>
-                      <div className="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden">
-                        <div className="h-full rounded-full transition-all" style={{ width: `${b.pct}%`, backgroundColor: b.color }} />
+          {isAdmin && activeTab === 'cihazlar' && (() => {
+            // Gruplama işlemleri:
+            const total = loginAlerts.length;
+            const browsers: Record<string, number> = {};
+            const devices: Record<string, number> = {};
+            
+            // Eğer giriş yapan öğrenci login_alerts'te yoksa, o kişileri bilinmeyen kategorisinde ekleyebiliriz (email onayı vs.)
+            const loggedStudentIds = new Set(loginAlerts.map(a => a.student_id));
+            const unverifiedOrUnknownCount = students.filter(s => !loggedStudentIds.has(s.id)).length;
+
+            loginAlerts.forEach(a => {
+              const b = a.browser || 'Diğer';
+              browsers[b] = (browsers[b] || 0) + 1;
+              const d = a.device_name || (a.is_desktop ? 'Masaüstü (PC/Mac)' : 'Telefon/Tablet');
+              devices[d] = (devices[d] || 0) + 1;
+            });
+
+            if (unverifiedOrUnknownCount > 0) {
+              devices['Bilinmeyen Cihaz / Doğrulanmamış'] = (devices['Bilinmeyen Cihaz / Doğrulanmamış'] || 0) + unverifiedOrUnknownCount;
+            }
+
+            return (
+              <div className="space-y-6 animate-fade-in">
+                <div className="bg-[#0A1128]/80 border border-[#6358cc]/30 p-6 rounded-xl">
+                  <h3 className="text-[#6358cc] font-bold text-lg uppercase tracking-wider mb-6">📡 Gerçek Zamanlı Cihaz Dağılımı</h3>
+                  {total === 0 && unverifiedOrUnknownCount === 0 ? (
+                    <div className="p-8 text-center text-gray-500 animate-pulse">Veri toplanıyor...</div>
+                  ) : (
+                    <>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+                        {Object.entries(devices).map(([label, count], i) => (
+                          <div key={label} className="bg-[#050505]/80 border border-gray-800 rounded-lg p-5 text-center transition-all hover:border-[#00F0FF]/50">
+                            <div className="text-3xl font-bold mb-1 text-[#00F0FF]">{count}</div>
+                            <div className="text-xs text-gray-500">{label}</div>
+                          </div>
+                        ))}
                       </div>
-                      <span className="text-xs font-bold font-mono w-8 text-right" style={{ color: b.color }}>%{b.pct}</span>
-                    </div>
-                  ))}
+                      <h4 className="text-gray-400 text-xs font-mono uppercase tracking-wider mb-3">Tarayıcı Motoru Dağılımı</h4>
+                      <div className="space-y-3">
+                        {Object.entries(browsers).map(([bName, bCount]) => {
+                          const pct = Math.round((bCount / total) * 100);
+                          return (
+                            <div key={bName} className="flex items-center gap-3">
+                              <span className="text-xs text-gray-400 w-52 shrink-0">{bName}</span>
+                              <div className="flex-1 h-2 bg-gray-800 rounded-full overflow-hidden">
+                                <div className="h-full rounded-full transition-all bg-[#39FF14]" style={{ width: `${pct}%` }} />
+                              </div>
+                              <span className="text-xs font-bold font-mono w-8 text-right text-[#39FF14]">% {pct}</span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
                 </div>
-                <p className="text-gray-700 text-xs mt-6 font-mono italic">* Gerçek veri için Supabase'de loginAlerts tablosu oluşturulmalı ve LOGIN_ALERTS_ENABLED = true yapılmalı.</p>
               </div>
-            </div>
-          )}
+            );
+          })()}
 
           {/* TAB: ANKET */}
           {isAdmin && activeTab === 'anket' && (
-            <div className="space-y-6 animate-fade-in">
-              <div className="bg-[#0A1128]/80 border border-[#FF9F43]/30 p-6 rounded-xl">
-                <h3 className="text-[#FF9F43] font-bold text-lg uppercase tracking-wider mb-4">📊 Anket Yönetimi</h3>
-                <p className="text-gray-400 text-sm mb-6">Ders içi hızlı oylamalar ve duygu barometresi için anket modülü.</p>
-                <div className="bg-[#050505]/80 border border-dashed border-gray-700 rounded-xl p-10 text-center">
-                  <div className="text-5xl mb-4">🗳️</div>
-                  <p className="text-gray-400 text-base font-bold mb-2">Anket Modülü Yakında</p>
-                  <p className="text-gray-600 text-sm">Ders içi anlık oylamalar, duygu barometresi ve soru-cevap özellikleri planlanmaktadır.</p>
-                </div>
-              </div>
-            </div>
+            <SurveyManager />
           )}
 
-          {/* TAB: KILAVUZ — tüm ajanlar (admin değil) */}
-          {!isAdmin && activeTab === 'klavuz' && (
-            <div className="space-y-6 animate-fade-in max-w-3xl">
-              <div className="bg-[#0A1128]/80 border border-[#00F0FF]/30 p-6 rounded-xl">
-                <h3 className="text-[#00F0FF] font-bold text-lg uppercase tracking-wider mb-6">📖 Ajan Kılavuzu</h3>
-                {[
-                  { icon: '🔐', title: 'Giriş', desc: 'Sana verilen 3–4 haneli ajan ID’nle giriş yap. ID’ni kimseyle paylaşma.' },
-                  { icon: '🎮', title: 'XP ve Seviye', desc: 'Derse katıldığında XP kazanırsın. XP birikmesi Seviye atlamanı sağlar. Profilinde kazanımlarını takip edebilirsin.' },
-                  { icon: '📅', title: 'Ders Programı', desc: 'Dersler her Perşembe saat 19.00–20.00 arası yapılır. Giriş ekranında bir sonraki derse ne kadar kaldığını görebilirsin.' },
-                  { icon: '🚀', title: 'Derse Katılma', desc: '“Derse Katıl” butonuna basınca seni Zoom toplantısına yönlendirir. Dersin başladığı saatte buton aktif olur.' },
-                  { icon: '🎬', title: 'Fragman', desc: 'Adminler yeni ders fragmanı paylaştığında ana sayfaında otomatik görünür.' },
-                  { icon: '💬', title: 'Geri Bildirim', desc: 'Her dersten 15 dakika sonra değerlendirme formu açılır. Düşüncelerini paylasmayı unutma!' },
-                  { icon: '📣', title: 'Duyurular', desc: 'Admin duyuruları ana sayfanda “İstihbarat Akışı” bölümünde görünür.' },
-                ].map(item => (
-                  <div key={item.title} className="flex gap-4 py-4 border-b border-gray-800 last:border-0">
-                    <span className="text-2xl shrink-0 mt-0.5">{item.icon}</span>
-                    <div>
-                      <div className="font-bold text-white mb-1">{item.title}</div>
-                      <p className="text-gray-400 text-sm leading-relaxed">{item.desc}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+
 
         </div>
       </main>

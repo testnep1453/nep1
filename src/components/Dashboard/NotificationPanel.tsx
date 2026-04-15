@@ -7,6 +7,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../../config/supabase';
+import { getSettingStore, saveSettingStore } from '../../services/dbFirebase';
 
 interface NotificationItem {
   id: string;
@@ -26,6 +27,7 @@ interface NotificationPanelProps {
 
 export const NotificationPanel = ({ studentId, isOpen, onClose }: NotificationPanelProps) => {
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [readReceipts, setReadReceipts] = useState<string[]>([]);
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -53,18 +55,23 @@ export const NotificationPanel = ({ studentId, isOpen, onClose }: NotificationPa
           .order('date', { ascending: false })
           .limit(20);
 
-        const msgNotifs: NotificationItem[] = (msgData || []).map((m: Record<string, unknown>) => ({
-          id: `msg_${m.id}`,
-          title: 'Admin Duyurusu',
-          body: String(m.text || ''),
-          type: 'admin' as const,
-          read: true,
-          createdAt: Number(m.date) || Date.now(),
-        }));
+        const reads = await getSettingStore<string[]>(`read_${studentId}`, []);
+        setReadReceipts(reads || []);
+
+        const msgNotifs: NotificationItem[] = (msgData || []).map((m: Record<string, unknown>) => {
+          const nId = `msg_${m.id}`;
+          return {
+            id: nId,
+            title: 'Admin Duyurusu',
+            body: String(m.text || ''),
+            type: 'admin' as const,
+            read: (reads || []).includes(nId),
+            createdAt: Number(m.date) || Date.now(),
+          };
+        });
 
         setNotifications(msgNotifs);
       } catch {
-        // sessiz — tablo yoksa veya bağlantı yoksa boş göster
         setNotifications([]);
       }
     };
@@ -90,6 +97,15 @@ export const NotificationPanel = ({ studentId, isOpen, onClose }: NotificationPa
     return d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' });
   };
 
+  const markAsRead = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    if (readReceipts.includes(id)) return;
+    const newReads = [...readReceipts, id];
+    setReadReceipts(newReads);
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    await saveSettingStore(`read_${studentId}`, newReads);
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -111,16 +127,23 @@ export const NotificationPanel = ({ studentId, isOpen, onClose }: NotificationPa
           notifications.map(n => (
             <div
               key={n.id}
-              className="p-3 border-b border-white/5 hover:bg-white/5 transition-colors"
+              className={`p-3 border-b border-white/5 transition-colors ${!n.read ? 'bg-[#00F0FF]/5 hover:bg-[#00F0FF]/10' : 'hover:bg-white/5'}`}
             >
               <div className="flex items-start gap-2">
                 <span className="text-sm mt-0.5">
                   {n.type === 'admin' ? '📢' : n.type === 'lesson' ? '📚' : '🔔'}
                 </span>
                 <div className="flex-1 min-w-0">
-                  <p className="text-xs font-semibold text-white/80 truncate">{n.title}</p>
-                  <p className="text-xs text-gray-400 mt-0.5 line-clamp-2">{n.body}</p>
-                  <p className="text-[10px] text-gray-600 mt-1">{formatTime(n.createdAt)}</p>
+                  <p className={`text-xs font-semibold truncate ${!n.read ? 'text-[#00F0FF]' : 'text-white/80'}`}>{n.title}</p>
+                  <p className="text-xs text-gray-400 mt-0.5">{n.body}</p>
+                  <div className="flex items-center justify-between mt-2">
+                    <p className="text-[10px] text-gray-600">{formatTime(n.createdAt)}</p>
+                    {!n.read && (
+                      <button onClick={(e) => markAsRead(e, n.id)} className="text-[10px] font-bold text-[#39FF14] bg-[#39FF14]/10 hover:bg-[#39FF14]/20 px-2 py-0.5 rounded transition-colors uppercase tracking-widest">
+                        Okundu İşaretle
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>

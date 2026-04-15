@@ -110,3 +110,16 @@ export const getSettingStore = async <T>(id: string, defaultData: T): Promise<T>
 export const saveSettingStore = async <T>(id: string, dataObj: T): Promise<void> => {
   await supabase.from('settings').upsert({ id, data: dataObj as any });
 };
+
+export const subscribeToSettingStore = <T>(id: string, defaultData: T, callback: (data: T) => void) => {
+  const fetchSettings = async () => {
+    const { data } = await supabase.from('settings').select('data').eq('id', id).maybeSingle();
+    callback((data ? data.data : defaultData) as T);
+  };
+  fetchSettings();
+  const channel = supabase.channel(`public:settings:${id}`)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'settings', filter: `id=eq.${id}` }, fetchSettings)
+    .subscribe();
+  return () => { supabase.removeChannel(channel); };
+};
+

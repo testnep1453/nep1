@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getSettingStore } from '../../services/dbFirebase';
+import { subscribeToSettingStore } from '../../services/dbFirebase';
 import type { SurveyEntry } from '../Admin/SurveyManager';
 
 export const SurveysClient = () => {
@@ -7,16 +7,12 @@ export const SurveysClient = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadSurveys();
+    const unsub = subscribeToSettingStore<SurveyEntry[]>('surveys', [], (data) => {
+      setSurveys(Array.isArray(data) ? data.filter(s => s.isActive) : []);
+      setLoading(false);
+    });
+    return () => unsub();
   }, []);
-
-  const loadSurveys = async () => {
-    setLoading(true);
-    const data = await getSettingStore<SurveyEntry[]>('surveys', []);
-    // Sadece "yayınlanan (isActive: true)" olanları göster
-    setSurveys(Array.isArray(data) ? data.filter(s => s.isActive) : []);
-    setLoading(false);
-  };
 
   return (
     <div className="space-y-6 animate-fade-in">
