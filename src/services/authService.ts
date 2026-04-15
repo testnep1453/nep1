@@ -50,7 +50,7 @@ export const signInWithGoogle = async (): Promise<{ email: string; user: any } |
 
 export const findStudentByEmail = async (email: string): Promise<string | null> => {
   try {
-    const { data, error } = await supabase.from('students').select('id').eq('email', email).single();
+    const { data, error } = await supabase.from('students').select('id').eq('email', email).maybeSingle();
     if (error || !data) return null;
     return data.id;
   } catch {
@@ -68,7 +68,7 @@ export const sendVerificationCode = async (email: string): Promise<{ success: bo
       .from('students')
       .select('id')
       .eq('email', email)
-      .single();
+      .maybeSingle();
 
     if (dbError || !student) {
       return { success: false, message: 'Bu e-posta adresi sisteme kayıtlı değil!' };

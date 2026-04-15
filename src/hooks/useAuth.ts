@@ -33,7 +33,7 @@ export const useAuth = () => {
         }
 
         // 2. Supabase'de bu mailde bir öğrenci var mı bak
-        const { data: matchedStudent } = await supabase.from('students').select('id').eq('email', email).single();
+        const { data: matchedStudent } = await supabase.from('students').select('id').eq('email', email).maybeSingle();
         
         if (matchedStudent) {
           // Öğrenci bulunduysa direkt içeri al
