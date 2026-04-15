@@ -7,7 +7,6 @@ import {
 } from '../../services/dbFirebase';
 import { recordAttendance } from '../../services/db';
 import { Student, Lesson, Trailer, FeedbackEntry } from '../../types/student';
-import { ProfileSection } from './ProfileSection';
 import { TopBar } from './TopBar';
 import { MessageFeed } from './MessageFeed';
 import { YouTubePlayer } from '../VideoTheater/YouTubePlayer';
@@ -427,7 +426,6 @@ export const UnifiedDashboard = ({
                   </div>
                 );
               })()}
-              <ProfileSection student={student} isAdmin={isAdmin} />
               <MessageFeed />
             </div>
           )}

@@ -1,7 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Student } from '../../types/student';
 import { NotificationPanel } from './NotificationPanel';
-import { ProfileModal } from './ProfileModal';
 
 interface TopBarProps {
   student: Student;
@@ -17,12 +16,6 @@ const BellIcon = () => (
   </svg>
 );
 
-const UserIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-    <circle cx="12" cy="7" r="4" />
-  </svg>
-);
 
 const InstallIcon = () => (
   <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="w-4 h-4 sm:w-5 sm:h-5">
@@ -33,7 +26,6 @@ const InstallIcon = () => (
 
 export const TopBar = ({ student, unreadCount, theme = 'dark', onThemeChange }: TopBarProps) => {
   const [showNotifications, setShowNotifications] = useState(false);
-  const [showProfile, setShowProfile] = useState(false);
   const isAdmin = student.id === '1002';
   const accentColor = isAdmin ? '#39FF14' : '#00F0FF';
 
@@ -121,7 +113,7 @@ export const TopBar = ({ student, unreadCount, theme = 'dark', onThemeChange }: 
         )}
 
         <button
-          onClick={() => { setShowNotifications(!showNotifications); setShowProfile(false); setShowManualPrompt(false); }}
+          onClick={() => { setShowNotifications(!showNotifications); setShowManualPrompt(false); }}
           className="relative w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-all"
         >
           <BellIcon />
@@ -132,28 +124,10 @@ export const TopBar = ({ student, unreadCount, theme = 'dark', onThemeChange }: 
           )}
         </button>
 
-        <button
-          onClick={() => { setShowProfile(!showProfile); setShowNotifications(false); setShowManualPrompt(false); }}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/5 hover:bg-white/10 transition-all"
-        >
-          <div
-            className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold text-white"
-            style={{ backgroundColor: `${accentColor}30`, borderColor: `${accentColor}60`, borderWidth: 1 }}
-          >
-            {student.name.charAt(0)}
-          </div>
-          <span className="text-sm text-gray-300 font-medium hidden lg:block">
-            {student.nickname || student.name.split(' ')[0]}
-          </span>
-          <UserIcon />
-        </button>
-
         {showNotifications && (
           <NotificationPanel studentId={student.id} isOpen={showNotifications} onClose={() => setShowNotifications(false)} unreadCount={unreadCount} />
         )}
       </div>
-
-      <ProfileModal student={student} isOpen={showProfile} onClose={() => setShowProfile(false)} theme={theme ?? 'dark'} onThemeChange={onThemeChange ?? (() => {})} />
     </>
   );
 };
