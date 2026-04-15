@@ -13,7 +13,14 @@ export const useAuth = () => {
   const [pendingStudent, setPendingStudent] = useState<Student | null>(null);
   const [needsAdminAuth, setNeedsAdminAuth] = useState(false);
   const [needsEmailVerification, setNeedsEmailVerification] = useState(false);
-  const [googleError, setGoogleError] = useState(''); 
+  const [googleError, setGoogleError] = useState<string>(() => {
+    const stored = sessionStorage.getItem('oauthError');
+    if (stored) {
+      sessionStorage.removeItem('oauthError');
+      return stored;
+    }
+    return '';
+  });
 
   useEffect(() => {
     const initAuth = async () => {
@@ -27,6 +34,7 @@ export const useAuth = () => {
         const emailConfirmedAt = session.user.email_confirmed_at;
         if (!emailConfirmedAt) {
           await supabase.auth.signOut();
+          sessionStorage.setItem('oauthError', 'E-posta adresiniz henüz doğrulanmamış. Lütfen giriş yapmadan önce e-posta adresinizi doğrulayın.');
           setGoogleError('E-posta adresiniz henüz doğrulanmamış. Lütfen giriş yapmadan önce e-posta adresinizi doğrulayın.');
           setLoading(false);
           return;
@@ -44,6 +52,7 @@ export const useAuth = () => {
         } else {
           // Bulunamadıysa oturumu kapat ve uyar
           await supabase.auth.signOut();
+          sessionStorage.setItem('oauthError', 'Bu Google hesabı sisteme kayıtlı değil. Önce numaranla giriş yaparak e-postanı bağla.');
           setGoogleError('Bu Google hesabı sisteme kayıtlı değil. Önce numaranla giriş yaparak e-postanı bağla.');
         }
       }
