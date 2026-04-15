@@ -22,6 +22,78 @@ import { SurveyManager } from './SurveyManager';
 import { KnowledgeManager } from './KnowledgeManager';
 import { ArchiveManager } from './ArchiveManager';
 import { SystemConfigManager } from './SystemConfigManager';
+import { subscribeToSettingStore } from '../../services/dbFirebase';
+import { setManualLessonActive } from '../../services/systemSettingsService';
+
+const LessonToggleButton = () => {
+  const [manualLessonActive, setManualLessonActiveState] = useState(false);
+  const [overrideLoading, setOverrideLoading] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    getSystemConfig().then(cfg => {
+      if (isMounted) setManualLessonActiveState(cfg.manual_lesson_active === true);
+    });
+
+    const unsub = subscribeToSettingStore<Record<string, unknown> | null>('system_config', null, (data) => {
+      if (isMounted) setManualLessonActiveState(data?.manual_lesson_active === true);
+    });
+    return () => {
+      isMounted = false;
+      unsub();
+    };
+  }, []);
+
+  const handleToggleOverride = async () => {
+    setOverrideLoading(true);
+    try {
+      const newVal = !manualLessonActive;
+      await setManualLessonActive(newVal);
+      setManualLessonActiveState(newVal);
+    } catch (error) {
+      console.error('Ders durumu değiştirilemedi:', error);
+    } finally {
+      setOverrideLoading(false);
+    }
+  };
+
+  return (
+    <button
+      onClick={handleToggleOverride}
+      disabled={overrideLoading}
+      className={`w-full py-6 text-center px-6 rounded-2xl mb-8 font-black text-xl md:text-2xl uppercase tracking-widest transition-all duration-300 flex flex-col md:flex-row items-center justify-center gap-4 border-2 shadow-2xl relative overflow-hidden disabled:opacity-50 ${
+        manualLessonActive
+          ? 'bg-[#39FF14] border-white text-black shadow-[0_0_80px_rgba(57,255,20,0.6)] scale-[1.02]'
+          : 'bg-[#FF4500] border-black text-white shadow-[0_0_40px_rgba(255,69,0,0.4)] hover:bg-[#ff5511]'
+      }`}
+    >
+      <div className="flex items-center gap-4 z-10 text-center flex-wrap justify-center">
+        <span className="text-3xl md:text-4xl drop-shadow-lg">🚀</span>
+        <span className="drop-shadow-sm flex flex-col items-center">
+          DERSİ ŞİMDİ BAŞLAT
+          <span className="text-sm opacity-80 mt-1">(ZORUNLU GEÇİŞ)</span>
+        </span>
+      </div>
+      
+      <span className={`md:absolute md:right-6 text-sm font-bold px-4 py-2 rounded-full z-10 shadow-inner mt-4 md:mt-0 ${
+        manualLessonActive 
+          ? 'bg-black text-[#39FF14] border border-black' 
+          : 'bg-black/40 text-white border border-white'
+      }`}>
+        {overrideLoading 
+          ? 'İŞLENİYOR...' 
+          : manualLessonActive 
+            ? 'DURUM: AÇIK — KAPAT' 
+            : 'DURUM: KAPALI — AÇ'}
+      </span>
+
+      {manualLessonActive && (
+        <div className="absolute inset-0 bg-white opacity-20 animate-pulse pointer-events-none" />
+      )}
+    </button>
+  );
+};
+
 
 export const AdminDashboard: React.FC = () => {
   // YENİ: 'security' sekmesi eklendi ve archive'dan tamamen ayrıldı
@@ -151,6 +223,9 @@ export const AdminDashboard: React.FC = () => {
              </div>
           </div>
         </header>
+
+        {/* HER GÖRÜNÜMDE SABİT MANUEL DERS BUTONU */}
+        <LessonToggleButton />
 
         <section className="animate-in fade-in duration-500">
           {activeTab === 'overview' && (
