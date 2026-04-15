@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../config/supabase';
 import { isLessonActive, isLessonEnded, getNextLesson } from '../config/lessonSchedule';
-import { subscribeToSettingStore } from '../services/dbFirebase';
+import { subscribeToSystemKey } from '../services/systemSettingsService';
 
 interface AutoZoomState {
   status: 'waiting' | 'redirecting' | 'in_lesson' | 'lesson_ended' | 'feedback';
@@ -30,14 +30,21 @@ export const useAutoZoom = (
 
   // Verileri Supabase'den gerçek zamanlı dinle
   useEffect(() => {
-    const unsub = subscribeToSettingStore<Record<string, any> | null>('zoom_link', null, (data) => {
-      manualOverrideRef.current = data?.manual_lesson_active === true;
-      if (data?.zoom_link) {
-        setLiveZoomLink(data.zoom_link);
-      }
+    // Zoom linkini dinle
+    const unsubLink = subscribeToSystemKey('zoom_link', (val: string) => {
+      if (val) setLiveZoomLink(val);
       setIsLoading(false);
     });
-    return () => unsub();
+    
+    // Manuel ders durumunu dinle
+    const unsubManual = subscribeToSystemKey('manual_lesson_active', (val: string) => {
+      manualOverrideRef.current = val === 'true' || val === true;
+    });
+
+    return () => {
+      unsubLink();
+      unsubManual();
+    };
   }, []);
 
   // Link eksikliği uyarısını sadece veri yüklendiğinde ve link gerçekten yoksa 1 kez ver

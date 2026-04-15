@@ -7,8 +7,7 @@ import { Lesson, Trailer } from '../../types/student';
 import { CircularCountdown } from '../Countdown/CircularCountdown';
 import { YouTubePlayer } from '../VideoTheater/YouTubePlayer';
 import { isLessonActive, isLessonEnded, getNextLesson, FIXED_LESSON_SCHEDULE } from '../../config/lessonSchedule';
-import { subscribeToSettingStore } from '../../services/dbFirebase';
-import { getSystemConfig, setManualLessonActive } from '../../services/systemSettingsService';
+import { subscribeToSystemKey, getSystemConfig, setManualLessonActive } from '../../services/systemSettingsService';
 
 interface OperationDrawerProps {
   isOpen: boolean;
@@ -59,8 +58,8 @@ export const OperationDrawer = ({
       setManualLessonActiveState(cfg.manual_lesson_active === true);
     });
 
-    const unsub = subscribeToSettingStore<Record<string, unknown> | null>('zoom_link', null, (data) => {
-      setManualLessonActiveState(data?.manual_lesson_active === true);
+    const unsub = subscribeToSystemKey('manual_lesson_active', (val: string) => {
+      setManualLessonActiveState(val === 'true' || val === true);
     });
     return () => unsub();
   }, [isAdmin]);

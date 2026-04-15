@@ -1,102 +1,109 @@
 /**
  * Sistem Ayarları Servisi
  * 
- * Hardcoded (el yazımı) değerleri ortadan kaldırmak için Supabase'deki
- * `system_settings` tablosundan dinamik olarak çeker.
- * 
- * Konfigürasyon anahtarları:
- *   system_settings/{id: 'zoom_link'}  → { zoomLink, lessonTitle, ... }
+ * Sadece 'zoom_link', 'manual_lesson_active' ve 'lesson_title' ayarlarını
+ * Supabase üzerindeki 'system_settings' tablosundan (key/value yapısı) yönetir.
  */
 
 import { supabase } from '../config/supabase';
 
 export interface SystemConfig {
   zoom_link: string;
-  lesson_title?: string;
-  manual_lesson_active?: boolean;
+  lesson_title: string;
+  manual_lesson_active: boolean;
 }
 
 const FALLBACK_CONFIG: SystemConfig = {
   zoom_link: '',
   lesson_title: 'NEP Haftalık Ders',
+  manual_lesson_active: false,
 };
 
-let cachedConfig: SystemConfig | null = null;
-
 /**
- * Sistem konfigürasyonunu Supabase'den yükler.
- * İlk yüklemede önbelleğe alır; aynı session'da tekrar çağrıldığında
- * önbellekten döner.
+ * Tüm sistem konfigürasyonunu Supabase'den yükler.
+ * system_settings tablosu key/value sütunlarını kullanır.
  */
 export const getSystemConfig = async (): Promise<SystemConfig> => {
-  if (cachedConfig) return cachedConfig;
   try {
     const { data, error } = await supabase
       .from('system_settings')
-      .select('data')
-      .eq('id', 'zoom_link')
-      .maybeSingle();
+      .select('key, value');
 
-    if (error || !data) {
-      cachedConfig = FALLBACK_CONFIG;
-    } else {
-      cachedConfig = { ...FALLBACK_CONFIG, ...(data.data as Partial<SystemConfig>) };
-    }
+    if (error || !data) return FALLBACK_CONFIG;
+
+    const config = { ...FALLBACK_CONFIG };
+    data.forEach((row: any) => {
+      if (row.key === 'zoom_link') config.zoom_link = row.value;
+      if (row.key === 'lesson_title') config.lesson_title = row.value;
+      if (row.key === 'manual_lesson_active') config.manual_lesson_active = row.value === 'true' || row.value === true;
+    });
+
+    return config;
   } catch {
-    cachedConfig = FALLBACK_CONFIG;
+    return FALLBACK_CONFIG;
   }
-  return cachedConfig;
 };
 
-/**
- * Sadece Zoom linkini hızlıca çeker (önbellekli).
- */
 export const getZoomLink = async (): Promise<string> => {
-  const cfg = await getSystemConfig();
-  return cfg.zoom_link;
+  const { data } = await supabase
+    .from('system_settings')
+    .select('value')
+    .eq('key', 'zoom_link')
+    .maybeSingle();
+  return data?.value || '';
 };
 
-/**
- * Sistem konfigürasyonunu Supabase'e kaydet (Admin kullanımı).
- */
 export const saveSystemConfig = async (config: Partial<SystemConfig>): Promise<void> => {
-  try {
-    const current = await getSystemConfig();
-    const merged = { ...current, ...config };
-    
-    // Upsert: 'id' çakışması durumunda güncelleme yapar, yoksa yeni satır ekler
-    const { error } = await supabase
-      .from('system_settings')
-      .upsert({ id: 'zoom_link', data: merged }, { onConflict: 'id' });
-
-    if (error) throw error;
-    
-    cachedConfig = merged; // önbelleği anında güncelle
-  } catch (error) {
-    console.error("Sistem konfigürasyonu kaydedilirken hata:", error);
-    throw error;
+  const promises = [];
+  
+  if (config.zoom_link !== undefined) {
+    promises.push(supabase.from('system_settings').upsert({ key: 'zoom_link', value: config.zoom_link }));
   }
+  if (config.lesson_title !== undefined) {
+    promises.push(supabase.from('system_settings').upsert({ key: 'lesson_title', value: config.lesson_title }));
+  }
+  if (config.manual_lesson_active !== undefined) {
+    promises.push(supabase.from('system_settings').upsert({ key: 'manual_lesson_active', value: String(config.manual_lesson_active) }));
+  }
+
+  await Promise.all(promises);
 };
 
-/**
- * Önbelleği temizler (test veya hot-reload için).
- */
-export const clearSystemConfigCache = () => {
-  cachedConfig = null;
-};
-
-/**
- * Manuel ders override durumunu okur.
- */
 export const getManualLessonActive = async (): Promise<boolean> => {
-  const cfg = await getSystemConfig();
-  return cfg.manual_lesson_active === true;
+  const { data } = await supabase
+    .from('system_settings')
+    .select('value')
+    .eq('key', 'manual_lesson_active')
+    .maybeSingle();
+  return data?.value === 'true' || data?.value === true;
+};
+
+export const setManualLessonActive = async (active: boolean): Promise<void> => {
+  await supabase
+    .from('system_settings')
+    .upsert({ key: 'manual_lesson_active', value: String(active) });
 };
 
 /**
- * Manuel ders override ayarını Supabase'e yazar.
+ * system_settings tablosundaki belirli bir key'i dinlemek için özel abonelik
  */
-export const setManualLessonActive = async (active: boolean): Promise<void> => {
-  clearSystemConfigCache();
-  await saveSystemConfig({ manual_lesson_active: active });
+export const subscribeToSystemKey = (key: string, callback: (value: string) => void) => {
+  // İlk değeri çek
+  supabase.from('system_settings').select('value').eq('key', key).maybeSingle().then(({ data }) => {
+    if (data) callback(data.value);
+  });
+
+  const channelName = `system_settings_${key}_${Date.now()}`;
+  const channel = supabase.channel(channelName)
+    .on('postgres_changes', 
+      { event: '*', schema: 'public', table: 'system_settings', filter: `key=eq.${key}` }, 
+      (payload: any) => {
+        if (payload.new && payload.new.value !== undefined) {
+          callback(payload.new.value);
+        }
+      }
+    )
+    .subscribe();
+
+  return () => { supabase.removeChannel(channel); };
 };
