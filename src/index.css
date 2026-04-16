@@ -73,7 +73,37 @@
     to { opacity: 1; transform: translateY(0); }
   }
 
+  @keyframes scan-line {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(400%); }
+  }
+
+  @keyframes neon-glow-cyan {
+    0%, 100% { box-shadow: 0 0 10px rgba(0, 240, 255, 0.5), inset 0 0 5px rgba(0, 240, 255, 0.2); }
+    50% { box-shadow: 0 0 20px rgba(0, 240, 255, 0.8), inset 0 0 10px rgba(0, 240, 255, 0.4); }
+  }
+
+  @keyframes screen-shake {
+    0%, 100% { transform: translate(0, 0); }
+    10% { transform: translate(-2px, -1px); }
+    20% { transform: translate(-1px, 2px); }
+    30% { transform: translate(2px, 1px); }
+    40% { transform: translate(1px, -2px); }
+  }
+
   /* === ANİMASYON SINIFLARI === */
+  .animate-scan-line {
+    animation: scan-line 3s linear infinite;
+  }
+
+  .animate-neon-glow-cyan {
+    animation: neon-glow-cyan 2s ease-in-out infinite;
+  }
+
+  .animate-screen-shake {
+    animation: screen-shake 0.2s ease-in-out 3;
+  }
+
   .animate-pulse-glow {
     animation: pulse-glow 2s ease-in-out infinite;
   }

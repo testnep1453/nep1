@@ -5,13 +5,22 @@ const ADMIN_STUDENT_ID = import.meta.env.VITE_ADMIN_ID || '';
 
 export const getStudentById = async (id: string): Promise<Student | null> => {
   try {
-    const { data, error } = await supabase.from('students').select('*').eq('id', id).single();
-    if (error || !data) return null;
+    // Fetch base student data (now includes xp, level, display_name)
+    const { data: student, error } = await supabase.from('students').select('*').eq('id', id).single();
+    if (error || !student) return null;
+
     return {
-      id: data.id, name: data.name, nickname: data.nickname, email: data.email,
-      xp: data.xp || 0, level: data.level || 1, badges: data.badges || [],
-      avatar: data.avatar || 'hero_1', lastSeen: data.lastSeen || Date.now(),
-      attendanceHistory: data.attendanceHistory || [], streak: data.streak || 0,
+      id: student.id,
+      name: student.name,
+      nickname: student.display_name || student.nickname || 'AJAN',
+      email: student.email,
+      xp: student.xp ?? 0,
+      level: student.level ?? 1,
+      badges: student.badges || [],
+      avatar: student.avatar || 'hero_1',
+      lastSeen: student.lastSeen || Date.now(),
+      attendanceHistory: student.attendanceHistory || [],
+      streak: student.streak ?? 0,
     };
   } catch {
     return null;

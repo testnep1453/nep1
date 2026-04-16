@@ -118,9 +118,9 @@ export const AgentDashboard = ({
 
   let tabs: { id: AgentTab; label: string; icon: JSX.Element }[] = [
     { id: 'home', label: 'Ana Sayfa', icon: <Icons.Home /> },
-    { id: 'levels', label: 'Level & Rozetler', icon: <Icons.Trophy /> },
-    { id: 'archive', label: 'Arşiv', icon: <Icons.Film /> },
-    { id: 'activity', label: 'Etkinlik', icon: <Icons.Calendar /> },
+    { id: 'levels', label: '🎖️ RÜTBELERİM', icon: <Icons.Trophy /> },
+    { id: 'archive', label: '📂 GİZLİ DOSYALAR', icon: <Icons.Film /> },
+    { id: 'activity', label: '🎮 AJAN ARENASI', icon: <Icons.Calendar /> },
     { id: 'feedback', label: 'Sorgu Odası', icon: <span className="text-xl -mt-1 -ml-0.5">📋</span> },
   ];
 
@@ -129,8 +129,8 @@ export const AgentDashboard = ({
   }
 
   const tabTitles: Record<AgentTab, string> = {
-    home: 'AJAN KARARGAHI', operation: 'OPERASYON', levels: 'LEVEL & ROZETLER',
-    archive: 'ARŞİV', activity: 'ETKİNLİK', feedback: 'SORGU ODASI',
+    home: 'AJAN KARARGAHI', operation: 'OPERASYON', levels: '🎖️ RÜTBELERİM',
+    archive: '📂 GİZLİ DOSYALAR', activity: '🎮 AJAN ARENASI', feedback: 'SORGU ODASI',
   };
 
   return (
@@ -192,9 +192,9 @@ export const AgentDashboard = ({
         </div>
         <div className="p-4 border-b border-[#6358cc]/20">
           <button onClick={() => setDrawerOpen(true)}
-            className="flex items-center gap-3 w-full p-3 rounded-md bg-[#6358cc]/10 text-[#8b7fd8] hover:bg-[#6358cc]/20 border border-[#6358cc]/30 transition-all shadow-[0_0_15px_rgba(99,88,204,0.2)]">
+            className="flex items-center gap-3 w-full p-3 rounded-md bg-[#6358cc]/20 text-[#00F0FF] hover:bg-[#6358cc]/30 border border-[#00F0FF]/50 transition-all shadow-[0_0_20px_rgba(0,240,255,0.3)] animate-pulse-glow">
             <Icons.Target />
-            <span className="font-bold tracking-wide text-sm">DERSE KATIL</span>
+            <span className="font-bold tracking-[0.2em] text-sm">🚀 GÖREVE BAŞLA</span>
           </button>
         </div>
         <nav className="flex-1 p-4 space-y-2">

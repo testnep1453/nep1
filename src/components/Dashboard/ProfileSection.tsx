@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Student } from '../../types/student';
 import { Shield, Lock, Zap } from 'lucide-react';
 import { updateNickname } from '../../services/dbFirebase';
+import confetti from 'canvas-confetti';
 
 interface ProfileSectionProps {
   student: Student;
@@ -9,23 +10,43 @@ interface ProfileSectionProps {
 }
 
 const INVENTORY_ITEMS = [
-  { id: 'item_1', name: 'Taktik Kulaklık', reqLevel: 1, icon: '🎧' },
-  { id: 'item_2', name: 'Siber Tablet', reqLevel: 2, icon: '📱' },
-  { id: 'item_3', name: 'Gece Görüşü', reqLevel: 4, icon: '🕶️' },
-  { id: 'item_4', name: 'Lazer Kesici', reqLevel: 6, icon: '🔦' },
-  { id: 'item_5', name: 'EMP Bombası', reqLevel: 8, icon: '💣' },
-  { id: 'item_6', name: 'Hayalet Pelerini', reqLevel: 10, icon: '🥷' },
+  { id: 'item_drone', name: 'Siber Drone', reqLevel: 2, icon: '🚁' },
+  { id: 'item_watch', name: 'Hologram Saat', reqLevel: 4, icon: '⌚' },
+  { id: 'item_cloak', name: 'Görünmezlik Pelerini', reqLevel: 6, icon: '👻' },
+  { id: 'item_glasses', name: 'Lazer Gözlük', reqLevel: 8, icon: '🕶️' },
+  { id: 'item_jetpack', name: 'Sırt Roketi / Jetpack', reqLevel: 10, icon: '🚀' },
 ];
 
 
 
 export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps) => {
-  const [isEditingNickname, setIsEditingNickname] = useState(false);
-  const [nicknameValue, setNicknameValue] = useState(student.nickname || '');
-  const [saving, setSaving] = useState(false);
+  const [xpChanged, setXpChanged] = useState(false);
+  const totalXpInLevel = 200;
+  const xpForNextLevel = totalXpInLevel;
+  const currentXpProgress = student.xp % totalXpInLevel;
+  const xpProgress = (currentXpProgress / totalXpInLevel) * 100;
 
-  const xpForNextLevel = student.level * 200;
-  const xpProgress = (student.xp % 200) / 200 * 100;
+  // Visual feedback on level up or XP gain
+  useEffect(() => {
+    if (student.xp > 0) {
+      setXpChanged(true);
+      const timer = setTimeout(() => setXpChanged(false), 1000);
+      
+      // Level up feedback
+      const prevLevel = Number(sessionStorage.getItem(`agent_level_${student.id}`) || student.level);
+      if (student.level > prevLevel) {
+        confetti({
+          particleCount: 150,
+          spread: 80,
+          origin: { y: 0.6 },
+          colors: ['#00F0FF', '#39FF14', '#FF4500']
+        });
+      }
+      sessionStorage.setItem(`agent_level_${student.id}`, student.level.toString());
+      
+      return () => clearTimeout(timer);
+    }
+  }, [student.xp, student.level, student.id]);
 
   const handleSaveNickname = async () => {
     if (!nicknameValue.trim() || nicknameValue.trim() === student.nickname) {
@@ -96,20 +117,25 @@ export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps
 
       {/* SAĞ: XP BAR VE ENVANTER */}
       {!isAdmin && (
-        <div className="w-full lg:w-2/3 flex flex-col gap-4 md:gap-6 justify-center">
-          <div className="bg-black/40 p-4 md:p-5 rounded-2xl border border-gray-800">
+        <div className={`w-full lg:w-2/3 flex flex-col gap-4 md:gap-6 justify-center ${xpChanged ? 'animate-screen-shake' : ''}`}>
+          <div className="bg-black/40 p-4 md:p-5 rounded-2xl border border-gray-800 relative overflow-hidden group">
             <div className="flex justify-between items-end mb-2">
               <span className="text-gray-500 text-[10px] md:text-xs font-mono tracking-widest uppercase">Sonraki Level Hedefi</span>
-              <span className="text-[#00F0FF] text-xs md:text-sm font-mono font-bold">{student.xp % 200} / {xpForNextLevel} XP</span>
+              <span className="text-[#00F0FF] text-xs md:text-sm font-mono font-bold">{currentXpProgress} / {totalXpInLevel} XP</span>
             </div>
-            <div className="h-3 md:h-4 bg-[#050505] rounded-full overflow-hidden border border-gray-800 shadow-inner">
+            <div className={`h-4 md:h-6 bg-[#050505] rounded-full overflow-hidden border border-gray-800 shadow-[inset_0_0_10px_rgba(0,0,0,0.5)] relative ${xpProgress >= 100 ? 'animate-neon-glow-cyan' : ''}`}>
               <div
-                className="h-full bg-gradient-to-r from-[#00F0FF] to-[#39FF14] rounded-full transition-all duration-1000 relative"
+                className="h-full bg-gradient-to-r from-[#00F0FF] via-[#6358cc] to-[#39FF14] rounded-full transition-all duration-1000 relative shadow-[0_0_15px_rgba(0,240,255,0.4)]"
                 style={{ width: `${xpProgress}%` }}
               >
-                <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,0.2)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.2)_50%,rgba(255,255,255,0.2)_75%,transparent_75%,transparent)] bg-[length:1rem_1rem] animate-[pan_1s_linear_infinite]" />
+                {/* Scanning Animation */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/30 to-transparent w-20 animate-scan-line pointer-events-none" />
+                
+                <div className="absolute inset-0 bg-[linear-gradient(45deg,rgba(255,255,255,0.1)_25%,transparent_25%,transparent_50%,rgba(255,255,255,0.1)_50%,rgba(255,255,255,0.1)_75%,transparent_75%,transparent)] bg-[length:1rem_1rem]" />
               </div>
             </div>
+            {/* Background Glow */}
+            <div className="absolute -inset-1 bg-[#00F0FF]/5 blur-xl opacity-50 pointer-events-none" />
           </div>
 
           <div>

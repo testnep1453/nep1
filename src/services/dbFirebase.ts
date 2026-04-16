@@ -88,7 +88,25 @@ export const getFeedbackForLesson = async (): Promise<FeedbackEntry[]> => { retu
 export const getAllFeedback = async (): Promise<FeedbackEntry[]> => { return []; };
 
 export const updateNickname = async (studentId: string, nickname: string) => {
-  await supabase.from('students').update({ nickname }).eq('id', studentId);
+  // Update both for safety, student table now contains both columns
+  await supabase.from('students').update({ 
+    nickname, 
+    display_name: nickname 
+  }).eq('id', studentId);
+};
+
+export const getAgentData = async (id: string) => {
+  const { data, error } = await supabase.from('students').select('*').eq('id', id).single();
+  if (error) return null;
+  return data;
+};
+
+export const updateAgentXP = async (id: string, xp: number, level: number) => {
+  await supabase.from('students').update({ xp, level }).eq('id', id);
+};
+
+export const updateDisplayName = async (id: string, displayName: string) => {
+  await supabase.from('students').update({ display_name: displayName, nickname: displayName }).eq('id', id);
 };
 
 export const saveAdminPassword = async (hashedPassword: string) => {

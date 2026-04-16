@@ -1,5 +1,6 @@
 import seedData from '../student_list.json';
 import { Student } from '../types/student';
+import { supabase } from '../config/supabase';
 
 // --- GÜVENLİK DÜZELTMESİ ---
 // localStorage'a TÜM öğrenci listesi YAZILMAZ.
@@ -57,57 +58,80 @@ export const addMessage = (_text: string) => {
 
 // --- KATILIM + OTOMATİK XP + STREAK ---
 
-const XP_FOR_ATTENDANCE = 100;
-const XP_FOR_STREAK_BONUS = 50;
-
-export const recordAttendance = (studentId: string) => {
+export const recordAttendance = async (studentId: string) => {
   const now = new Date();
   const today = now.toISOString().slice(0, 10);
-  const students = getStudents();
-  const idx = students.findIndex((s) => s.id === studentId);
-  if (idx === -1) return;
+  
+  try {
+    // 1. Check if already attended today (attendance table)
+    const { data: attData } = await supabase
+      .from('attendance')
+      .select('id')
+      .eq('studentId', studentId)
+      .eq('lessonDate', today)
+      .maybeSingle();
 
-  const student = students[idx];
-  if (!student.attendanceHistory) student.attendanceHistory = [];
+    if (attData) return; // Already recorded
 
-  // Bugün zaten kayıt var mı?
-  const alreadyToday = student.attendanceHistory.some((r) => r.date === today);
-  if (alreadyToday) return;
+    // 2. record attendance
+    await supabase.from('attendance').insert({
+      id: `${today}_${studentId}`, 
+      studentId, 
+      lessonDate: today, 
+      joinedAt: Date.now(), 
+      autoJoined: false, 
+      xpEarned: 100
+    });
 
-  // Streak hesapla
-  const yesterday = new Date(now);
-  yesterday.setDate(yesterday.getDate() - 1);
-  const yesterdayStr = yesterday.toISOString().slice(0, 10);
-  const lastRecord = student.attendanceHistory.length > 0
-    ? student.attendanceHistory[student.attendanceHistory.length - 1]
-    : null;
+    // 3. Get current student data (XP, Level)
+    const { data: student } = await supabase
+      .from('students')
+      .select('xp, level, streak, attendanceHistory')
+      .eq('id', studentId)
+      .maybeSingle();
 
-  let newStreak = 1;
-  let streakBonus = 0;
-  if (lastRecord && lastRecord.date === yesterdayStr) {
-    newStreak = (student.streak || 0) + 1;
-    if (newStreak >= 2) {
-      streakBonus = XP_FOR_STREAK_BONUS;
+    if (!student) {
+      // Create student entry if not exists (though usually exists on login)
+      await supabase.from('students').insert({
+        id: studentId,
+        xp: 100,
+        level: 1,
+        streak: 1,
+        attendanceHistory: [today]
+      });
+      return { xpEarned: 100, streak: 1, streakBonus: false };
     }
+
+    const currentXP = student.xp || 0;
+    const history = student.attendanceHistory || [];
+    
+    // Streak logic
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().slice(0, 10);
+    
+    let newStreak = 1;
+    let streakBonus = 0;
+    if (history.includes(yesterdayStr)) {
+      newStreak = (student.streak || 0) + 1;
+      if (newStreak >= 2) streakBonus = 50;
+    }
+
+    const earnedXP = 100 + streakBonus;
+    const nextXP = currentXP + earnedXP;
+    const nextLevel = Math.floor(nextXP / 200) + 1;
+
+    // 4. Update students table immediately
+    await supabase.from('students').update({
+      xp: nextXP,
+      level: nextLevel,
+      streak: newStreak,
+      attendanceHistory: [...history, today]
+    }).eq('id', studentId);
+
+    return { xpEarned: earnedXP, streak: newStreak, streakBonus: streakBonus > 0 };
+  } catch (error) {
+    console.error('XP Sync Error:', error);
+    return null;
   }
-
-  const totalXp = XP_FOR_ATTENDANCE + streakBonus;
-  student.attendanceHistory.push({ date: today, lessonDate: today, xpEarned: totalXp, joinedAt: Date.now(), autoJoined: false });
-  student.streak = newStreak;
-  student.xp = (student.xp || 0) + totalXp;
-  student.level = Math.floor(student.xp / 200) + 1;
-
-  // Rozet kontrolü
-  if (!student.badges) student.badges = [];
-  if (!student.badges.includes('first_login')) {
-    student.badges.push('first_login');
-  }
-  if (newStreak >= 7 && !student.badges.includes('week_streak')) {
-    student.badges.push('week_streak');
-  }
-
-  students[idx] = student;
-  saveStudents(students);
-
-  return { xpEarned: totalXp, streak: newStreak, streakBonus: streakBonus > 0 };
 };
