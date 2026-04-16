@@ -26,6 +26,7 @@ import { ArchiveManager } from './ArchiveManager';
 import { SystemConfigManager } from './SystemConfigManager';
 import { subscribeToSettingStore } from '../../services/dbFirebase';
 import { setManualLessonActive } from '../../services/systemSettingsService';
+import { SecurityLogs } from './SecurityLogs';
 
 const LessonToggleButton = () => {
   const [manualLessonActive, setManualLessonActiveState] = useState(false);
@@ -303,26 +304,8 @@ export const AdminDashboard: React.FC = () => {
           {activeTab === 'archive' && <ArchiveManager />}
           {activeTab === 'config' && <SystemConfigManager />}
           
-          {/* YENİ: GÜVENLİK MERKEZİ (Güvenlik olaylarını burada detaylandırabiliriz) */}
-          {activeTab === 'security' && (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between border-b border-red-500/20 pb-4">
-                <div>
-                  <h3 className="text-2xl font-bold text-red-400 flex items-center gap-3">
-                    <ShieldAlert className="w-8 h-8" /> Güvenlik Merkezi
-                  </h3>
-                  <p className="text-slate-500 mt-1">Siber tehditleri ve loglanmış şüpheli IP adreslerini yönetin.</p>
-                </div>
-              </div>
-              <div className="bg-black/40 border border-white/5 p-8 rounded-2xl text-center">
-                 <ShieldAlert className="w-16 h-16 text-slate-700 mx-auto mb-4" />
-                 <h4 className="text-xl font-bold text-white mb-2">Güvenlik Logları (Canlı)</h4>
-                 <p className="text-slate-400 max-w-md mx-auto">
-                   Gerçek zamanlı olarak tespit edilen hatalı giriş denemeleri sağ alt köşede bildirim olarak gelmeye devam edecektir.
-                 </p>
-              </div>
-            </div>
-          )}
+          {/* YENİ: GÜVENLİK MERKEZİ - Canlı Hata Radar Sistemi */}
+          {activeTab === 'security' && <SecurityLogs />}
         </section>
 
         <AdminSecurityNotifier />

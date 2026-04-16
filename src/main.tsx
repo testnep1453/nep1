@@ -2,6 +2,10 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
 import './index.css';
+import { initErrorLogger } from './services/errorLogger';
+
+// Global hata dinleyicisini başlat (Supabase Logger)
+initErrorLogger();
 
 // PWA (Uygulama Yükleme) için Service Worker'ı manuel olarak sisteme kaydediyoruz
 if ('serviceWorker' in navigator) {
