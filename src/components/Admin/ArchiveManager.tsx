@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getArchiveVideos, addArchiveVideo, removeArchiveVideo, ArchiveVideo } from '../../services/archiveService';
+import { getArchiveVideos, addArchiveVideo, removeArchiveVideo, ArchiveVideo, extractYoutubeId } from '../../services/archiveService';
 
 interface Props {
   isAdmin?: boolean;
