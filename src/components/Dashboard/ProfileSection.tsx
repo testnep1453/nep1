@@ -10,11 +10,12 @@ interface ProfileSectionProps {
 }
 
 const INVENTORY_ITEMS = [
-  { id: 'item_drone', name: 'Siber Drone', reqLevel: 2, icon: '🚁' },
-  { id: 'item_watch', name: 'Hologram Saat', reqLevel: 4, icon: '⌚' },
-  { id: 'item_cloak', name: 'Görünmezlik Pelerini', reqLevel: 6, icon: '👻' },
-  { id: 'item_glasses', name: 'Lazer Gözlük', reqLevel: 8, icon: '🕶️' },
-  { id: 'item_jetpack', name: 'Sırt Roketi / Jetpack', reqLevel: 10, icon: '🚀' },
+  { id: 'item_goggles', name: 'Gece Görüş Gözlüğü', reqLevel: 2, icon: '🕶️' },
+  { id: 'item_spy_watch', name: 'Casus Saat', reqLevel: 4, icon: '⌚' },
+  { id: 'item_drone', name: 'Gözlem Dronu', reqLevel: 6, icon: '🚁' },
+  { id: 'item_shield', name: 'Enerji Kalkanı', reqLevel: 8, icon: '🛡️' },
+  { id: 'item_jetpack', name: 'Sırt Roketi', reqLevel: 10, icon: '🚀' },
+  { id: 'item_hacker', name: 'Hackleme Cihazı', reqLevel: 12, icon: '💻' },
 ];
 
 
