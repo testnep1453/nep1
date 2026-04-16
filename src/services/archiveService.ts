@@ -18,17 +18,17 @@ import { supabase } from '../config/supabase';
 export interface ArchiveVideo {
   id: number;
   title: string;
-  youtubeUrl: string;
-  youtubeId: string;
-  thumbnailUrl: string;
-  addedAt: number;
-  addedBy: string;
+  youtube_url: string;
+  youtube_id: string;
+  thumbnail_url: string;
+  added_at: string;
+  added_by: string;
 }
 
-const extractYoutubeId = (url: string): string => {
+export const extractYoutubeId = (url: string): string => {
   if (!url) return '';
-  const match = url.match(/(?:v\/|youtu\.be\/|v=|embed\/)([^&?\s]{11})/);
-  return match ? match[1] : url.slice(0, 11);
+  const match = url.match(/(?:v\/|youtu\.be\/|v=|embed\/|shorts\/)([^&?\s]{11})/i);
+  return match ? match[1] : url.trim();
 };
 
 export const getArchiveVideos = async (): Promise<ArchiveVideo[]> => {
@@ -38,19 +38,16 @@ export const getArchiveVideos = async (): Promise<ArchiveVideo[]> => {
       .select('*')
       .order('added_at', { ascending: false });
     if (error) {
-      // Tablo henüz oluşturulmadıysa sessizce boş dizi döndür
       return [];
     }
-    // Map back to camelCase for the frontend if necessary, but select * returns whatever DB has.
-    // If DB has snake_case, we should map it to match ArchiveVideo interface.
     return (data || []).map(v => ({
       id: v.id,
       title: v.title,
-      youtubeUrl: v.youtube_url,
-      youtubeId: v.youtube_id,
-      thumbnailUrl: v.thumbnail_url,
-      addedAt: new Date(v.added_at).getTime(),
-      addedBy: v.added_by
+      youtube_url: v.youtube_url,
+      youtube_id: v.youtube_id,
+      thumbnail_url: v.thumbnail_url,
+      added_at: v.added_at,
+      added_by: v.added_by
     }));
   } catch {
     return [];

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { EmojiReaction } from '../../types/student';
+import { extractYoutubeId } from '../../services/dbFirebase';
 
 interface YouTubePlayerProps {
   videoId: string;
@@ -30,11 +31,12 @@ export const YouTubePlayer = ({ videoId }: YouTubePlayerProps) => {
       <div className="relative bg-black rounded-xl overflow-hidden mb-4" style={{ paddingTop: '56.25%' }}>
         <iframe
           className="absolute top-0 left-0 w-full h-full"
-          src={`https://www.youtube.com/embed/${videoId}`}
+          src={`https://www.youtube.com/embed/${extractYoutubeId(videoId)}`}
           title="YouTube video player"
           frameBorder="0"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
+          referrerPolicy="strict-origin-when-cross-origin"
         />
 
         {reactions.map((reaction) => (

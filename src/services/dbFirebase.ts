@@ -77,8 +77,8 @@ export const disableTrailer = async () => {
 
 export const extractYoutubeId = (url: string): string => {
   if (!url) return '';
-  const match = url.match(/(?:v\/|youtu\.be\/|v=|embed\/)([^&?\s]{11})/);
-  return match ? match[1] : url.slice(0, 11);
+  const match = url.match(/(?:v\/|youtu\.be\/|v=|embed\/|shorts\/)([^&?\s]{11})/i);
+  return match ? match[1] : url.trim();
 };
 
 export const addStudentsBatch = async (students: Student[]) => {

@@ -109,14 +109,14 @@ export const ArchiveManager = ({ isAdmin = false }: Props) => {
             {videos.map(v => (
               <div key={v.id} className="flex items-center gap-4 p-4 hover:bg-white/5 transition-colors">
                 <img
-                  src={v.thumbnailUrl?.replace('hqdefault', 'mqdefault')}
+                  src={v.thumbnail_url?.replace('hqdefault', 'mqdefault')}
                   alt={v.title}
                   className="w-24 h-16 object-cover rounded flex-shrink-0 bg-gray-900"
                   onError={(e) => {
                     const img = e.target as HTMLImageElement;
                     if (!img.src.endsWith('default.jpg')) {
                       // Try default.jpg (usually exists even for unlisted)
-                      if (v.youtubeId) img.src = `https://img.youtube.com/vi/${v.youtubeId}/default.jpg`;
+                      if (v.youtube_id) img.src = `https://img.youtube.com/vi/${extractYoutubeId(v.youtube_id || v.youtube_url)}/default.jpg`;
                       else {
                         img.style.display = 'none';
                         const placeholder = img.nextElementSibling as HTMLElement;
@@ -138,7 +138,10 @@ export const ArchiveManager = ({ isAdmin = false }: Props) => {
 
                 <div className="flex-1 min-w-0">
                   <div className="text-white font-bold text-sm truncate">{v.title}</div>
-                  <div className="text-gray-600 text-xs font-mono mt-0.5 truncate">{v.youtubeUrl}</div>
+                  <div className="text-gray-600 text-xs font-mono mt-0.5 truncate">{v.youtube_url}</div>
+                  {v.added_at && (
+                    <div className="text-gray-500 text-[10px] font-mono mt-1">EKLENME: {new Date(v.added_at).toLocaleDateString()}</div>
+                  )}
                 </div>
                 {/* Silme butonu sadece admin */}
                 {isAdmin && (

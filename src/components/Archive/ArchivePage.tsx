@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getArchiveVideos, ArchiveVideo } from '../../services/archiveService';
+import { getArchiveVideos, ArchiveVideo, extractYoutubeId } from '../../services/archiveService';
 
 export const ArchivePage = () => {
   const [videos, setVideos] = useState<ArchiveVideo[]>([]);
@@ -31,9 +31,11 @@ export const ArchivePage = () => {
         <div className="bg-[#0A1128]/80 border border-[#FF4500]/30 rounded-lg overflow-hidden">
           <div className="aspect-video">
             <iframe
-              src={`https://www.youtube.com/embed/${selectedVideo.youtubeId}?autoplay=1`}
+              src={(selectedVideo.youtube_id || selectedVideo.youtube_url) ? `https://www.youtube.com/embed/${extractYoutubeId(selectedVideo.youtube_id || selectedVideo.youtube_url)}?autoplay=1` : ''}
               className="w-full h-full"
-              allow="autoplay; encrypted-media" allowFullScreen
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+              referrerPolicy="strict-origin-when-cross-origin"
             />
           </div>
           <div className="p-4 flex items-center justify-between">
@@ -53,13 +55,13 @@ export const ArchivePage = () => {
             onClick={() => setSelectedVideo(video)}
             className="bg-[#0A1128]/80 border border-gray-800 rounded-lg overflow-hidden cursor-pointer hover:border-[#00F0FF]/30 transition-all group">
             <div className="aspect-video relative overflow-hidden">
-              <img src={video.thumbnailUrl?.replace('hqdefault', 'mqdefault')} alt={video.title}
+              <img src={video.thumbnail_url?.replace('hqdefault', 'mqdefault')} alt={video.title}
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   // If thumbnail fails, try default.jpg, or finally hide it
                   if (!target.src.endsWith('default.jpg')) {
-                    target.src = `https://img.youtube.com/vi/${video.youtubeId}/default.jpg`;
+                    target.src = `https://img.youtube.com/vi/${extractYoutubeId(video.youtube_id || video.youtube_url)}/default.jpg`;
                   } else {
                     target.style.display = 'none';
                     if (target.nextElementSibling) {
@@ -80,8 +82,8 @@ export const ArchivePage = () => {
             </div>
             <div className="p-3">
               <h4 className="text-white font-bold text-sm truncate">{video.title}</h4>
-              {video.lessonDate && (
-                <p className="text-gray-600 text-xs font-mono mt-1">{video.lessonDate}</p>
+              {video.added_at && (
+                <p className="text-gray-600 text-xs font-mono mt-1">{new Date(video.added_at).toLocaleDateString()}</p>
               )}
             </div>
           </div>
