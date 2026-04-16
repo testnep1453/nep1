@@ -1,28 +1,15 @@
 import { supabase } from '../config/supabase';
-
-/**
- * ⚠️ LOGIN_ALERTS_ENABLED:
- * Supabase'de `login_alerts` tablosu oluşturulduktan sonra `true` yapın.
- * Tablo yokken `true` bırakmak 404 konsol hatasına neden olur.
- *
- * Tablo şeması:
- *   id           uuid primary key default gen_random_uuid()
- *   student_id   text not null
- *   browser      text
- *   is_desktop   boolean
- *   device_name  text
- *   alert_reason text
- *   created_at   timestamptz default now()
- */
-const LOGIN_ALERTS_ENABLED = false;
+import { getSystemConfig } from './systemSettingsService';
 
 /**
  * Kullanıcı giriş yaptığında cihaz bilgilerini kaydeder.
- * LOGIN_ALERTS_ENABLED false ise sessizce çıkar — konsola hata basmaz.
+ * Supabase'deki settings -> system_config -> login_alerts_enabled ayarına bağlıdır.
  */
 export const recordLoginAndCheckSuspicious = async (studentId: string): Promise<void> => {
-  if (!LOGIN_ALERTS_ENABLED) return;
   try {
+    const config = await getSystemConfig();
+    if (!config.login_alerts_enabled) return;
+
     const ua = navigator.userAgent;
     let browser = 'Diğer';
     if (ua.includes('Chrome')) browser = 'Chrome';
@@ -48,8 +35,9 @@ export const recordLoginAndCheckSuspicious = async (studentId: string): Promise<
  * Son 100 login logunu dondurur, dashboard icin
  */
 export const getAllLoginLogs = async () => {
-  if (!LOGIN_ALERTS_ENABLED) return [];
   try {
+    const config = await getSystemConfig();
+    if (!config.login_alerts_enabled) return [];
     const { data } = await supabase.from('login_alerts').select('*').order('created_at', { ascending: false }).limit(200);
     return data || [];
   } catch {
@@ -58,6 +46,11 @@ export const getAllLoginLogs = async () => {
 };
 
 export const getSuspiciousLogins = async (_limitCount: number = 20) => {
-  if (!LOGIN_ALERTS_ENABLED) return [];
-  return [];
+  try {
+    const config = await getSystemConfig();
+    if (!config.login_alerts_enabled) return [];
+    return [];
+  } catch {
+    return [];
+  }
 };

@@ -356,15 +356,6 @@ export const AdminDashboard: React.FC = () => {
             
             <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
               <SystemConfigManager />
-              
-              <div className="mt-12 p-6 bg-[#39FF14]/5 border border-[#39FF14]/20 rounded-2xl">
-                <h4 className="text-[#39FF14] font-bold text-sm mb-2 uppercase tracking-widest">Hızlı Bilgi</h4>
-                <p className="text-slate-400 text-xs leading-relaxed">
-                  Buradaki değişiklikler gerçek zamanlı (real-time) olarak tüm bağlı ajanlara yansıtılır. 
-                  Zoom linkini güncellediğinizde ajanların ekranındaki bağlantı anında güncellenecektir. 
-                  Zorunlu ders geçişleri (Manual Override) için yukarıdaki ana butonu da kullanabilirsiniz.
-                </p>
-              </div>
             </div>
 
             <div className="p-6 border-t border-white/5 bg-black/20 flex justify-end">

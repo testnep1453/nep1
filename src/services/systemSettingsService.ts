@@ -11,12 +11,16 @@ export interface SystemConfig {
   zoom_link: string;
   lesson_title: string;
   manual_lesson_active: boolean;
+  login_alerts_enabled: boolean;
+  maintenance_mode: boolean;
 }
 
 const FALLBACK_CONFIG: SystemConfig = {
   zoom_link: '',
   lesson_title: 'NEP Haftalık Ders',
   manual_lesson_active: false,
+  login_alerts_enabled: false,
+  maintenance_mode: false,
 };
 
 const SYSTEM_CONFIG_ID = 'system_config';
