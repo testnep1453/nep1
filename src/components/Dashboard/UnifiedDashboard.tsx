@@ -15,7 +15,9 @@ import { FeedbackForm, isFeedbackTime } from '../Feedback/FeedbackForm';
 import { AttendancePage } from '../Admin/AttendancePage';
 import { ArchiveManager } from '../Admin/ArchiveManager';
 import { SurveyManager } from '../Admin/SurveyManager';
+import { SystemConfigManager } from '../Admin/SystemConfigManager';
 import { getAllLoginLogs } from '../../services/loginAlertService';
+import { Settings } from 'lucide-react';
 import { useAutoMessages } from '../../hooks/useAutoMessages';
 import { useNotifications, sendNotificationToAll } from '../../hooks/useNotifications';
 import { useAutoZoom } from '../../hooks/useAutoZoom';
@@ -113,6 +115,7 @@ export const UnifiedDashboard = ({
   // Feedback State (Admin)
   const [feedbackList, setFeedbackList] = useState<FeedbackEntry[]>([]);
   const [feedbackLoading, setFeedbackLoading] = useState(false);
+  const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
 
   useEffect(() => {
     if (isAdmin) {
@@ -404,7 +407,13 @@ export const UnifiedDashboard = ({
               {activeTab === 'geribildirim' && 'GERİ BİLDİRİMLER'}
             </h1>
           </div>
-          <TopBar student={student} unreadCount={unreadCount} theme={theme} onThemeChange={handleThemeChange} />
+          <TopBar 
+            student={student} 
+            unreadCount={unreadCount} 
+            theme={theme} 
+            onThemeChange={handleThemeChange} 
+            onOpenSettings={() => setIsConfigModalOpen(true)}
+          />
         </header>
 
         <div className="max-w-7xl mx-auto">
@@ -728,8 +737,6 @@ export const UnifiedDashboard = ({
             <SurveyManager />
           )}
 
-
-
         </div>
       </main>
 
@@ -737,6 +744,54 @@ export const UnifiedDashboard = ({
         <div className="md:hidden fixed bottom-0 left-0 right-0 bg-[#0A1128] border-t border-[#00F0FF]/20 z-20 flex items-center justify-around px-2 py-2 safe-area-bottom">
           <button onClick={() => setActiveTab('genel')} className={`flex flex-col items-center gap-1 p-2 rounded-lg transition-all min-w-[60px] min-h-[56px] ${activeTab === 'genel' ? 'text-[#00F0FF]' : 'text-gray-500'}`}><Icons.Home /><span className="text-[10px] font-bold">ANA SAYFA</span></button>
           <button onClick={() => setDrawerOpen(true)} className="flex flex-col items-center gap-1 p-2 rounded-lg bg-[#6358cc]/20 text-[#8b7fd8] min-w-[60px] min-h-[56px]"><Icons.Target /><span className="text-[10px] font-bold">OPERASYON</span></button>
+        </div>
+      )}
+
+      {/* SİSTEM AYARLARI TAM EKRAN MODAL */}
+      {isConfigModalOpen && (
+        <div className="fixed inset-0 z-[500] flex items-center justify-center animate-in fade-in zoom-in duration-300">
+          <div className="absolute inset-0 bg-black/95 backdrop-blur-xl" onClick={() => setIsConfigModalOpen(false)} />
+          
+          <div className="relative w-full h-full max-w-4xl max-h-[90vh] bg-[#0A1128] border border-[#39FF14]/30 rounded-3xl overflow-hidden flex flex-col shadow-[0_0_100px_rgba(57,255,20,0.2)] mx-4">
+            <div className="p-6 border-b border-white/5 flex items-center justify-between bg-black/40">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-[#39FF14]/10 rounded-lg flex items-center justify-center border border-[#39FF14]/30">
+                  <Settings className="text-[#39FF14] w-6 h-6" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold tracking-tight text-white uppercase">Sistem Ayarları</h2>
+                  <p className="text-slate-500 text-xs">Genel operasyonel parametreleri yapılandırın.</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setIsConfigModalOpen(false)}
+                className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-red-500/20 hover:border-red-500/30 transition-all font-bold"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+              <SystemConfigManager />
+              
+              <div className="mt-12 p-6 bg-[#39FF14]/5 border border-[#39FF14]/20 rounded-2xl">
+                <h4 className="text-[#39FF14] font-bold text-sm mb-2 uppercase tracking-widest">Hızlı Bilgi</h4>
+                <p className="text-slate-400 text-xs leading-relaxed">
+                  Buradaki değişiklikler gerçek zamanlı (real-time) olarak tüm bağlı ajanlara yansıtılır. 
+                  Zoom linkini güncellediğinizde ajanların ekranındaki bağlantı anında güncellenecektir. 
+                </p>
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-white/5 bg-black/20 flex justify-end">
+              <button 
+                onClick={() => setIsConfigModalOpen(false)}
+                className="px-8 py-3 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-xl transition-all font-bold uppercase tracking-widest text-sm"
+              >
+                Kapat
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

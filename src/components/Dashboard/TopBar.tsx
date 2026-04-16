@@ -1,12 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Student } from '../../types/student';
 import { NotificationPanel } from './NotificationPanel';
+import { Settings } from 'lucide-react';
 
 interface TopBarProps {
   student: Student;
   unreadCount: number;
   theme?: 'dark' | 'light';
   onThemeChange?: (theme: 'dark' | 'light') => void;
+  onOpenSettings?: () => void;
 }
 
 const BellIcon = () => (
@@ -24,7 +26,7 @@ const InstallIcon = () => (
   </svg>
 );
 
-export const TopBar = ({ student, unreadCount, theme = 'dark', onThemeChange }: TopBarProps) => {
+export const TopBar = ({ student, unreadCount, theme = 'dark', onThemeChange, onOpenSettings }: TopBarProps) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const isAdmin = student.id === '1002';
   const accentColor = isAdmin ? '#39FF14' : '#00F0FF';
@@ -71,7 +73,7 @@ export const TopBar = ({ student, unreadCount, theme = 'dark', onThemeChange }: 
       <div className="flex items-center gap-2 sm:gap-3 relative">
         
         {!isStandalone && (
-          <div className="relative">
+          <div className="relative flex items-center">
             <button
               onClick={handleInstallClick}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#39FF14]/10 hover:bg-[#39FF14]/20 text-[#39FF14] border border-[#39FF14]/30 transition-all font-bold text-xs shadow-[0_0_10px_rgba(57,255,20,0.2)] animate-pulse"
@@ -80,6 +82,16 @@ export const TopBar = ({ student, unreadCount, theme = 'dark', onThemeChange }: 
               <InstallIcon />
               <span className="hidden sm:inline tracking-wider">YÜKLE</span>
             </button>
+
+            {isAdmin && onOpenSettings && (
+              <button
+                onClick={onOpenSettings}
+                className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-[#39FF14] border border-white/10 transition-all group ml-1 sm:ml-2"
+                title="Sistem Ayarları"
+              >
+                <Settings size={18} className="group-hover:rotate-90 transition-transform duration-500" />
+              </button>
+            )}
 
             {showManualPrompt && (
               <div className="absolute top-12 right-0 w-80 bg-[#0A1128] border border-[#00F0FF]/40 p-4 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] z-50">

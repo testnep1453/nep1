@@ -10,7 +10,9 @@ import {
   BellRing,
   LayoutDashboard,
   Archive,
-  Settings
+  Settings,
+  PlusCircle,
+  Download
 } from 'lucide-react';
 import { signOutUser } from '../../services/authService';
 import { getStudents } from '../../services/db';
@@ -100,6 +102,7 @@ export const AdminDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'overview' | 'attendance' | 'surveys' | 'knowledge' | 'archive' | 'security' | 'config'>('overview');
   const [students, setStudents] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
 
   useEffect(() => {
     const data = getStudents();
@@ -217,6 +220,22 @@ export const AdminDashboard: React.FC = () => {
                   className="bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2 text-sm focus:border-[#39FF14]/50 outline-none w-64 transition-all"
                 />
              </div>
+             
+             {/* YÜKLE BUTONU (PWA / İndir) */}
+             <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#39FF14]/10 hover:bg-[#39FF14]/20 text-[#39FF14] border border-[#39FF14]/30 transition-all font-bold text-xs">
+                <Download size={16} />
+                <span className="tracking-wider">YÜKLE</span>
+             </button>
+
+             {/* AYARLAR ÇARKI */}
+             <button 
+                onClick={() => setIsConfigModalOpen(true)}
+                className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-[#ffffff] hover:text-[#39FF14] hover:bg-white/10 transition-all group"
+                title="Sistem Ayarları"
+             >
+                <Settings size={20} className="group-hover:rotate-90 transition-transform duration-500" />
+             </button>
+
              <div className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-[#39FF14] relative">
                 <BellRing size={20} />
                 <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
@@ -310,6 +329,55 @@ export const AdminDashboard: React.FC = () => {
 
         <div className="fixed top-0 right-0 -z-10 w-[500px] h-[500px] bg-[#39FF14]/5 blur-[120px] rounded-full pointer-events-none" />
       </main>
+
+      {/* SİSTEM AYARLARI TAM EKRAN MODAL */}
+      {isConfigModalOpen && (
+        <div className="fixed inset-0 z-[500] flex items-center justify-center animate-in fade-in zoom-in duration-300">
+          <div className="absolute inset-0 bg-black/95 backdrop-blur-xl" onClick={() => setIsConfigModalOpen(false)} />
+          
+          <div className="relative w-full h-full max-w-4xl max-h-[90vh] bg-[#0A1128] border border-[#39FF14]/30 rounded-3xl overflow-hidden flex flex-col shadow-[0_0_100px_rgba(57,255,20,0.2)] mx-4">
+            <div className="p-6 border-b border-white/5 flex items-center justify-between bg-black/40">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-[#39FF14]/10 rounded-lg flex items-center justify-center border border-[#39FF14]/30">
+                  <Settings className="text-[#39FF14] w-6 h-6" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold tracking-tight text-white uppercase">Sistem Ayarları</h2>
+                  <p className="text-slate-500 text-xs">Genel operasyonel parametreleri yapılandırın.</p>
+                </div>
+              </div>
+              <button 
+                onClick={() => setIsConfigModalOpen(false)}
+                className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-red-500/20 hover:border-red-500/30 transition-all font-bold"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+              <SystemConfigManager />
+              
+              <div className="mt-12 p-6 bg-[#39FF14]/5 border border-[#39FF14]/20 rounded-2xl">
+                <h4 className="text-[#39FF14] font-bold text-sm mb-2 uppercase tracking-widest">Hızlı Bilgi</h4>
+                <p className="text-slate-400 text-xs leading-relaxed">
+                  Buradaki değişiklikler gerçek zamanlı (real-time) olarak tüm bağlı ajanlara yansıtılır. 
+                  Zoom linkini güncellediğinizde ajanların ekranındaki bağlantı anında güncellenecektir. 
+                  Zorunlu ders geçişleri (Manual Override) için yukarıdaki ana butonu da kullanabilirsiniz.
+                </p>
+              </div>
+            </div>
+
+            <div className="p-6 border-t border-white/5 bg-black/20 flex justify-end">
+              <button 
+                onClick={() => setIsConfigModalOpen(false)}
+                className="px-8 py-3 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-xl transition-all font-bold uppercase tracking-widest text-sm"
+              >
+                Kapat
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
