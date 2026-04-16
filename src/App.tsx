@@ -11,6 +11,9 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { getNextLesson } from './config/lessonSchedule';
 import { requestNotificationPermission, setupNotificationListener } from './services/fcm';
 import { recordLoginAndCheckSuspicious } from './services/loginAlertService';
+import { useCommandListener } from './hooks/useCommandListener';
+import { TrailerOverlay } from './components/CommandOverlay';
+import { extractYoutubeId } from './services/dbFirebase';
 
 type AppStatus = 'loggingIn' | 'adminAuth' | 'dashboard';
 
@@ -30,6 +33,7 @@ function App() {
     cancelEmailVerification,
   } = useAuth();
 
+  const { lastCommand, setLastCommand } = useCommandListener();
   const onlineCount = usePresence(student?.id || null);
   const [appStatus, setAppStatus] = useState<AppStatus>('loggingIn');
 
@@ -60,6 +64,14 @@ function App() {
       setAppStatus('loggingIn');
     }
   }, [student]);
+
+  useEffect(() => {
+    if (lastCommand?.command === 'START_LESSON') {
+      // Dispatch a custom event for redirection to 'yoklama' (attendance)
+      // This is a robust way to change tab without react-router or lifting state up
+      window.dispatchEvent(new CustomEvent('system-navigation', { detail: { target: 'yoklama' } }));
+    }
+  }, [lastCommand]);
 
   useEffect(() => {
     if (needsAdminAuth) {
@@ -143,7 +155,21 @@ function App() {
     );
   }
 
-  return null;
+    );
+  }
+
+  return (
+    <>
+      {lastCommand?.command === 'START_TRAILER' && lastCommand.payload?.video_url && (
+        <TrailerOverlay 
+          videoId={extractYoutubeId(lastCommand.payload.video_url)} 
+          onClose={() => setLastCommand({ ...lastCommand, command: 'RESET' })}
+          isResettable={isAdmin}
+        />
+      )}
+      {null}
+    </>
+  );
 }
 
 // Hata Yakalayıcı (ErrorBoundary) ile Sarmalama
