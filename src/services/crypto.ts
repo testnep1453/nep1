@@ -128,3 +128,4 @@ export const getDeviceInfo = (): DeviceRecord => {
     firstSeen: Date.now(),
   };
 };
+

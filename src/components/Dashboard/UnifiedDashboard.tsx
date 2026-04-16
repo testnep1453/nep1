@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import * as XLSX from 'xlsx';
 import {
-  getStudentsFromFirebase, addStudentToFirebase, addStudentsBatch, removeStudentFromFirebase,
-  updateStudentInFirebase, setTrailer, disableTrailer, subscribeToTrailer,
-  extractYoutubeId, getAllFeedback
-} from '../../services/dbFirebase';
-import { recordAttendance } from '../../services/db';
+  fetchStudents, upsertStudent, addStudentsBatch, removeStudent,
+  updateStudent, setTrailer, disableTrailer, subscribeToTrailer,
+  extractYoutubeId, getAllFeedback, recordAttendance
+} from '../../services/supabaseService';
+import { getStudents } from '../../services/clientStorageService';
 import { Student, Lesson, Trailer, FeedbackEntry } from '../../types/student';
 import { TopBar } from './TopBar';
 import { MessageFeed } from './MessageFeed';
@@ -23,6 +23,8 @@ import { useNotifications, sendNotificationToAll, sendNotification } from '../..
 import { sendPushNotification } from '../../services/fcm';
 import { useAutoZoom } from '../../hooks/useAutoZoom';
 import { LESSON_CONFIG, formatLessonDate } from '../../config/lessonSchedule';
+import { sendSystemCommand, resetSystemCommands } from '../../services/commandService';
+import { Play, Rocket } from 'lucide-react';
 
 const Icons = {
   Home: () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="m19 8.71l-5.333-4.148a2.666 2.666 0 0 0-3.274 0L5.059 8.71a2.665 2.665 0 0 0-1.029 2.105v7.2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-7.2c0-.823-.38-1.6-1.03-2.105"/><path d="M16 15c-2.21 1.333-5.792 1.333-8 0"/></svg>,
@@ -121,7 +123,7 @@ export const UnifiedDashboard = ({
 
   useEffect(() => {
     if (isAdmin) {
-      getStudentsFromFirebase().then(setStudents);
+      fetchStudents().then(setStudents);
       getAllLoginLogs().then((logs) => setLoginAlerts(logs));
     }
   }, [isAdmin]);
@@ -144,6 +146,17 @@ export const UnifiedDashboard = ({
       });
     }
   }, [isAdmin, activeTab]);
+
+  useEffect(() => {
+    const handleNavigation = (e: any) => {
+      const target = e.detail?.target;
+      if (target && tabConfig.some(t => t.id === target)) {
+        setActiveTab(target as any);
+      }
+    };
+    window.addEventListener('system-navigation', handleNavigation);
+    return () => window.removeEventListener('system-navigation', handleNavigation);
+  }, [tabConfig]);
 
   const handleSetTrailer = async () => {
     const videoId = extractYoutubeId(trailerYoutubeUrl);
@@ -196,7 +209,7 @@ export const UnifiedDashboard = ({
         setUploadMessage('Excel dosyasında geçerli veri bulunamadı.');
         return;
       }
-      const existing = await getStudentsFromFirebase();
+      const existing = await fetchStudents();
       const existingIds = new Set(existing.map(s => s.id));
       const newStudents = validRows.filter(s => !existingIds.has(s.id));
       if (newStudents.length === 0) {
@@ -205,7 +218,7 @@ export const UnifiedDashboard = ({
       }
       await addStudentsBatch(newStudents);
       setUploadMessage(`${newStudents.length} ajan başarıyla eklendi!`);
-      setStudents(await getStudentsFromFirebase());
+      setStudents(await fetchStudents());
       if (fileInputRef.current) fileInputRef.current.value = '';
     } catch (err) {
       setUploadMessage('Excel dosyası okunamadı: ' + (err as Error).message);
@@ -232,8 +245,8 @@ export const UnifiedDashboard = ({
       xp: 0, level: 1, badges: [], avatar: 'hero_1',
       lastSeen: Date.now(), attendanceHistory: [], streak: 0,
     };
-    await addStudentToFirebase(newS);
-    setStudents(await getStudentsFromFirebase());
+    await upsertStudent(newS);
+    setStudents(await fetchStudents());
     setNewStudent({ id: '', name: '', nickname: '', email: '' });
   };
 
@@ -244,12 +257,12 @@ export const UnifiedDashboard = ({
       return;
     }
     try {
-      await updateStudentInFirebase(editStudent.id, {
+      await updateStudent(editStudent.id, {
         name: editStudent.name,
         nickname: editStudent.nickname || `Ajan_${editStudent.id}`,
         email: editStudent.email || '',
       });
-      setStudents(await getStudentsFromFirebase());
+      setStudents(await fetchStudents());
       setEditStudent(null);
     } catch (error) {
       console.error('Düzenleme hatası:', error);
@@ -267,7 +280,7 @@ export const UnifiedDashboard = ({
     if (!window.confirm(`Ajan ${name} (${id}) kalıcı olarak silinecek. Onaylıyor musunuz?`)) return;
     try {
       // Yalnızca Supabase'den sil (RTDB write izni yok)
-      await removeStudentFromFirebase(id);
+      await removeStudent(id);
       setStudents(prev => prev.filter(s => s.id !== id));
     } catch (error) {
       console.error('Ajan silme hatası:', error);
@@ -477,6 +490,69 @@ export const UnifiedDashboard = ({
                     )}
                   </div>
                   <div className="absolute inset-0 pointer-events-none border border-red-500/5 opacity-30 shadow-[inset_0_0_50px_rgba(239,68,68,0.05)]" />
+                </div>
+              )}
+
+              {/* MISSION: ABSOLUTE ADMIN OVERRIDE BUTTONS */}
+              {isAdmin && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
+                  <button 
+                    onClick={async () => {
+                      const videoUrl = prompt('Fragman YouTube Linki:', trailer?.youtubeId ? `https://www.youtube.com/watch?v=${trailer.youtubeId}` : '');
+                      if (videoUrl) {
+                        await sendSystemCommand('START_TRAILER', { video_url: videoUrl });
+                      }
+                    }}
+                    className="relative group overflow-hidden bg-gradient-to-r from-[#F5D32E]/20 to-[#FFB000]/20 border border-[#F5D32E]/40 p-6 rounded-2xl transition-all hover:scale-[1.02] active:scale-95 shadow-[0_0_30px_rgba(245,211,46,0.1)]"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 bg-[#F5D32E]/10 rounded-xl flex items-center justify-center border border-[#F5D32E]/30 group-hover:bg-[#F5D32E] group-hover:text-black transition-colors">
+                        <Play fill="currentColor" />
+                      </div>
+                      <div className="text-left">
+                        <span className="block text-[#F5D32E] font-black text-lg tracking-widest uppercase mb-1">FRAGMANI BAŞLAT</span>
+                        <span className="block text-gray-500 text-xs font-mono uppercase">Tüm ekranları kilitle ve videoyu oynat</span>
+                      </div>
+                    </div>
+                  </button>
+
+                  <button 
+                    onClick={async () => {
+                      if (confirm('Herkesi derse (yoklama ekranına) yönlendirmek istiyor musunuz?')) {
+                        await sendSystemCommand('START_LESSON');
+                      }
+                    }}
+                    className="relative group overflow-hidden bg-gradient-to-r from-[#39FF14]/20 to-[#00F0FF]/20 border border-[#39FF14]/40 p-6 rounded-2xl transition-all hover:scale-[1.02] active:scale-95 shadow-[0_0_30px_rgba(57,255,20,0.1)]"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-14 h-14 bg-[#39FF14]/10 rounded-xl flex items-center justify-center border border-[#39FF14]/30 group-hover:bg-[#39FF14] group-hover:text-black transition-colors text-[#39FF14]">
+                        <Rocket />
+                      </div>
+                      <div className="text-left">
+                        <span className="block text-[#39FF14] font-black text-lg tracking-widest uppercase mb-1">HERKESİ DERSE AL</span>
+                        <span className="block text-gray-500 text-xs font-mono uppercase">Anlık yönlendirme: Operasyon Odası</span>
+                      </div>
+                    </div>
+                  </button>
+
+                  <button 
+                    onClick={async () => {
+                      if (confirm('Tüm aktif sistem komutlarını (fragman kilidi vb.) sıfırlamak istiyor musunuz?')) {
+                        await resetSystemCommands();
+                      }
+                    }}
+                    className="relative group overflow-hidden bg-white/5 border border-red-500/20 p-6 rounded-2xl transition-all hover:scale-[1.02] active:scale-95 hover:border-red-500/50 hover:bg-red-500/5"
+                  >
+                    <div className="flex items-center gap-4 text-red-900 group-hover:text-red-500 transition-colors">
+                      <div className="w-14 h-14 bg-red-950/20 rounded-xl flex items-center justify-center border border-red-900/30 group-hover:border-red-500/50">
+                        <Icons.Logout />
+                      </div>
+                      <div className="text-left">
+                        <span className="block font-black text-lg tracking-widest uppercase mb-1">KOMUTLARI SIFIRLA</span>
+                        <span className="block text-gray-500 text-xs font-mono uppercase">Tüm kilitleri kaldır ve normale dön</span>
+                      </div>
+                    </div>
+                  </button>
                 </div>
               )}
 
@@ -814,3 +890,6 @@ export const UnifiedDashboard = ({
     </div>
   );
 };
+
+
+

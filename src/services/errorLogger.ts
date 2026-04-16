@@ -83,3 +83,4 @@ const sharedLogError = async (error: Error | ErrorEvent | PromiseRejectionEvent 
       isLogging = false;
     }
 };
+

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { EmojiReaction } from '../../types/student';
-import { extractYoutubeId } from '../../services/dbFirebase';
+import { extractYoutubeId } from '../../services/supabaseService';
 
 interface YouTubePlayerProps {
   videoId: string;
@@ -67,3 +67,6 @@ export const YouTubePlayer = ({ videoId }: YouTubePlayerProps) => {
     </div>
   );
 };
+
+
+

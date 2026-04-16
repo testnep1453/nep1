@@ -2,7 +2,11 @@ import { supabase } from '../config/supabase';
 import { Student, Trailer, FeedbackEntry } from '../types/student';
 import seedData from '../student_list.json';
 
-export const getStudentsFromFirebase = async (): Promise<Student[]> => {
+/**
+ * Supabase tabanlı öğrenci ve sistem veri servisi.
+ */
+
+export const fetchStudents = async (): Promise<Student[]> => {
   const { data } = await supabase.from('students').select('*');
   if (!data || data.length === 0) return seedData as Student[];
   
@@ -14,7 +18,7 @@ export const getStudentsFromFirebase = async (): Promise<Student[]> => {
   })) as Student[];
 };
 
-export const addStudentToFirebase = async (student: Student) => {
+export const upsertStudent = async (student: Student) => {
   await supabase.from('students').upsert({
     id: student.id,
     name: student.name,
@@ -31,8 +35,8 @@ export const addStudentToFirebase = async (student: Student) => {
   });
 };
 
-export const updateStudentInFirebase = async (id: string, updates: Partial<Student>) => {
-  const mappedUpdates: Record<string, any> = { ...updates };
+export const updateStudent = async (id: string, updates: Partial<Student>) => {
+  const mappedUpdates: Record<string, unknown> = { ...updates };
   
   if (updates.lastSeen) {
     mappedUpdates.last_seen = new Date(updates.lastSeen).toISOString();
@@ -49,17 +53,16 @@ export const updateStudentInFirebase = async (id: string, updates: Partial<Stude
   await supabase.from('students').update(mappedUpdates).eq('id', id);
 };
 
-export const removeStudentFromFirebase = async (id: string) => {
+export const removeStudent = async (id: string) => {
   await supabase.from('students').delete().eq('id', id);
 };
 
 export const subscribeToTrailer = (callback: (trailer: Trailer | null) => void) => {
    const fetchTrailer = async () => {
      const { data } = await supabase.from('settings').select('data').eq('id', 'trailer').maybeSingle();
-     callback(data ? data.data as Trailer : null);
+     callback(data ? (data.data as Trailer) : null);
    };
    fetchTrailer();
-   // Benzersiz kanal ismi: aynı tablo için birden fazla abone çakışmasını önler
    const channelName = `settings_trailer_${Date.now()}_${Math.random().toString(36).slice(2)}`;
    const channel = supabase.channel(channelName)
      .on('postgres_changes', { event: '*', schema: 'public', table: 'settings', filter: `id=eq.trailer` }, fetchTrailer)
@@ -99,15 +102,76 @@ export const addStudentsBatch = async (students: Student[]) => {
   await supabase.from('students').upsert(mapped);
 };
 
-export const recordAttendanceToFirebase = async (studentId: string, lessonDate: string, autoJoined: boolean = true) => {
-  await supabase.from('attendance').upsert({
-    id: `${lessonDate}_${studentId}`, 
-    student_id: studentId, 
-    lesson_date: lessonDate, 
-    joined_at: new Date().toISOString(), 
-    auto_joined: autoJoined, 
-    xp_earned: 100
-  });
+export const recordAttendance = async (studentId: string) => {
+  const now = new Date();
+  const today = now.toISOString().slice(0, 10);
+  
+  try {
+    const { data: attData } = await supabase
+      .from('attendance')
+      .select('id')
+      .eq('student_id', String(studentId))
+      .eq('lesson_date', today)
+      .maybeSingle();
+
+    if (attData) return null;
+
+    await supabase.from('attendance').insert({
+      id: `${today}_${studentId}`, 
+      student_id: String(studentId), 
+      lesson_date: today, 
+      joined_at: new Date().toISOString(), 
+      auto_joined: false, 
+      xp_earned: 100
+    });
+
+    const { data: student } = await supabase
+      .from('students')
+      .select('xp, level, streak, attendance_history')
+      .eq('id', String(studentId))
+      .maybeSingle();
+
+    if (!student) {
+      await supabase.from('students').insert({
+        id: String(studentId),
+        xp: 100,
+        level: 1,
+        streak: 1,
+        attendance_history: [today]
+      });
+      return { xpEarned: 100, streak: 1, streakBonus: false };
+    }
+
+    const currentXP = student.xp || 0;
+    const history = student.attendance_history || [];
+    
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toISOString().slice(0, 10);
+    
+    let newStreak = 1;
+    let streakBonus = 0;
+    if (history.includes(yesterdayStr)) {
+      newStreak = (student.streak || 0) + 1;
+      if (newStreak >= 2) streakBonus = 50;
+    }
+
+    const earnedXP = 100 + streakBonus;
+    const nextXP = currentXP + earnedXP;
+    const nextLevel = Math.floor(nextXP / 200) + 1;
+
+    await supabase.from('students').update({
+      xp: nextXP,
+      level: nextLevel,
+      streak: newStreak,
+      attendance_history: [...history, today]
+    }).eq('id', String(studentId));
+
+    return { xpEarned: earnedXP, streak: newStreak, streakBonus: streakBonus > 0 };
+  } catch (error) {
+    console.error('XP Sync Error:', error);
+    return null;
+  }
 };
 
 export const getAttendanceForLesson = async (lessonDate: string) => {
@@ -115,11 +179,12 @@ export const getAttendanceForLesson = async (lessonDate: string) => {
   return data || [];
 };
 
-export const getFeedbackForLesson = async (): Promise<FeedbackEntry[]> => { return []; };
-export const getAllFeedback = async (): Promise<FeedbackEntry[]> => { return []; };
+export const getAllFeedback = async (): Promise<FeedbackEntry[]> => {
+  const { data } = await supabase.from('feedback').select('*').order('created_at', { ascending: false });
+  return (data || []) as FeedbackEntry[];
+};
 
 export const updateNickname = async (studentId: string, nickname: string) => {
-  // Update both for safety, student table now contains both columns
   await supabase.from('students').update({ 
     nickname, 
     display_name: nickname 
@@ -144,12 +209,15 @@ export const saveAdminPassword = async (hashedPassword: string) => {
   await supabase.from('settings').upsert({ id: 'admin_auth', data: { admin_hash: hashedPassword, updatedAt: Date.now() } });
 };
 
-export const getAdminAuth = async (): Promise<{ admin_hash: string } | null> => {
+interface AdminAuthData {
+  admin_hash: string;
+}
+
+export const getAdminAuth = async (): Promise<AdminAuthData | null> => {
   const { data } = await supabase.from('settings').select('data').eq('id', 'admin_auth').maybeSingle();
-  return data ? data.data as any : null;
+  return data ? (data.data as AdminAuthData) : null;
 };
 
-// ── Generic Settings Database (Legacy id/data in 'settings' table) ──
 export const getSettingStore = async <T>(id: string, defaultData: T): Promise<T> => {
   try {
     const { data, error } = await supabase.from('settings').select('data').eq('id', id).maybeSingle();
@@ -170,7 +238,6 @@ export const subscribeToSettingStore = <T>(id: string, defaultData: T, callback:
     callback((data ? data.data : defaultData) as T);
   };
   fetchSettings();
-  // Benzersiz kanal ismi: React Strict Mode çift-mount ve çakışan aboneleri önler
   const channelName = `settings_${id}_${Date.now()}_${Math.random().toString(36).slice(2)}`;
   const channel = supabase
     .channel(channelName)
@@ -179,7 +246,6 @@ export const subscribeToSettingStore = <T>(id: string, defaultData: T, callback:
   return () => { supabase.removeChannel(channel); };
 };
 
-// ── Student Badges System (Medal Room) ──
 export const checkAndAwardBadge = async (studentId: string, badgeKey: string) => {
   const { data: existing } = await supabase
     .from('student_badges')
@@ -206,3 +272,4 @@ export const getStudentBadges = async (studentId: string) => {
     .eq('student_id', studentId);
   return data || [];
 };
+

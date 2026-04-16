@@ -7,7 +7,7 @@ import { Lesson, Trailer } from '../../types/student';
 import { CircularCountdown } from '../Countdown/CircularCountdown';
 import { YouTubePlayer } from '../VideoTheater/YouTubePlayer';
 import { isLessonActive, isLessonEnded, getNextLesson, FIXED_LESSON_SCHEDULE } from '../../config/lessonSchedule';
-import { subscribeToSettingStore } from '../../services/dbFirebase';
+import { subscribeToSettingStore } from '../../services/supabaseService';
 import { getSystemConfig, setManualLessonActive } from '../../services/systemSettingsService';
 
 interface OperationDrawerProps {
@@ -263,3 +263,6 @@ export const OperationDrawer = ({
     </div>
   );
 };
+
+
+

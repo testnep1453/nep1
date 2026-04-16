@@ -42,3 +42,4 @@ export const useSessionTimeout = (_options?: SessionTimeoutOptions) => {
     };
   }, [student, logout]);
 };
+

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../config/supabase';
-import { getSettingStore } from '../services/dbFirebase';
+import { getSettingStore } from '../services/supabaseService';
 
 const NOTIFICATIONS_ENABLED = true;
 
@@ -147,4 +147,5 @@ export const sendNotification = async (
     console.error('Error sending notification:', err);
   }
 };
+
 

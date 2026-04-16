@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Student } from '../../types/student';
 import { Shield, Lock, Zap } from 'lucide-react';
-import { updateNickname } from '../../services/dbFirebase';
+import { updateNickname } from '../../services/supabaseService';
 import confetti from 'canvas-confetti';
 
 interface ProfileSectionProps {
@@ -214,3 +214,6 @@ export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps
     </div>
   );
 };
+
+
+

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getSettingStore } from '../../services/dbFirebase';
+import { getSettingStore } from '../../services/supabaseService';
 import type { KnowledgeEntry } from '../Admin/KnowledgeManager';
 
 export const KnowledgeClient = () => {
@@ -74,3 +74,6 @@ export const KnowledgeClient = () => {
     </div>
   );
 };
+
+
+

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Student } from '../../types/student';
-import { getAttendanceForLesson, recordAttendanceToFirebase } from '../../services/dbFirebase';
+import { getAttendanceForLesson, recordAttendanceToFirebase } from '../../services/supabaseService';
 import { FIXED_LESSON_SCHEDULE } from '../../config/lessonSchedule';
 import { supabase } from '../../config/supabase';
 
@@ -361,3 +361,6 @@ export const AttendancePage = ({ students }: { students: Student[] }) => {
     </div>
   );
 };
+
+
+

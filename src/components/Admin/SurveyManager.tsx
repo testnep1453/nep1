@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getSettingStore, saveSettingStore } from '../../services/dbFirebase';
+import { getSettingStore, saveSettingStore } from '../../services/supabaseService';
 import { supabase } from '../../config/supabase';
 
 export type QuestionType = 'multiple_choice' | 'open_ended';
@@ -457,3 +457,6 @@ export const SurveyManager = () => {
     </div>
   );
 };
+
+
+

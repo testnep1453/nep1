@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Student } from '../../types/student';
 import confetti from 'canvas-confetti';
-import { getStudentBadges, checkAndAwardBadge } from '../../services/dbFirebase';
+import { getStudentBadges, checkAndAwardBadge } from '../../services/supabaseService';
 
 const LEVEL_THRESHOLDS = [0, 200, 500, 1000, 2000, 3500, 5500, 8000, 12000, 18000, 25000];
 const LEVEL_COLORS = [
@@ -256,3 +256,6 @@ export const LevelProgress = ({ student }: { student: Student }) => {
     </div>
   );
 };
+
+
+

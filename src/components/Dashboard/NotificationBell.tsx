@@ -14,3 +14,6 @@ export const NotificationBell = ({ hasNotifications = false }: NotificationBellP
     </button>
   );
 };
+
+
+

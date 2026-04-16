@@ -8,11 +8,15 @@ import { ArchivePage } from '../Archive/ArchivePage';
 import { LevelProgress } from './LevelProgress';
 import { ActivityPage } from './ActivityPage';
 import { SurveysClient } from './SurveysClient';
-import { getSettingStore } from '../../services/dbFirebase';
-
+import { 
+  subscribeToTrailer, 
+  recordAttendance, 
+  subscribeToSettingStore, 
+  getSettingStore, 
+  saveSettingStore 
+} from '../../services/supabaseService';
 import { useAutoZoom } from '../../hooks/useAutoZoom';
 import { useNotifications } from '../../hooks/useNotifications';
-import { subscribeToTrailer, recordAttendanceToFirebase, subscribeToSettingStore, getSettingStore, saveSettingStore } from '../../services/dbFirebase';
 import type { SurveyEntry } from '../Admin/SurveyManager';
 import { LESSON_CONFIG } from '../../config/lessonSchedule';
 import { getZoomLink } from '../../services/systemSettingsService';
@@ -70,7 +74,7 @@ export const AgentDashboard = ({
     if (student && !attendanceRecorded.current) {
       if (autoZoomState.status === 'active' || autoZoomState.status === 'trailer' || trailer?.isActive) {
         attendanceRecorded.current = true;
-        void recordAttendanceToFirebase(student.id, autoZoomState.lessonDate, true);
+        void recordAttendance(student.id);
       }
     }
   }, [student?.id, autoZoomState.status, autoZoomState.lessonDate, trailer?.isActive]);
@@ -115,6 +119,19 @@ export const AgentDashboard = ({
     window.addEventListener('surveyCompleted', handleSurveyComplete);
     return () => window.removeEventListener('surveyCompleted', handleSurveyComplete);
   }, [activeTab]);
+
+  useEffect(() => {
+    const handleNavigation = (e: any) => {
+      const target = e.detail?.target;
+      if (target === 'yoklama') {
+        setDrawerOpen(true); // Agents see lesson details in drawer
+      } else if (target && tabs.some(t => t.id === target)) {
+        setActiveTab(target as any);
+      }
+    };
+    window.addEventListener('system-navigation', handleNavigation);
+    return () => window.removeEventListener('system-navigation', handleNavigation);
+  }, [tabs]);
 
   let tabs: { id: AgentTab; label: string; icon: JSX.Element }[] = [
     { id: 'home', label: 'Ana Sayfa', icon: <Icons.Home /> },
@@ -276,3 +293,6 @@ export const AgentDashboard = ({
     </div>
   );
 };
+
+
+

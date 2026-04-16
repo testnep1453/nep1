@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { subscribeToSettingStore, getSettingStore, saveSettingStore } from '../../services/dbFirebase';
+import { subscribeToSettingStore, getSettingStore, saveSettingStore } from '../../services/supabaseService';
 import type { SurveyEntry, SurveyQuestion } from '../Admin/SurveyManager';
 import { supabase } from '../../config/supabase';
 
@@ -176,3 +176,6 @@ export const SurveysClient = () => {
     </div>
   );
 };
+
+
+

@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(gh run:*)",
-      "Bash(powershell -Command \"cd 'C:\\\\Users\\\\03muh\\\\OneDrive - Bahceşehir Üniversitesi\\\\Belgeler\\\\nep1'; git add .; git commit -m 'fix: build hatalari duzeltildi'; git push\")",
-      "Bash(powershell -Command \"cd 'C:\\\\Users\\\\03muh\\\\OneDrive - Bahceşehir Üniversitesi\\\\Belgeler\\\\nep1'; git add AGENTS.md OPTIMIZATIONS.md SECURITY_AUDIT.md src/components/Auth/StudentLogin.tsx src/hooks/usePresence.ts src/services/db.ts; git commit -m 'fix: I/O optimizasyonu, localStorage güvenlik, rate limiting, numChildren optimizasyonu + 3 doküman'; git push\")"
-    ]
-  }
-}

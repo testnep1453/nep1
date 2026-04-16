@@ -11,7 +11,7 @@
  */
 
 import { useEffect, useRef } from 'react';
-import { getSettingStore, saveSettingStore } from '../services/dbFirebase';
+import { getSettingStore, saveSettingStore } from '../services/supabaseService';
 import { getNextLesson } from '../config/lessonSchedule';
 import { sendPushNotification } from '../services/fcm';
 import { sendNotification } from './useNotifications';
@@ -88,3 +88,4 @@ export const useAutoMessages = (isAdmin: boolean) => {
     };
   }, [isAdmin]);
 };
+

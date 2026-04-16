@@ -194,3 +194,6 @@ export const EmailVerificationModal: React.FC<Props> = ({ studentId, onVerified,
     </div>
   );
 };
+
+
+

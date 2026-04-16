@@ -9,3 +9,6 @@ export const ActivityPage = ({ student }: { student: Student }) => {
     </div>
   );
 };
+
+
+

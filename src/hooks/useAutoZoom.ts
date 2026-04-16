@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../config/supabase';
 import { isLessonActive, isLessonEnded, getNextLesson } from '../config/lessonSchedule';
-import { subscribeToSettingStore } from '../services/dbFirebase';
+import { getSettingStore, saveSettingStore } from '../services/supabaseService';
 
 interface AutoZoomState {
   status: 'waiting' | 'redirecting' | 'in_lesson' | 'lesson_ended' | 'feedback';
@@ -175,3 +175,4 @@ const recordAutoAttendance = async (studentId: string, lessonDate: string) => {
     console.error('Yoklama kaydı hatası:', error);
   }
 };
+

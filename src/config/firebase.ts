@@ -30,3 +30,4 @@ export const getMessagingInstance = async () => {
   }
   return null;
 };
+

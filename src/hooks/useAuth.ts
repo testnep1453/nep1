@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Student } from '../types/student';
-import { getStudents } from '../services/db'; 
+import { getStudents } from '../services/clientStorageService'; 
 import { getStudentById, upsertStudent, signOutUser, saveStudentEmail, signInAndMapStudent } from '../services/authService';
 import { registerDevice } from '../services/deviceService';
 import { supabase } from '../config/supabase';
@@ -195,3 +195,4 @@ const loginWithGoogle = async () => {
 
   return { student, loading, login, loginWithGoogle, logout, pendingStudent, needsAdminAuth, confirmAdminAuth, cancelAdminAuth, needsEmailVerification, confirmEmailVerification, cancelEmailVerification, googleError };
 };
+

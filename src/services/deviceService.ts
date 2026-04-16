@@ -49,3 +49,4 @@ export const isCurrentDeviceApproved = async (studentId: string): Promise<boolea
 
 export const listenForDeviceApprovals = (studentId: string, callback: any) => { callback([]); };
 export const respondToDeviceApproval = async () => {};
+

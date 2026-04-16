@@ -13,7 +13,8 @@ import { requestNotificationPermission, setupNotificationListener } from './serv
 import { recordLoginAndCheckSuspicious } from './services/loginAlertService';
 import { useCommandListener } from './hooks/useCommandListener';
 import { TrailerOverlay } from './components/CommandOverlay';
-import { extractYoutubeId } from './services/dbFirebase';
+import { extractYoutubeId } from './services/supabaseService';
+import { resetSystemCommands } from './services/commandService';
 
 type AppStatus = 'loggingIn' | 'adminAuth' | 'dashboard';
 
@@ -129,6 +130,7 @@ function App() {
   }
 
   // 5. Ekran: Ana Paneller (Admin veya Ajan)
+  let content = null;
   if (appStatus === 'dashboard' && student) {
     const handleLogout = () => {
       logout();
@@ -136,7 +138,7 @@ function App() {
     };
 
     if (isAdmin) {
-      return (
+      content = (
         <UnifiedDashboard
           student={student}
           onLogout={handleLogout}
@@ -144,30 +146,30 @@ function App() {
           onlineCount={onlineCount}
         />
       );
+    } else {
+      content = (
+        <AgentDashboard
+          student={student}
+          onLogout={handleLogout}
+          lesson={lesson}
+        />
+      );
     }
-
-    return (
-      <AgentDashboard
-        student={student}
-        onLogout={handleLogout}
-        lesson={lesson}
-      />
-    );
-  }
-
-    );
   }
 
   return (
     <>
+      {content}
       {lastCommand?.command === 'START_TRAILER' && lastCommand.payload?.video_url && (
         <TrailerOverlay 
           videoId={extractYoutubeId(lastCommand.payload.video_url)} 
-          onClose={() => setLastCommand({ ...lastCommand, command: 'RESET' })}
+          onClose={async () => {
+             await resetSystemCommands();
+             setLastCommand({ ...lastCommand, command: 'RESET' });
+          }}
           isResettable={isAdmin}
         />
       )}
-      {null}
     </>
   );
 }
@@ -182,3 +184,4 @@ function AppWithBoundary() {
 }
 
 export default AppWithBoundary;
+

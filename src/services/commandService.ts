@@ -26,3 +26,4 @@ export const sendSystemCommand = async (command: SystemCommand, payload: any = {
 export const resetSystemCommands = async () => {
   await sendSystemCommand('RESET');
 };
+

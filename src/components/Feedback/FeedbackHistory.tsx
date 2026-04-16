@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { FeedbackEntry } from '../../types/student';
-import { getAllFeedback } from '../../services/dbFirebase';
+import { getAllFeedback } from '../../services/supabaseService';
 import { FeedbackForm } from './FeedbackForm';
 import { formatLessonDate } from '../../config/lessonSchedule';
 
@@ -84,3 +84,6 @@ export const FeedbackHistory = ({ studentId }: { studentId: string }) => {
     </div>
   );
 };
+
+
+

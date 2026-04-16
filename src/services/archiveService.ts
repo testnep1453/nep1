@@ -76,3 +76,4 @@ export const removeArchiveVideo = async (id: number): Promise<void> => {
   const { error } = await supabase.from('archive').delete().eq('id', id);
   if (error) throw new Error('Silinemedi: ' + error.message);
 };
+

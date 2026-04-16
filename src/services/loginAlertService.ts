@@ -54,3 +54,4 @@ export const getSuspiciousLogins = async (_limitCount: number = 20) => {
     return [];
   }
 };
+

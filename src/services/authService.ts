@@ -146,3 +146,4 @@ export const handleEmailLinkVerification = async () => { return null; };
 export const getStudentMapping = async (uid: string) => { return { studentId: uid, isAdmin: uid === ADMIN_STUDENT_ID }; };
 export const getCurrentUser = (): any => { return null; };
 export const sendVerificationLink = async () => { return false; };
+

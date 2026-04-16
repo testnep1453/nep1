@@ -78,3 +78,6 @@ export const TrailerOverlay = ({ videoId, onClose, isResettable = false }: Trail
     </div>
   );
 };
+
+
+

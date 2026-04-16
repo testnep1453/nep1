@@ -232,3 +232,4 @@ export const LESSON_CONFIG = {
   zoomLink: '', // Supabase'den çekilir — bak: systemSettingsService
   dayName: 'Perşembe',
 } as const;
+

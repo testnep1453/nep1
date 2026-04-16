@@ -18,3 +18,4 @@ export const useDeviceType = (): DeviceType => {
 
   return device;
 };
+

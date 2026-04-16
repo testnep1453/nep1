@@ -15,7 +15,7 @@ import {
   Download
 } from 'lucide-react';
 import { signOutUser } from '../../services/authService';
-import { getStudents } from '../../services/db';
+import { getStudents } from '../../services/clientStorageService';
 import { requestPermission } from '../../services/fcm';
 import { getSystemConfig } from '../../services/systemSettingsService';
 import { AdminSecurityNotifier } from './AdminSecurityNotifier';
@@ -24,7 +24,7 @@ import { SurveyManager } from './SurveyManager';
 import { KnowledgeManager } from './KnowledgeManager';
 import { ArchiveManager } from './ArchiveManager';
 import { SystemConfigManager } from './SystemConfigManager';
-import { subscribeToSettingStore } from '../../services/dbFirebase';
+import { subscribeToSettingStore } from '../../services/supabaseService';
 import { setManualLessonActive } from '../../services/systemSettingsService';
 import { SecurityLogs } from './SecurityLogs';
 
@@ -355,3 +355,6 @@ export const AdminDashboard: React.FC = () => {
     </div>
   );
 };
+
+
+

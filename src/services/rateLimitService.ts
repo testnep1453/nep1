@@ -51,3 +51,4 @@ export const formatCooldown = (ms: number): string => {
   const hours = Math.ceil(minutes / 60);
   return `${hours} saat`;
 };
+

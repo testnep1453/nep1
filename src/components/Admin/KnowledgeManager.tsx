@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { getSettingStore, saveSettingStore } from '../../services/dbFirebase';
+import { getSettingStore, saveSettingStore } from '../../services/supabaseService';
 
 export interface KnowledgeEntry {
   id: string;
@@ -123,3 +123,6 @@ export const KnowledgeManager = () => {
     </div>
   );
 };
+
+
+

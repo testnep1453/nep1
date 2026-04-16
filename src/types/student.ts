@@ -87,3 +87,4 @@ export interface AutoMessage {
   type: 'reminder' | 'lesson_start' | 'admin' | 'system';
   lessonDate?: string;
 }
+

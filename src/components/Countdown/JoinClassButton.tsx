@@ -100,3 +100,6 @@ export const JoinClassButton = ({ zoomLink, studentName }: JoinClassButtonProps)
     </div>
   );
 };
+
+
+

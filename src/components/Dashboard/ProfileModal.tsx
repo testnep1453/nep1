@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Student } from '../../types/student';
 import { Dices } from 'lucide-react';
-import { updateStudentInFirebase } from '../../services/dbFirebase';
+import { updateStudentInFirebase } from '../../services/supabaseService';
 
 interface ProfileModalProps {
   student: Student;
@@ -161,3 +161,6 @@ export const ProfileModal = ({ student, isOpen, onClose, theme, onThemeChange }:
     </div>
   );
 };
+
+
+
