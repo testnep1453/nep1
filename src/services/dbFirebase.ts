@@ -91,15 +91,6 @@ export const updateNickname = async (studentId: string, nickname: string) => {
   await supabase.from('students').update({ nickname }).eq('id', studentId);
 };
 
-export const saveAdminPassword = async (hashedPassword: string) => {
-  await supabase.from('settings').upsert({ id: 'admin_auth', data: { passwordHash: hashedPassword, createdAt: Date.now() } });
-};
-
-export const getAdminAuth = async (): Promise<{ passwordHash: string } | null> => {
-  const { data } = await supabase.from('settings').select('data').eq('id', 'admin_auth').single();
-  return data ? data.data as any : null;
-};
-
 // ── Generic Settings Database (Legacy id/data in 'settings' table) ──
 export const getSettingStore = async <T>(id: string, defaultData: T): Promise<T> => {
   try {
