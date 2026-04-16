@@ -20,7 +20,11 @@ const INVENTORY_ITEMS = [
 
 
 export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps) => {
+  const [isEditingNickname, setIsEditingNickname] = useState(false);
+  const [nicknameValue, setNicknameValue] = useState(student.nickname || '');
+  const [saving, setSaving] = useState(false);
   const [xpChanged, setXpChanged] = useState(false);
+  
   const totalXpInLevel = 200;
   const xpForNextLevel = totalXpInLevel;
   const currentXpProgress = student.xp % totalXpInLevel;
