@@ -28,12 +28,17 @@ export const SystemConfigManager = () => {
 
   const addTargetedUser = () => {
     if (!targetedUserId || !config) return;
-    if (!config.maintenance_mode.targeted_users.includes(targetedUserId)) {
+    
+    // Defensive check for maintenance_mode and targeted_users
+    const currentMaintenance = config.maintenance_mode || { global: false, targeted_users: [] };
+    const currentUsers = currentMaintenance.targeted_users || [];
+
+    if (!currentUsers.includes(targetedUserId)) {
       setConfig({
         ...config,
         maintenance_mode: {
-          ...config.maintenance_mode,
-          targeted_users: [...config.maintenance_mode.targeted_users, targetedUserId]
+          ...currentMaintenance,
+          targeted_users: [...currentUsers, targetedUserId]
         }
       });
     }
@@ -42,11 +47,15 @@ export const SystemConfigManager = () => {
 
   const removeTargetedUser = (id: string) => {
     if (!config) return;
+    
+    const currentMaintenance = config.maintenance_mode || { global: false, targeted_users: [] };
+    const currentUsers = currentMaintenance.targeted_users || [];
+
     setConfig({
       ...config,
       maintenance_mode: {
-        ...config.maintenance_mode,
-        targeted_users: config.maintenance_mode.targeted_users.filter(u => u !== id)
+        ...currentMaintenance,
+        targeted_users: currentUsers.filter(u => u !== id)
       }
     });
   };
@@ -61,6 +70,13 @@ export const SystemConfigManager = () => {
   }
 
   if (!config) return null;
+
+  // Defensive data extraction with fallbacks
+  const maintenanceMode = config.maintenance_mode || { global: false, targeted_users: [] };
+  const targetedUsers = maintenanceMode.targeted_users || [];
+  const broadcastMessage = config.broadcast_message || '';
+  const zoomLink = config.zoom_link || '';
+  const lessonTitle = config.lesson_title || '';
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-10">
@@ -80,7 +96,7 @@ export const SystemConfigManager = () => {
               <label className="text-[10px] uppercase tracking-widest text-slate-500 mb-2 block font-bold">Zoom Linki</label>
               <input
                 type="url"
-                value={config.zoom_link}
+                value={zoomLink}
                 onChange={e => setConfig({ ...config, zoom_link: e.target.value })}
                 className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-[#00F0FF] outline-none transition-all font-mono text-[#00F0FF]"
                 placeholder="https://zoom.us/j/..."
@@ -90,7 +106,7 @@ export const SystemConfigManager = () => {
               <label className="text-[10px] uppercase tracking-widest text-slate-500 mb-2 block font-bold">Ders Başlığı</label>
               <input
                 type="text"
-                value={config.lesson_title}
+                value={lessonTitle}
                 onChange={e => setConfig({ ...config, lesson_title: e.target.value })}
                 className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-[#00F0FF] outline-none transition-all font-bold"
                 placeholder="Örn: NEP HAFTALIK OPERASYON"
@@ -116,7 +132,7 @@ export const SystemConfigManager = () => {
 
       {/* 2. GELİŞMİŞ BAKIM MODU (HEDEFLİ) */}
       <section className="bg-black/40 border border-red-500/20 rounded-2xl overflow-hidden shadow-2xl relative">
-        {!config.maintenance_mode.global && config.maintenance_mode.targeted_users.length === 0 && (
+        {!maintenanceMode.global && targetedUsers.length === 0 && (
           <div className="absolute top-2 right-2 flex items-center gap-1.5 opacity-40">
             <ShieldAlert className="w-3 h-3 text-slate-400" />
             <span className="text-[8px] font-bold text-slate-400 uppercase">Erişim Serbest</span>
@@ -136,7 +152,7 @@ export const SystemConfigManager = () => {
           {/* Global Bakım */}
           <div className="flex items-center justify-between p-4 bg-red-500/5 border border-red-500/10 rounded-2xl">
             <div className="flex items-center gap-4">
-              <div className={`w-12 h-12 rounded-xl flex items-center justify-center border-2 transition-all ${config.maintenance_mode.global ? 'bg-red-500 text-white border-red-400' : 'bg-white/5 text-slate-500 border-white/10'}`}>
+              <div className={`w-12 h-12 rounded-xl flex items-center justify-center border-2 transition-all ${maintenanceMode.global ? 'bg-red-500 text-white border-red-400' : 'bg-white/5 text-slate-500 border-white/10'}`}>
                 <Globe className="w-6 h-6" />
               </div>
               <div>
@@ -145,14 +161,14 @@ export const SystemConfigManager = () => {
               </div>
             </div>
             <button 
-              onClick={() => setConfig({ ...config, maintenance_mode: { ...config.maintenance_mode, global: !config.maintenance_mode.global } })}
+              onClick={() => setConfig({ ...config, maintenance_mode: { ...maintenanceMode, global: !maintenanceMode.global } })}
               className={`px-6 py-3 rounded-xl font-black text-xs uppercase transition-all border-2 ${
-                config.maintenance_mode.global 
+                maintenanceMode.global 
                   ? 'bg-red-500 border-red-400 text-white shadow-[0_0_20px_rgba(239,68,68,0.3)]' 
                   : 'bg-white/5 border-white/10 text-slate-400 hover:border-red-500/30'
               }`}
             >
-              {config.maintenance_mode.global ? 'SİSTEM KAPALI' : 'SİSTEM AÇIK'}
+              {maintenanceMode.global ? 'SİSTEM KAPALI' : 'SİSTEM AÇIK'}
             </button>
           </div>
 
@@ -180,7 +196,7 @@ export const SystemConfigManager = () => {
             </div>
             
             <div className="flex flex-wrap gap-2">
-              {config.maintenance_mode.targeted_users.map(id => (
+              {targetedUsers.map(id => (
                 <div key={id} className="flex items-center gap-2 bg-orange-500/10 border border-orange-500/20 px-3 py-1.5 rounded-lg text-orange-400 font-mono text-xs group">
                   <span>ID: {id}</span>
                   <button onClick={() => removeTargetedUser(id)} className="hover:text-red-500 transition-colors">
@@ -188,7 +204,7 @@ export const SystemConfigManager = () => {
                   </button>
                 </div>
               ))}
-              {config.maintenance_mode.targeted_users.length === 0 && (
+              {targetedUsers.length === 0 && (
                 <p className="text-[10px] text-slate-600 italic">Şu an hedeflenmiş bir engel bulunmuyor.</p>
               )}
             </div>
@@ -207,7 +223,7 @@ export const SystemConfigManager = () => {
         
         <div className="p-6">
           <textarea
-            value={config.broadcast_message}
+            value={broadcastMessage}
             onChange={e => setConfig({ ...config, broadcast_message: e.target.value })}
             placeholder="Tüm ajanların ekranında görünecek acil durum mesajını buraya yazın..."
             className="w-full bg-black/40 border border-red-900/30 rounded-xl px-4 py-4 text-sm focus:border-red-500 outline-none transition-all min-h-[100px] text-red-200 placeholder:text-red-900/60 font-medium leading-relaxed"
