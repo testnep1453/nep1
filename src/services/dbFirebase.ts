@@ -2,28 +2,6 @@ import { supabase } from '../config/supabase';
 import { Student, Trailer, FeedbackEntry } from '../types/student';
 import seedData from '../student_list.json';
 
-export interface AppMessage { id: string; text: string; date: number; }
-
-export const subscribeToMessages = (callback: (messages: AppMessage[]) => void) => {
-  const fetchMessages = async () => {
-    const { data } = await supabase.from('messages').select('*').order('date', { ascending: false });
-    if (data) callback(data);
-  };
-  fetchMessages();
-  
-  // Benzersiz kanal ismi çakışmayı önler
-  const channelName = `messages_${Date.now()}_${Math.random().toString(36).slice(2)}`;
-  const channel = supabase.channel(channelName)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, fetchMessages)
-    .subscribe();
-    
-  return () => { supabase.removeChannel(channel); };
-};
-
-export const addMessageToFirebase = async (text: string) => {
-  await supabase.from('messages').insert([{ text, date: Date.now() }]);
-};
-
 export const getStudentsFromFirebase = async (): Promise<Student[]> => {
   const { data } = await supabase.from('students').select('*');
   return data && data.length > 0 ? data as Student[] : seedData as Student[];

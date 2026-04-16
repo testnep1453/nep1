@@ -11,9 +11,10 @@
  */
 
 import { useEffect, useRef } from 'react';
-import { addMessageToFirebase, getSettingStore, saveSettingStore } from '../services/dbFirebase';
+import { getSettingStore, saveSettingStore } from '../services/dbFirebase';
 import { getNextLesson } from '../config/lessonSchedule';
 import { sendPushNotification } from '../services/fcm';
+import { sendNotification } from './useNotifications';
 
 /** Supabase'de saklanan gönderilmiş mesaj ID'leri */
 const SENT_MSGS_STORE_KEY = 'auto_messages_sent';
@@ -54,11 +55,17 @@ export const useAutoMessages = (isAdmin: boolean) => {
         const sentKey = `autoMsg_${keySuffix}_${lesson.date}`;
         if (sent[sentKey]) return; // Zaten gönderildi
 
-        // Sisteme yaz
-        await addMessageToFirebase(`⚠️ ${title.toUpperCase()}: ${body}`);
-        // Push at
+        // Action A: Supabase (İç Uygulama)
+        await sendNotification('all', {
+          title: `⚠️ ${title.toUpperCase()}`,
+          body,
+          type: 'system'
+        });
+        
+        // Action B: Firebase FCM (Kilit Ekranı)
         await sendPushNotification(title, body);
-        // Supabase'e kaydet (artık localStorage değil)
+        
+        // Gönderildi olarak işaretle
         await markMessageSent(sentKey);
       };
 

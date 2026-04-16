@@ -74,31 +74,47 @@ export const NotificationPanel = ({ studentId, isOpen, onClose }: NotificationPa
             </div>
           </div>
         ) : (
-          notifications.map(n => (
-            <div
-              key={n.id}
-              className={`p-4 border-b border-white/5 transition-all relative group ${!n.read ? 'bg-[#00F0FF]/5 cursor-pointer' : 'opacity-80'}`}
-              onClick={() => !n.read && markAsRead(n.id)}
-            >
-              <div className="flex items-start gap-3">
-                <div className={`mt-1 flex-shrink-0 w-8 h-8 rounded bg-gray-900 border flex items-center justify-center text-lg ${!n.read ? 'border-[#00F0FF]/40 shadow-[0_0_10px_rgba(0,240,255,0.2)]' : 'border-gray-800'}`}>
-                  {n.type === 'admin' ? '📢' : n.type === 'lesson' ? '📚' : n.type === 'feedback' ? '⭐' : '🔔'}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-1">
-                    <p className={`text-xs font-bold uppercase tracking-wider ${!n.read ? 'text-[#00F0FF]' : 'text-gray-400'}`}>
-                      {n.title}
-                    </p>
-                    <span className="text-[9px] font-mono text-gray-600 whitespace-nowrap">{formatTime(n.createdAt)}</span>
+          notifications.map(n => {
+            const isEmergency = n.type === 'emergency';
+            return (
+              <div
+                key={n.id}
+                className={`p-4 border-b border-white/5 transition-all relative group ${
+                  !n.read 
+                    ? isEmergency 
+                      ? 'bg-red-500/10 animate-pulse-fast border-l-4 border-red-500' 
+                      : 'bg-[#00F0FF]/5 cursor-pointer border-l-4 border-[#00F0FF]' 
+                    : 'opacity-80'
+                }`}
+                onClick={() => !n.read && markAsRead(n.id)}
+              >
+                <div className="flex items-start gap-3">
+                  <div className={`mt-1 flex-shrink-0 w-8 h-8 rounded bg-gray-900 border flex items-center justify-center text-lg ${
+                    !n.read 
+                      ? isEmergency 
+                        ? 'border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.4)] text-red-500' 
+                        : 'border-[#00F0FF]/40 shadow-[0_0_10px_rgba(0,240,255,0.2)]' 
+                      : 'border-gray-800'
+                  }`}>
+                    {isEmergency ? '🚨' : n.type === 'admin' ? '📢' : n.type === 'lesson' ? '📚' : n.type === 'feedback' ? '⭐' : '🔔'}
                   </div>
-                  <p className={`text-xs leading-relaxed ${!n.read ? 'text-gray-200' : 'text-gray-500'}`}>{n.body}</p>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between mb-1">
+                      <p className={`text-xs font-bold uppercase tracking-wider ${
+                        !n.read 
+                          ? isEmergency ? 'text-red-500' : 'text-[#00F0FF]' 
+                          : 'text-gray-400'
+                      }`}>
+                        {isEmergency && 'ACİL DURUM: '}{n.title}
+                      </p>
+                      <span className="text-[9px] font-mono text-gray-600 whitespace-nowrap">{formatTime(n.createdAt)}</span>
+                    </div>
+                    <p className={`text-xs leading-relaxed ${!n.read ? 'text-gray-200' : 'text-gray-500'}`}>{n.body}</p>
+                  </div>
                 </div>
               </div>
-              {!n.read && (
-                <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-[#00F0FF] shadow-[0_0_10px_#00F0FF]" />
-              )}
-            </div>
-          ))
+            );
+          })
         )}
       </div>
     </div>

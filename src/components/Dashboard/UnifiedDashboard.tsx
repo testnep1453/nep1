@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import * as XLSX from 'xlsx';
 import {
   getStudentsFromFirebase, addStudentToFirebase, addStudentsBatch, removeStudentFromFirebase,
-  updateStudentInFirebase, addMessageToFirebase, setTrailer, disableTrailer, subscribeToTrailer,
+  updateStudentInFirebase, setTrailer, disableTrailer, subscribeToTrailer,
   extractYoutubeId, getAllFeedback
 } from '../../services/dbFirebase';
 import { recordAttendance } from '../../services/db';
@@ -19,7 +19,8 @@ import { SystemConfigManager } from '../Admin/SystemConfigManager';
 import { getAllLoginLogs } from '../../services/loginAlertService';
 import { Settings } from 'lucide-react';
 import { useAutoMessages } from '../../hooks/useAutoMessages';
-import { useNotifications, sendNotificationToAll } from '../../hooks/useNotifications';
+import { useNotifications, sendNotificationToAll, sendNotification } from '../../hooks/useNotifications';
+import { sendPushNotification } from '../../services/fcm';
 import { useAutoZoom } from '../../hooks/useAutoZoom';
 import { LESSON_CONFIG, formatLessonDate } from '../../config/lessonSchedule';
 
@@ -278,26 +279,31 @@ export const UnifiedDashboard = ({
   const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
     if (messageText.trim()) {
-      if (messageTargetId && messageTargetId.trim() !== '') {
-        // Özel mesaj/bildirim (Yalnızca notification olarak hedef ID'ye gidebilir veya tabloya yazılabilir)
-        // Mevcut addMessageToFirebase herksin okuduğu 'messages' tablosuna yazıyor.
-        // O yüzden sadece notification olarak gönderebiliriz.
-        await sendNotificationToAll([messageTargetId.trim()], {
-          title: 'Gizli Ajan Mesajı',
+      const targetId = messageTargetId && messageTargetId.trim() !== '' ? messageTargetId.trim() : 'all';
+      const isEmergency = messageText.includes('ACİL') || messageText.includes('!!');
+      const type = isEmergency ? 'emergency' : 'admin';
+      const title = isEmergency ? '🚨 ACİL DURUM BİLDİRİMİ' : 'Komuta Merkezi Mesajı';
+
+      try {
+        // Action A: Supabase (İç Uygulama)
+        await sendNotification(targetId, {
+          title,
           body: messageText.trim(),
-          type: 'admin',
+          type: type
         });
-        alert(`Mesaj ${messageTargetId} ID'li ajana iletildi!`);
-      } else {
-        await addMessageToFirebase(messageText.trim());
-        const studentIds = students.map(s => s.id).filter(id => id !== '1002');
-        await sendNotificationToAll(studentIds, {
-          title: 'Admin Duyurusu',
-          body: messageText.trim(),
-          type: 'admin',
-        });
-        alert('Mesaj ve bildirimler tüm ajanlara iletildi!');
+
+        // Action B: Firebase FCM (Kilit Ekranı)
+        await sendPushNotification(title, messageText.trim());
+
+        alert(targetId === 'all' 
+          ? 'Mesaj tüm ajanlara (Supabase + FCM) başarıyla iletildi!' 
+          : `Mesaj ${targetId} ID'li ajana (Supabase + FCM) iletildi!`
+        );
+      } catch (error) {
+        console.error('Mesaj gönderme hatası:', error);
+        alert('Mesaj gönderilirken bir hata oluştu.');
       }
+
       setMessageText('');
       setMessageTargetId('');
     }
@@ -631,16 +637,16 @@ export const UnifiedDashboard = ({
           {isAdmin && activeTab === 'mesajlar' && (
             <div className="max-w-2xl animate-fade-in">
               <div className="bg-[#0A1128]/80 border border-[#00F0FF]/30 p-4 sm:p-6 clip-path-diagonal relative">
-                <div className="absolute top-0 right-0 px-4 py-1 bg-[#00F0FF] text-black text-xs font-bold tracking-widest">BROADCAST / DM</div>
+                <div className="absolute top-0 right-0 px-4 py-1 bg-[#00F0FF] text-black text-xs font-bold tracking-widest">Sistem: Supabase (Uygulama İçi) + Firebase (Kilit Ekranı)</div>
                 <h3 className="text-[#00F0FF] text-base sm:text-lg font-bold mb-2 uppercase tracking-widest">Global veya Özel Mesaj</h3>
-                <p className="text-gray-400 text-xs sm:text-sm mb-6">Hedef ID boş bırakılırsa Firestore 'messages' aracılığıyla tüm ajanlara yayınlanır. Hedef ID belirtilirse yalnızca o ajana bildirim olarak ulaşır.</p>
+                <p className="text-gray-400 text-xs sm:text-sm mb-6">Hedef ID boş bırakılırsa 'all' üzerinden tüm ajanlara yayınlanır. Hedef ID belirtilirse yalnızca o ajana özel (DM) olarak ulaşır.</p>
                 <form onSubmit={handleSendMessage}>
                   <div className="mb-4">
                     <label className="block text-gray-400 text-xs font-mono mb-2">HEDEF AJAN ID (İsteğe Bağlı)</label>
                     <input type="text" value={messageTargetId} onChange={(e) => setMessageTargetId(e.target.value)} placeholder="Tüm Ajanlar (Boş Bırakın) veya örn: 1005" className="w-full bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#00F0FF] font-mono text-sm transition-colors rounded" />
                   </div>
-                  <textarea id="broadcastMsg" name="broadcastMsg" aria-label="Mesaj Kutusu" value={messageText} onChange={(e) => setMessageText(e.target.value)} placeholder="Mesajınızı yazın..." required rows={4} className="w-full bg-[#050505] border border-gray-700 text-white p-4 focus:outline-none focus:border-[#00F0FF] font-mono text-sm mb-4 transition-colors resize-none rounded" />
-                  <button type="submit" className="w-full bg-[#00F0FF]/20 hover:bg-[#00F0FF] text-[#00F0FF] hover:text-black border border-[#00F0FF] py-3 font-bold transition-all uppercase tracking-widest flex items-center justify-center gap-2 rounded min-h-[48px]"><Icons.Message /> GÖNDER</button>
+                  <textarea id="broadcastMsg" name="broadcastMsg" aria-label="Mesaj Kutusu" value={messageText} onChange={(e) => setMessageText(e.target.value)} placeholder="Mesajınızı yazın... (Mesajda 'ACİL' geçerse kırmızı alarm tetiklenir)" required rows={4} className="w-full bg-[#050505] border border-gray-700 text-white p-4 focus:outline-none focus:border-[#00F0FF] font-mono text-sm mb-4 transition-colors resize-none rounded" />
+                  <button type="submit" className="w-full bg-[#00F0FF]/20 hover:bg-[#00F0FF] text-[#00F0FF] hover:text-black border border-[#00F0FF] py-3 font-bold transition-all uppercase tracking-widest flex items-center justify-center gap-2 rounded min-h-[48px]"><Icons.Message /> HİBRİT GÖNDERİMİ BAŞLAT</button>
                 </form>
               </div>
             </div>

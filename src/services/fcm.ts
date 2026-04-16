@@ -77,7 +77,10 @@ export const setupNotificationListener = async (
     if (!messaging) return;
 
     onMessage(messaging, (payload) => {
-      // Foreground'da browser notification göster
+      // Foreground'da browser notification göstermiyoruz — Supabase (Uygulama İçi) handle ediyor.
+      // SADECE background (Kilit Ekranı) için Firebase tasarlandı (Modül 2).
+      
+      /* 
       if ('Notification' in window && Notification.permission === 'granted') {
         const title = payload.notification?.title || 'NEP Eğitim';
         const body = payload.notification?.body || 'Yeni bildirim';
@@ -88,6 +91,7 @@ export const setupNotificationListener = async (
           tag: 'nep-foreground',
         });
       }
+      */
 
       callback(payload);
     });
