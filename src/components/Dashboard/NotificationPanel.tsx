@@ -1,22 +1,9 @@
 /**
- * Bildirimler Paneli
- * NOT: 'notifications' tablosu Supabase'de henüz oluşturulmadı.
- * Şimdilik yalnızca 'messages' tablosundan admin duyuruları gösterilir.
- * Notifications tablosu oluşturulduğunda ilgili blok açılabilir.
+ * Bildirimler Paneli (Notification System Overhaul)
  */
 
-import { useState, useEffect, useRef } from 'react';
-import { supabase } from '../../config/supabase';
-import { getSettingStore, saveSettingStore } from '../../services/dbFirebase';
-
-interface NotificationItem {
-  id: string;
-  title: string;
-  body: string;
-  type: 'admin' | 'system' | 'lesson';
-  read: boolean;
-  createdAt: number;
-}
+import { useEffect, useRef } from 'react';
+import { useNotifications } from '../../hooks/useNotifications';
 
 interface NotificationPanelProps {
   studentId: string;
@@ -26,8 +13,7 @@ interface NotificationPanelProps {
 }
 
 export const NotificationPanel = ({ studentId, isOpen, onClose }: NotificationPanelProps) => {
-  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
-  const [readReceipts, setReadReceipts] = useState<string[]>([]);
+  const { notifications, markAsRead, markAllRead } = useNotifications(studentId);
   const panelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -42,51 +28,6 @@ export const NotificationPanel = ({ studentId, isOpen, onClose }: NotificationPa
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen, onClose]);
 
-  // Yalnızca 'messages' tablosundan admin duyurularını çek
-  // 'notifications' tablosu oluşturulduğunda buraya eklenebilir
-  useEffect(() => {
-    if (!studentId || !isOpen) return;
-
-    const fetchAll = async () => {
-      try {
-        const { data: msgData } = await supabase
-          .from('messages')
-          .select('*')
-          .order('date', { ascending: false })
-          .limit(20);
-
-        const reads = await getSettingStore<string[]>(`read_${studentId}`, []);
-        setReadReceipts(reads || []);
-
-        const msgNotifs: NotificationItem[] = (msgData || []).map((m: Record<string, unknown>) => {
-          const nId = `msg_${m.id}`;
-          return {
-            id: nId,
-            title: 'Admin Duyurusu',
-            body: String(m.text || ''),
-            type: 'admin' as const,
-            read: (reads || []).includes(nId),
-            createdAt: Number(m.date) || Date.now(),
-          };
-        });
-
-        setNotifications(msgNotifs);
-      } catch {
-        setNotifications([]);
-      }
-    };
-
-    fetchAll();
-
-    // Yalnızca messages tablosunu izle
-    const channel = supabase
-      .channel(`notif_panel_${studentId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, fetchAll)
-      .subscribe();
-
-    return () => { supabase.removeChannel(channel); };
-  }, [studentId, isOpen]);
-
   const formatTime = (ts: number) => {
     const d = new Date(ts);
     const now = new Date();
@@ -97,55 +38,65 @@ export const NotificationPanel = ({ studentId, isOpen, onClose }: NotificationPa
     return d.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' });
   };
 
-  const markAsRead = async (e: React.MouseEvent, id: string) => {
-    e.stopPropagation();
-    if (readReceipts.includes(id)) return;
-    const newReads = [...readReceipts, id];
-    setReadReceipts(newReads);
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
-    await saveSettingStore(`read_${studentId}`, newReads);
-  };
-
   if (!isOpen) return null;
 
   return (
     <div
       ref={panelRef}
-      className="absolute right-12 top-14 w-80 max-h-[70vh] bg-[#0A1128] border border-[#6358cc]/40 rounded-xl shadow-2xl shadow-black/50 z-[200] flex flex-col overflow-hidden animate-fade-in"
+      className="absolute right-0 sm:right-0 top-14 w-[calc(100vw-2rem)] sm:w-80 max-h-[70vh] bg-[#0A1128]/95 backdrop-blur-md border border-[#00F0FF]/30 rounded-xl shadow-[0_0_30px_rgba(0,0,0,0.8)] z-[200] flex flex-col overflow-hidden animate-fade-in mx-4 sm:mx-0"
     >
-      <div className="p-4 border-b border-[#6358cc]/20 flex items-center justify-between">
-        <h3 className="text-sm font-bold text-white uppercase tracking-wider">Bildirimler</h3>
-        <span className="text-gray-500 text-xs">{notifications.length} bildirim</span>
+      <div className="p-4 border-b border-[#00F0FF]/20 flex items-center justify-between bg-[#00F0FF]/5">
+        <div>
+          <h3 className="text-sm font-bold text-[#00F0FF] uppercase tracking-[0.2em]">Bildirimler</h3>
+          <p className="text-[10px] text-gray-500 mt-0.5 font-mono">{notifications.length} KAYIT BULUNDU</p>
+        </div>
+        {notifications.some(n => !n.read) && (
+          <button 
+            onClick={() => markAllRead()}
+            className="text-[10px] font-bold text-[#00F0FF] hover:text-white transition-all uppercase tracking-widest border border-[#00F0FF]/40 px-2 py-1 rounded bg-[#00F0FF]/10 hover:bg-[#00F0FF]/20 shadow-[0_0_10px_rgba(0,240,255,0.1)]"
+          >
+            Tümünü Okundu İşaretle
+          </button>
+        )}
       </div>
 
-      <div className="flex-1 overflow-y-auto">
+      <div className="flex-1 overflow-y-auto custom-scrollbar">
         {notifications.length === 0 ? (
-          <div className="p-8 text-center text-gray-500 text-sm">
-            Henüz bildirim yok
+          <div className="p-12 text-center relative overflow-hidden group">
+            <div className="absolute inset-0 bg-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+            <div className="text-4xl mb-4 animate-pulse opacity-50 filter drop-shadow-[0_0_8px_rgba(0,240,255,0.5)]">📡</div>
+            <p className="text-[10px] uppercase tracking-[0.3em] font-mono text-[#00F0FF]/40 mb-1">Status: Offline</p>
+            <p className="text-xs uppercase tracking-[0.1em] font-bold text-gray-500">Veri akışı bulunamadı</p>
+            <div className="mt-4 flex justify-center gap-1 opacity-20">
+              <div className="w-1 h-1 bg-[#00F0FF] rounded-full animate-bounce [animation-delay:-0.3s]" />
+              <div className="w-1 h-1 bg-[#00F0FF] rounded-full animate-bounce [animation-delay:-0.15s]" />
+              <div className="w-1 h-1 bg-[#00F0FF] rounded-full animate-bounce" />
+            </div>
           </div>
         ) : (
           notifications.map(n => (
             <div
               key={n.id}
-              className={`p-3 border-b border-white/5 transition-colors ${!n.read ? 'bg-[#00F0FF]/5 hover:bg-[#00F0FF]/10' : 'hover:bg-white/5'}`}
+              className={`p-4 border-b border-white/5 transition-all relative group ${!n.read ? 'bg-[#00F0FF]/5 cursor-pointer' : 'opacity-80'}`}
+              onClick={() => !n.read && markAsRead(n.id)}
             >
-              <div className="flex items-start gap-2">
-                <span className="text-sm mt-0.5">
-                  {n.type === 'admin' ? '📢' : n.type === 'lesson' ? '📚' : '🔔'}
-                </span>
+              <div className="flex items-start gap-3">
+                <div className={`mt-1 flex-shrink-0 w-8 h-8 rounded bg-gray-900 border flex items-center justify-center text-lg ${!n.read ? 'border-[#00F0FF]/40 shadow-[0_0_10px_rgba(0,240,255,0.2)]' : 'border-gray-800'}`}>
+                  {n.type === 'admin' ? '📢' : n.type === 'lesson' ? '📚' : n.type === 'feedback' ? '⭐' : '🔔'}
+                </div>
                 <div className="flex-1 min-w-0">
-                  <p className={`text-xs font-semibold truncate ${!n.read ? 'text-[#00F0FF]' : 'text-white/80'}`}>{n.title}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">{n.body}</p>
-                  <div className="flex items-center justify-between mt-2">
-                    <p className="text-[10px] text-gray-600">{formatTime(n.createdAt)}</p>
-                    {!n.read && (
-                      <button onClick={(e) => markAsRead(e, n.id)} className="text-[10px] font-bold text-[#39FF14] bg-[#39FF14]/10 hover:bg-[#39FF14]/20 px-2 py-0.5 rounded transition-colors uppercase tracking-widest">
-                        Okundu İşaretle
-                      </button>
-                    )}
+                  <div className="flex items-center justify-between mb-1">
+                    <p className={`text-xs font-bold uppercase tracking-wider ${!n.read ? 'text-[#00F0FF]' : 'text-gray-400'}`}>
+                      {n.title}
+                    </p>
+                    <span className="text-[9px] font-mono text-gray-600 whitespace-nowrap">{formatTime(n.createdAt)}</span>
                   </div>
+                  <p className={`text-xs leading-relaxed ${!n.read ? 'text-gray-200' : 'text-gray-500'}`}>{n.body}</p>
                 </div>
               </div>
+              {!n.read && (
+                <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-[#00F0FF] shadow-[0_0_10px_#00F0FF]" />
+              )}
             </div>
           ))
         )}

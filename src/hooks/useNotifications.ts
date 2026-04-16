@@ -17,47 +17,108 @@ export const useNotifications = (studentId: string | null) => {
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
 
+  const fetchStats = async () => {
+    if (!studentId || !['1001', '1003'].includes(studentId)) return;
+    try {
+      // Fetch from notifications table
+      const { data, error } = await supabase
+        .from('notifications')
+        .select('*')
+        .eq('user_id', studentId)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (error) throw error;
+
+      const appNotifs: AppNotification[] = (data || []).map(n => ({
+        id: n.id,
+        title: n.title,
+        body: n.body || n.content || '',
+        type: n.type || 'system',
+        read: n.is_read,
+        createdAt: new Date(n.created_at).getTime(),
+      }));
+
+      setNotifications(appNotifs);
+      setUnreadCount(appNotifs.filter(n => !n.read).length);
+    } catch (err) {
+      console.error('Error fetching notifications:', err);
+    }
+  };
+
   useEffect(() => {
     if (!studentId || !NOTIFICATIONS_ENABLED || !['1001', '1003'].includes(studentId)) return;
     
-    const fetchStats = async () => {
-      try {
-        const { data: msgData } = await supabase.from('messages').select('id');
-        const reads = await getSettingStore<string[]>(`read_${studentId}`, []);
-        const total = msgData ? msgData.length : 0;
-        const readLen = Array.isArray(reads) ? reads.filter(id => id.startsWith('msg_')).length : 0;
-        setUnreadCount(Math.max(0, total - readLen));
-      } catch {}
-    };
-
     fetchStats();
     
-    // listen to messages updates
-    const channel = supabase.channel(`notifs_${studentId}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'messages' }, fetchStats)
+    // listen to notifications updates
+    const channel = supabase.channel(`notifs_v2_${studentId}_${Math.random().toString(36).substring(2, 9)}`)
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'notifications',
+        filter: `user_id=eq.${studentId}`
+      }, fetchStats)
       .subscribe();
       
-    // interval for polling reading status from panel updates 
-    const intv = setInterval(fetchStats, 5000);
-
-    return () => { supabase.removeChannel(channel); clearInterval(intv); };
+    return () => { supabase.removeChannel(channel); };
   }, [studentId]);
 
-  const markAsRead = async (_notifId: string) => {};
-  const markAllRead = async () => {};
+  const markAsRead = async (notifId: string) => {
+    try {
+      await supabase.from('notifications').update({ is_read: true }).eq('id', notifId);
+      fetchStats();
+    } catch (err) {
+      console.error('Error marking as read:', err);
+    }
+  };
+
+  const markAllRead = async () => {
+    if (!studentId) return;
+    try {
+      await supabase.from('notifications').update({ is_read: true }).eq('user_id', studentId);
+      fetchStats();
+    } catch (err) {
+      console.error('Error marking all as read:', err);
+    }
+  };
+
   return { notifications, unreadCount, markAsRead, markAllRead };
 };
 
 export const sendNotificationToAll = async (
-  _studentIds: string[],
-  _notification: Omit<AppNotification, 'id' | 'read' | 'createdAt'>
+  studentIds: string[],
+  notification: Omit<AppNotification, 'id' | 'read' | 'createdAt'>
 ) => {
   if (!NOTIFICATIONS_ENABLED) return;
+  try {
+    const rows = studentIds.map(id => ({
+      user_id: id,
+      title: notification.title,
+      body: notification.body,
+      type: notification.type,
+      is_read: false
+    }));
+    await supabase.from('notifications').insert(rows);
+  } catch (err) {
+    console.error('Error sending batch notifications:', err);
+  }
 };
 
 export const sendNotification = async (
-  _studentId: string,
-  _notification: Omit<AppNotification, 'id' | 'read' | 'createdAt'>
+  studentId: string,
+  notification: Omit<AppNotification, 'id' | 'read' | 'createdAt'>
 ) => {
   if (!NOTIFICATIONS_ENABLED) return;
+  try {
+    await supabase.from('notifications').insert({
+      user_id: studentId,
+      title: notification.title,
+      body: notification.body,
+      type: notification.type,
+      is_read: false
+    });
+  } catch (err) {
+    console.error('Error sending notification:', err);
+  }
 };

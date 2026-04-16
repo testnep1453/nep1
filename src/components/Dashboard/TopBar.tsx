@@ -137,7 +137,11 @@ export const TopBar = ({ student, unreadCount, theme = 'dark', onThemeChange, on
         {['1001', '1003'].includes(student.id) && (
           <div className="relative">
             <button
-              onClick={() => { setShowNotifications(!showNotifications); setShowManualPrompt(false); }}
+              onClick={(e) => { 
+                e.stopPropagation();
+                setShowNotifications(!showNotifications); 
+                setShowManualPrompt(false); 
+              }}
               className="relative w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-all"
             >
               <BellIcon />
