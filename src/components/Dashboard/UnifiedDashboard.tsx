@@ -288,7 +288,7 @@ export const UnifiedDashboard = ({
         // Action A: Supabase (İç Uygulama)
         await sendNotification(targetId, {
           title,
-          message: messageText.trim(),
+          body: messageText.trim(),
           type: type
         });
 

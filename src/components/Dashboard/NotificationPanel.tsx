@@ -109,7 +109,7 @@ export const NotificationPanel = ({ studentId, isOpen, onClose }: NotificationPa
                       </p>
                       <span className="text-[9px] font-mono text-gray-600 whitespace-nowrap">{formatTime(n.created_at)}</span>
                     </div>
-                    <p className={`text-xs leading-relaxed ${!n.is_read ? 'text-gray-200' : 'text-gray-500'}`}>{n.message}</p>
+                    <p className={`text-xs leading-relaxed ${!n.is_read ? 'text-gray-200' : 'text-gray-500'}`}>{n.body}</p>
                   </div>
                 </div>
               </div>

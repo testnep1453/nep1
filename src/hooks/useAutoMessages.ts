@@ -55,10 +55,9 @@ export const useAutoMessages = (isAdmin: boolean) => {
         const sentKey = `autoMsg_${keySuffix}_${lesson.date}`;
         if (sent[sentKey]) return; // Zaten gönderildi
 
-        // Action A: Supabase (İç Uygulama)
         await sendNotification('all', {
           title: `⚠️ ${title.toUpperCase()}`,
-          message: body,
+          body: body,
           type: 'system'
         });
         

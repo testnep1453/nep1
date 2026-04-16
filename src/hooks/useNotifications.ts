@@ -8,7 +8,7 @@ export interface AppNotification {
   id: string;
   user_id: string;
   title: string;
-  message: string;
+  body: string; // 'message' mapped to 'body' for schema sync
   type: 'lesson' | 'feedback' | 'system' | 'admin' | 'emergency' | 'info';
   is_read: boolean;
   created_at: number;
@@ -24,7 +24,7 @@ export const useNotifications = (studentId: string | null) => {
       // Fetch from notifications table (User-specific OR 'all')
       const { data, error } = await supabase
         .from('notifications')
-        .select('id, user_id, title, message, type, is_read, created_at')
+        .select('id, user_id, title, body, type, is_read, created_at')
         .or(`user_id.eq.${studentId},user_id.eq.all`)
         .order('created_at', { ascending: false })
         .limit(50);
@@ -35,7 +35,7 @@ export const useNotifications = (studentId: string | null) => {
         id: n.id,
         user_id: n.user_id,
         title: n.title,
-        message: n.message || '',
+        body: n.body || '', // n.body used instead of n.message
         type: n.type || 'system',
         is_read: n.is_read,
         created_at: new Date(n.created_at).getTime(),
@@ -113,7 +113,7 @@ export const sendNotificationToAll = async (
     const rows = studentIds.map(id => ({
       user_id: id,
       title: notification.title,
-      message: notification.message,
+      body: notification.body, // 'message' had become 'body' in the interface
       type: notification.type
     }));
     await supabase.from('notifications').insert(rows);
@@ -131,7 +131,7 @@ export const sendNotification = async (
     await supabase.from('notifications').insert({
       user_id: studentIdOrAll,
       title: notification.title,
-      message: notification.message,
+      body: notification.body, // body
       type: notification.type
     });
   } catch (err) {
