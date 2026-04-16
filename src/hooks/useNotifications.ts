@@ -23,7 +23,7 @@ export const useNotifications = (studentId: string | null) => {
       // Fetch from notifications table (User-specific OR 'all')
       const { data, error } = await supabase
         .from('notifications')
-        .select('*')
+        .select('id, title, message, type, is_read, created_at')
         .or(`user_id.eq.${studentId},user_id.eq.all`)
         .order('created_at', { ascending: false })
         .limit(50);
@@ -33,7 +33,7 @@ export const useNotifications = (studentId: string | null) => {
       const appNotifs: AppNotification[] = (data || []).map(n => ({
         id: n.id,
         title: n.title,
-        body: n.body || n.content || '',
+        body: n.message || '',
         type: n.type || 'system',
         read: n.is_read,
         createdAt: new Date(n.created_at).getTime(),
@@ -111,9 +111,8 @@ export const sendNotificationToAll = async (
     const rows = studentIds.map(id => ({
       user_id: id,
       title: notification.title,
-      body: notification.body,
-      type: notification.type,
-      is_read: false
+      message: notification.body,
+      type: notification.type
     }));
     await supabase.from('notifications').insert(rows);
   } catch (err) {
@@ -130,11 +129,11 @@ export const sendNotification = async (
     await supabase.from('notifications').insert({
       user_id: studentIdOrAll,
       title: notification.title,
-      body: notification.body,
-      type: notification.type,
-      is_read: false
+      message: notification.body,
+      type: notification.type
     });
   } catch (err) {
     console.error('Error sending notification:', err);
   }
 };
+

@@ -57,7 +57,7 @@ const saveTokenToFirestore = async (studentId: string, token: string) => {
     await supabase.from('fcmTokens').upsert({
       id: studentId,
       token,
-      updatedAt: Date.now(),
+      updated_at: new Date().toISOString(),
       platform: navigator.userAgent.includes('Mobile') ? 'mobile' : 'desktop',
     });
   } catch {
@@ -107,7 +107,11 @@ export const setupNotificationListener = async (
 export const sendPushNotification = async (title: string, body: string) => {
   try {
     // Bu tablo/kanal üzerinden backend (Edge function veya benzeri) FCM atabilir.
-    await supabase.from('fcm_queue').insert([{ title, body, createdAt: Date.now() }]);
+    await supabase.from('fcm_queue').insert([{ 
+      title, 
+      body, 
+      created_at: new Date().toISOString() 
+    }]);
   } catch {
     // sessiz
   }

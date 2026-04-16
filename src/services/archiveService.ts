@@ -36,12 +36,22 @@ export const getArchiveVideos = async (): Promise<ArchiveVideo[]> => {
     const { data, error } = await supabase
       .from('archive')
       .select('*')
-      .order('addedAt', { ascending: false });
+      .order('added_at', { ascending: false });
     if (error) {
       // Tablo henüz oluşturulmadıysa sessizce boş dizi döndür
       return [];
     }
-    return (data ?? []) as ArchiveVideo[];
+    // Map back to camelCase for the frontend if necessary, but select * returns whatever DB has.
+    // If DB has snake_case, we should map it to match ArchiveVideo interface.
+    return (data || []).map(v => ({
+      id: v.id,
+      title: v.title,
+      youtubeUrl: v.youtube_url,
+      youtubeId: v.youtube_id,
+      thumbnailUrl: v.thumbnail_url,
+      addedAt: new Date(v.added_at).getTime(),
+      addedBy: v.added_by
+    }));
   } catch {
     return [];
   }
@@ -56,12 +66,11 @@ export const addArchiveVideo = async (
   if (!youtubeId) throw new Error('Geçersiz YouTube URL — video ID bulunamadı.');
   const { error } = await supabase.from('archive').insert([{
     title,
-    youtubeUrl,
-    youtubeId,
-    thumbnailUrl: `https://img.youtube.com/vi/${youtubeId}/mqdefault.jpg`,
-
-    addedAt: Date.now(),
-    addedBy,
+    youtube_url: youtubeUrl,
+    youtube_id: youtubeId,
+    thumbnail_url: `https://img.youtube.com/vi/${youtubeId}/mqdefault.jpg`,
+    added_at: new Date().toISOString(),
+    added_by: addedBy,
   }]);
   if (error) throw new Error('Eklenemedi: ' + error.message);
 };

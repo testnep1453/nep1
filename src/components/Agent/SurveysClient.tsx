@@ -50,9 +50,9 @@ export const SurveysClient = () => {
     // Anonim kaydet
     try {
       await supabase.from('survey_results').insert([{
-        surveyid: activeSurvey.id,
+        survey_id: activeSurvey.id,
         answers,
-        createdat: Date.now(),
+        created_at: new Date().toISOString(),
       }]);
 
       const newCompleted = new Set(completed).add(activeSurvey.id);

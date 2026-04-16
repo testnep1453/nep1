@@ -4,15 +4,49 @@ import seedData from '../student_list.json';
 
 export const getStudentsFromFirebase = async (): Promise<Student[]> => {
   const { data } = await supabase.from('students').select('*');
-  return data && data.length > 0 ? data as Student[] : seedData as Student[];
+  if (!data || data.length === 0) return seedData as Student[];
+  
+  return data.map(s => ({
+    ...s,
+    nickname: s.display_name || s.nickname || 'AJAN',
+    lastSeen: s.last_seen ? new Date(s.last_seen).getTime() : Date.now(),
+    attendanceHistory: s.attendance_history || []
+  })) as Student[];
 };
 
 export const addStudentToFirebase = async (student: Student) => {
-  await supabase.from('students').upsert(student);
+  await supabase.from('students').upsert({
+    id: student.id,
+    name: student.name,
+    nickname: student.nickname,
+    display_name: student.nickname,
+    email: student.email,
+    xp: student.xp,
+    level: student.level,
+    avatar: student.avatar,
+    last_seen: new Date(student.lastSeen || Date.now()).toISOString(),
+    attendance_history: student.attendanceHistory || [],
+    streak: student.streak || 0,
+    badges: student.badges || []
+  });
 };
 
 export const updateStudentInFirebase = async (id: string, updates: Partial<Student>) => {
-  await supabase.from('students').update(updates).eq('id', id);
+  const mappedUpdates: Record<string, any> = { ...updates };
+  
+  if (updates.lastSeen) {
+    mappedUpdates.last_seen = new Date(updates.lastSeen).toISOString();
+    delete mappedUpdates.lastSeen;
+  }
+  if (updates.attendanceHistory) {
+    mappedUpdates.attendance_history = updates.attendanceHistory;
+    delete mappedUpdates.attendanceHistory;
+  }
+  if (updates.nickname) {
+    mappedUpdates.display_name = updates.nickname;
+  }
+
+  await supabase.from('students').update(mappedUpdates).eq('id', id);
 };
 
 export const removeStudentFromFirebase = async (id: string) => {
@@ -48,17 +82,36 @@ export const extractYoutubeId = (url: string): string => {
 };
 
 export const addStudentsBatch = async (students: Student[]) => {
-  await supabase.from('students').upsert(students);
+  const mapped = students.map(s => ({
+    id: s.id,
+    name: s.name,
+    nickname: s.nickname,
+    display_name: s.nickname,
+    email: s.email,
+    xp: s.xp,
+    level: s.level,
+    avatar: s.avatar,
+    last_seen: new Date(s.lastSeen || Date.now()).toISOString(),
+    attendance_history: s.attendanceHistory || [],
+    streak: s.streak || 0,
+    badges: s.badges || []
+  }));
+  await supabase.from('students').upsert(mapped);
 };
 
 export const recordAttendanceToFirebase = async (studentId: string, lessonDate: string, autoJoined: boolean = true) => {
   await supabase.from('attendance').upsert({
-    id: `${lessonDate}_${studentId}`, studentId, lessonDate, joinedAt: Date.now(), autoJoined, xpEarned: 100
+    id: `${lessonDate}_${studentId}`, 
+    student_id: studentId, 
+    lesson_date: lessonDate, 
+    joined_at: new Date().toISOString(), 
+    auto_joined: autoJoined, 
+    xp_earned: 100
   });
 };
 
 export const getAttendanceForLesson = async (lessonDate: string) => {
-  const { data } = await supabase.from('attendance').select('studentId, joinedAt, autoJoined').eq('lessonDate', lessonDate);
+  const { data } = await supabase.from('attendance').select('student_id, joined_at, auto_joined').eq('lesson_date', lessonDate);
   return data || [];
 };
 
@@ -131,14 +184,14 @@ export const checkAndAwardBadge = async (studentId: string, badgeKey: string) =>
   const { data: existing } = await supabase
     .from('student_badges')
     .select('*')
-    .eq('studentId', studentId)
-    .eq('badgeKey', badgeKey)
+    .eq('student_id', studentId)
+    .eq('badge_key', badgeKey)
     .maybeSingle();
 
   if (!existing) {
     await supabase.from('student_badges').insert([{
-      studentId,
-      badgeKey,
+      student_id: studentId,
+      badge_key: badgeKey,
       earned_at: new Date().toISOString()
     }]);
     return true;
@@ -150,6 +203,6 @@ export const getStudentBadges = async (studentId: string) => {
   const { data } = await supabase
     .from('student_badges')
     .select('*')
-    .eq('studentId', studentId);
+    .eq('student_id', studentId);
   return data || [];
 };

@@ -18,8 +18,8 @@ export const getStudentById = async (id: string): Promise<Student | null> => {
       level: student.level ?? 1,
       badges: student.badges || [],
       avatar: student.avatar || 'hero_1',
-      lastSeen: student.lastSeen || Date.now(),
-      attendanceHistory: student.attendanceHistory || [],
+      lastSeen: new Date(student.last_seen || Date.now()).getTime(),
+      attendanceHistory: student.attendance_history || [],
       streak: student.streak ?? 0,
     };
   } catch {
@@ -30,9 +30,17 @@ export const getStudentById = async (id: string): Promise<Student | null> => {
 export const upsertStudent = async (student: Student): Promise<boolean> => {
   try {
     const { error } = await supabase.from('students').upsert({
-      id: student.id, name: student.name, nickname: student.nickname, email: student.email,
-      xp: student.xp, level: student.level, avatar: student.avatar, streak: student.streak,
-      badges: student.badges, attendanceHistory: student.attendanceHistory, lastSeen: Date.now()
+      id: student.id, 
+      name: student.name, 
+      nickname: student.nickname, 
+      email: student.email,
+      xp: student.xp, 
+      level: student.level, 
+      avatar: student.avatar, 
+      streak: student.streak,
+      badges: student.badges, 
+      attendance_history: student.attendanceHistory || [], 
+      last_seen: new Date().toISOString()
     });
     return !error;
   } catch {
