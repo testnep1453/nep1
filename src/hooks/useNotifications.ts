@@ -52,8 +52,8 @@ export const useNotifications = (studentId: string | null) => {
     fetchStats();
     
     // listen to notifications updates
-    // Realtime filter is limited, so we listen to the table and filter locally or just refetch
-    const channel = supabase.channel(`notifs_hybrid_${studentId}`)
+    const channelName = `notifs_hybrid_${studentId}_${Math.random().toString(36).substring(2, 9)}`;
+    const channel = supabase.channel(channelName)
       .on('postgres_changes', { 
         event: '*', 
         schema: 'public', 
