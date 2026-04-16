@@ -58,7 +58,7 @@ export const useAutoMessages = (isAdmin: boolean) => {
         // Action A: Supabase (İç Uygulama)
         await sendNotification('all', {
           title: `⚠️ ${title.toUpperCase()}`,
-          body,
+          message: body,
           type: 'system'
         });
         

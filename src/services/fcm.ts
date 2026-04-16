@@ -35,9 +35,9 @@ export const requestNotificationPermission = async (studentId?: string): Promise
         serviceWorkerRegistration: registration
       });
 
-      // Token'ı Firestore'a kaydet
+      // Token'ı Supabase (students tablosu) üzerine kaydet
       if (token && studentId) {
-        await saveTokenToFirestore(studentId, token);
+        await saveTokenToDatabase(studentId, token);
       }
 
       return token;
@@ -50,16 +50,15 @@ export const requestNotificationPermission = async (studentId?: string): Promise
 };
 
 /**
- * FCM Token'ı Firestore'a kaydet
+ * FCM Token'ı Supabase students tablosuna (fcm_token) kaydet
  */
-const saveTokenToFirestore = async (studentId: string, token: string) => {
+const saveTokenToDatabase = async (studentId: string, token: string) => {
   try {
-    await supabase.from('fcmTokens').upsert({
-      id: studentId,
-      token,
-      updated_at: new Date().toISOString(),
-      platform: navigator.userAgent.includes('Mobile') ? 'mobile' : 'desktop',
-    });
+    // fcmTokens tablosu yerine doğrudan students tablosuna (snake_case)
+    await supabase.from('students').update({
+      fcm_token: token,
+      last_seen: new Date().toISOString()
+    }).eq('id', studentId);
   } catch {
     // Token kaydedilemedi — sessiz
   }
@@ -104,12 +103,14 @@ export const setupNotificationListener = async (
  * FCM Push gönderme (Sistem tetikleyicisi)
  * Supabase fcm_queue tablosuna push isteği atar, veya direkt fonksiyon çağırır.
  */
-export const sendPushNotification = async (title: string, body: string) => {
+export const sendPushNotification = async (title: string, body: string, userId: string = 'all') => {
   try {
     // Bu tablo/kanal üzerinden backend (Edge function veya benzeri) FCM atabilir.
     await supabase.from('fcm_queue').insert([{ 
+      user_id: userId,
       title, 
       body, 
+      status: 'pending',
       created_at: new Date().toISOString() 
     }]);
   } catch {

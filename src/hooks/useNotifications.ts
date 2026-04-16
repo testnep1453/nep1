@@ -6,11 +6,12 @@ const NOTIFICATIONS_ENABLED = true;
 
 export interface AppNotification {
   id: string;
+  user_id: string;
   title: string;
-  body: string;
+  message: string;
   type: 'lesson' | 'feedback' | 'system' | 'admin' | 'emergency' | 'info';
-  read: boolean;
-  createdAt: number;
+  is_read: boolean;
+  created_at: number;
 }
 
 export const useNotifications = (studentId: string | null) => {
@@ -23,7 +24,7 @@ export const useNotifications = (studentId: string | null) => {
       // Fetch from notifications table (User-specific OR 'all')
       const { data, error } = await supabase
         .from('notifications')
-        .select('id, title, message, type, is_read, created_at')
+        .select('id, user_id, title, message, type, is_read, created_at')
         .or(`user_id.eq.${studentId},user_id.eq.all`)
         .order('created_at', { ascending: false })
         .limit(50);
@@ -32,15 +33,16 @@ export const useNotifications = (studentId: string | null) => {
 
       const appNotifs: AppNotification[] = (data || []).map(n => ({
         id: n.id,
+        user_id: n.user_id,
         title: n.title,
-        body: n.message || '',
+        message: n.message || '',
         type: n.type || 'system',
-        read: n.is_read,
-        createdAt: new Date(n.created_at).getTime(),
+        is_read: n.is_read,
+        created_at: new Date(n.created_at).getTime(),
       }));
 
       setNotifications(appNotifs);
-      setUnreadCount(appNotifs.filter(n => !n.read).length);
+      setUnreadCount(appNotifs.filter(n => !n.is_read).length);
     } catch (err) {
       console.error('Error fetching notifications:', err);
     }
@@ -79,7 +81,7 @@ export const useNotifications = (studentId: string | null) => {
     try {
       await supabase.from('notifications').update({ is_read: true }).eq('id', notifId);
       // Local update for speed
-      setNotifications(prev => prev.map(n => n.id === notifId ? { ...n, read: true } : n));
+      setNotifications(prev => prev.map(n => n.id === notifId ? { ...n, is_read: true } : n));
       setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (err) {
       console.error('Error marking as read:', err);
@@ -104,14 +106,14 @@ export const useNotifications = (studentId: string | null) => {
 
 export const sendNotificationToAll = async (
   studentIds: string[],
-  notification: Omit<AppNotification, 'id' | 'read' | 'createdAt'>
+  notification: Omit<AppNotification, 'id' | 'user_id' | 'is_read' | 'created_at'>
 ) => {
   if (!NOTIFICATIONS_ENABLED) return;
   try {
     const rows = studentIds.map(id => ({
       user_id: id,
       title: notification.title,
-      message: notification.body,
+      message: notification.message,
       type: notification.type
     }));
     await supabase.from('notifications').insert(rows);
@@ -122,14 +124,14 @@ export const sendNotificationToAll = async (
 
 export const sendNotification = async (
   studentIdOrAll: string,
-  notification: Omit<AppNotification, 'id' | 'read' | 'createdAt'>
+  notification: Omit<AppNotification, 'id' | 'user_id' | 'is_read' | 'created_at'>
 ) => {
   if (!NOTIFICATIONS_ENABLED) return;
   try {
     await supabase.from('notifications').insert({
       user_id: studentIdOrAll,
       title: notification.title,
-      message: notification.body,
+      message: notification.message,
       type: notification.type
     });
   } catch (err) {

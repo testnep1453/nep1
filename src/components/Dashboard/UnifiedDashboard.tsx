@@ -288,12 +288,12 @@ export const UnifiedDashboard = ({
         // Action A: Supabase (İç Uygulama)
         await sendNotification(targetId, {
           title,
-          body: messageText.trim(),
+          message: messageText.trim(),
           type: type
         });
 
         // Action B: Firebase FCM (Kilit Ekranı)
-        await sendPushNotification(title, messageText.trim());
+        await sendPushNotification(title, messageText.trim(), targetId);
 
         alert(targetId === 'all' 
           ? 'Mesaj tüm ajanlara (Supabase + FCM) başarıyla iletildi!' 
