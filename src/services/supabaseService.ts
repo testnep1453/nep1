@@ -102,9 +102,9 @@ export const addStudentsBatch = async (students: Student[]) => {
   await supabase.from('students').upsert(mapped);
 };
 
-export const recordAttendance = async (studentId: string) => {
+export const recordAttendance = async (studentId: string, targetDate?: string, autoJoined: boolean = false) => {
   const now = new Date();
-  const today = now.toISOString().slice(0, 10);
+  const today = targetDate || now.toISOString().slice(0, 10);
   
   try {
     const { data: attData } = await supabase
@@ -121,7 +121,7 @@ export const recordAttendance = async (studentId: string) => {
       student_id: String(studentId), 
       lesson_date: today, 
       joined_at: new Date().toISOString(), 
-      auto_joined: false, 
+      auto_joined: autoJoined, 
       xp_earned: 100
     });
 

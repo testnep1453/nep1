@@ -82,7 +82,7 @@ export const setManualLessonActive = async (active: boolean): Promise<void> => {
 
 /**
  * 'settings' tablosundaki 'system_config' satırını dinlemek için abonelik.
- * dbFirebase içindeki subscribeToSettingStore kullanılabilir.
+ * supabaseService içindeki subscribeToSettingStore kullanılabilir.
  */
 export { subscribeToSettingStore as subscribeToSystemConfig } from './supabaseService';
 

@@ -1,6 +1,6 @@
 // AES-256-GCM ile istemci tarafı şifreleme
-// Firebase'e yazılan hassas veriler şifrelenir, sadece bu istemcide çözülür.
-// Anahtar localStorage'da saklanır — gerçek güvenlik Firebase kurallarıyle sağlanır.
+// Supabase'e yazılan hassas veriler şifrelenir, sadece bu istemcide çözülür.
+// Anahtar localStorage'da saklanır — gerçek güvenlik Supabase kurallarıyle sağlanır.
 
 const CRYPTO_KEY_STORAGE = 'nep_crypto_key';
 

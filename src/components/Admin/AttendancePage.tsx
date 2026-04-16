@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Student } from '../../types/student';
-import { getAttendanceForLesson, recordAttendanceToFirebase } from '../../services/supabaseService';
+import { getAttendanceForLesson, recordAttendance } from '../../services/supabaseService';
 import { FIXED_LESSON_SCHEDULE } from '../../config/lessonSchedule';
 import { supabase } from '../../config/supabase';
 
@@ -146,7 +146,7 @@ export const AttendancePage = ({ students }: { students: Student[] }) => {
     try {
       if (!isPresent) {
         // Katıldı olarak işaretle
-        await recordAttendanceToFirebase(studentId, selectedDate, false);
+        await recordAttendance(studentId, selectedDate, false);
       } else {
         // Katılmadı olarak işaretle — Supabase'den sil (snake_case)
         await supabase.from('attendance').delete()

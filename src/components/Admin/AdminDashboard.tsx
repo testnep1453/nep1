@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 import { signOutUser } from '../../services/authService';
 import { getStudents } from '../../services/clientStorageService';
-import { requestPermission } from '../../services/fcm';
+import { requestNotificationPermission } from '../../services/fcm';
 import { getSystemConfig } from '../../services/systemSettingsService';
 import { AdminSecurityNotifier } from './AdminSecurityNotifier';
 import { AttendancePage } from './AttendancePage';
@@ -111,7 +111,7 @@ export const AdminDashboard: React.FC = () => {
 
     const enableNotifications = async () => {
       try {
-        const token = await requestPermission();
+        const token = await requestNotificationPermission();
         if (token) {
           console.log('Bildirim izni alındı, kilit ekranı mesajları aktif.');
         }
