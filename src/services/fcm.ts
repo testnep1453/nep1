@@ -101,13 +101,12 @@ export const setupNotificationListener = async (
 
 export const sendPushNotification = async (title: string, body: string, userId: string = 'all') => {
   try {
-    // Bu tablo/kanal üzerinden backend (Edge function veya benzeri) FCM atabilir.
-    // Şema: user_id, title, body, status, created_at
+    // Şema: user_id (TEXT), title, body, is_read, created_at
     await supabase.from('fcm_queue').insert([{ 
-      user_id: userId,
-      title: title, 
-      body: body, 
-      status: 'pending',
+      user_id: String(userId),
+      title: title || 'NEP Operasyon', 
+      body: body || '', 
+      is_read: false,
       created_at: new Date().toISOString() 
     }]);
   } catch (error) {

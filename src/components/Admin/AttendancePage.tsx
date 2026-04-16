@@ -69,13 +69,33 @@ export const AttendancePage = ({ students }: { students: Student[] }) => {
     if (!selectedDate) return;
     setLoading(true);
     getAttendanceForLesson(selectedDate)
-      .then(r => { setRecords(r); setLoading(false); })
+      .then(data => {
+        const mapped: AttendanceEntry[] = (data || []).map((r: any) => ({
+          studentId: r.student_id,
+          joinedAt: new Date(r.joined_at || Date.now()).getTime(),
+          autoJoined: r.auto_joined
+        }));
+        setRecords(mapped);
+        setLoading(false);
+      })
       .catch(() => setLoading(false));
 
-    // Realtime subscription
+    // Realtime subscription - use snake_case in filter
     const channel = supabase.channel(`public:attendance:${selectedDate}`)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance', filter: `lessonDate=eq.${selectedDate}` }, () => {
-        getAttendanceForLesson(selectedDate).then(setRecords);
+      .on('postgres_changes', { 
+          event: '*', 
+          schema: 'public', 
+          table: 'attendance', 
+          filter: `lesson_date=eq.${selectedDate}` 
+      }, () => {
+        getAttendanceForLesson(selectedDate).then(data => {
+           const mapped: AttendanceEntry[] = (data || []).map((r: any) => ({
+             studentId: r.student_id,
+             joinedAt: new Date(r.joined_at || Date.now()).getTime(),
+             autoJoined: r.auto_joined
+           }));
+           setRecords(mapped);
+        });
       })
       .subscribe();
 
@@ -127,17 +147,20 @@ export const AttendancePage = ({ students }: { students: Student[] }) => {
       if (!isPresent) {
         // Katıldı olarak işaretle
         await recordAttendanceToFirebase(studentId, selectedDate, false);
-        const updated = await getAttendanceForLesson(selectedDate);
-        setRecords(updated);
       } else {
-        // Katılmadı olarak işaretle — Supabase'den sil
-        const { supabase } = await import('../../config/supabase');
+        // Katılmadı olarak işaretle — Supabase'den sil (snake_case)
         await supabase.from('attendance').delete()
-          .eq('studentId', studentId)
-          .eq('lessonDate', selectedDate);
-        const updated = await getAttendanceForLesson(selectedDate);
-        setRecords(updated);
+          .eq('student_id', studentId)
+          .eq('lesson_date', selectedDate);
       }
+      // Refetch and remap
+      const data = await getAttendanceForLesson(selectedDate);
+      const mapped: AttendanceEntry[] = (data || []).map((r: any) => ({
+        studentId: r.student_id,
+        joinedAt: new Date(r.joined_at || Date.now()).getTime(),
+        autoJoined: r.auto_joined
+      }));
+      setRecords(mapped);
     } catch (e) {
       alert('Kayıt güncellenemedi: ' + (e as Error).message);
     } finally {

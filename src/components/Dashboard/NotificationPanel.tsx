@@ -28,8 +28,9 @@ export const NotificationPanel = ({ studentId, isOpen, onClose }: NotificationPa
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [isOpen, onClose]);
 
-  const formatTime = (ts: number) => {
+  const formatTime = (ts: number | string) => {
     const d = new Date(ts);
+    if (isNaN(d.getTime())) return '...';
     const now = new Date();
     const diff = now.getTime() - d.getTime();
     if (diff < 60_000) return 'Az önce';
@@ -74,38 +75,32 @@ export const NotificationPanel = ({ studentId, isOpen, onClose }: NotificationPa
             </div>
           </div>
         ) : (
-          notifications.map(n => {
-            const isEmergency = n.type === 'emergency';
+          notifications.map((n, idx) => {
+            const uniqueKey = `${n.user_id}_${n.created_at}_${idx}`;
             return (
               <div
-                key={n.id}
+                key={uniqueKey}
                 className={`p-4 border-b border-white/5 transition-all relative group ${
                   !n.is_read 
-                    ? isEmergency 
-                      ? 'bg-red-500/10 animate-pulse-fast border-l-4 border-red-500' 
-                      : 'bg-[#00F0FF]/5 cursor-pointer border-l-4 border-[#00F0FF]' 
+                    ? 'bg-[#00F0FF]/5 cursor-pointer border-l-4 border-[#00F0FF]' 
                     : 'opacity-80'
                 }`}
-                onClick={() => !n.is_read && markAsRead(n.id)}
+                onClick={() => !n.is_read && markAsRead(n)}
               >
                 <div className="flex items-start gap-3">
                   <div className={`mt-1 flex-shrink-0 w-8 h-8 rounded bg-gray-900 border flex items-center justify-center text-lg ${
                     !n.is_read 
-                      ? isEmergency 
-                        ? 'border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.4)] text-red-500' 
-                        : 'border-[#00F0FF]/40 shadow-[0_0_10px_rgba(0,240,255,0.2)]' 
+                      ? 'border-[#00F0FF]/40 shadow-[0_0_10px_rgba(0,240,255,0.2)]' 
                       : 'border-gray-800'
                   }`}>
-                    {isEmergency ? '🚨' : n.type === 'admin' ? '📢' : n.type === 'lesson' ? '📚' : n.type === 'feedback' ? '⭐' : '🔔'}
+                    🔔
                   </div>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
                       <p className={`text-xs font-bold uppercase tracking-wider ${
-                        !n.is_read 
-                          ? isEmergency ? 'text-red-500' : 'text-[#00F0FF]' 
-                          : 'text-gray-400'
+                        !n.is_read ? 'text-[#00F0FF]' : 'text-gray-400'
                       }`}>
-                        {isEmergency && 'ACİL DURUM: '}{n.title}
+                        {n.title}
                       </p>
                       <span className="text-[9px] font-mono text-gray-600 whitespace-nowrap">{formatTime(n.created_at)}</span>
                     </div>

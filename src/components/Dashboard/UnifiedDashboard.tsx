@@ -288,8 +288,7 @@ export const UnifiedDashboard = ({
         // Action A: Supabase (İç Uygulama)
         await sendNotification(targetId, {
           title,
-          body: messageText.trim(),
-          type: type
+          body: messageText.trim()
         });
 
         // Action B: Firebase FCM (Kilit Ekranı)

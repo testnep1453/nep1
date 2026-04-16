@@ -63,12 +63,12 @@ export const recordAttendance = async (studentId: string) => {
   const today = now.toISOString().slice(0, 10);
   
   try {
-    // 1. Check if already attended today (attendance table)
+    // 1. Check if already attended today (attendance table - snake_case)
     const { data: attData } = await supabase
       .from('attendance')
       .select('id')
-      .eq('studentId', studentId)
-      .eq('lessonDate', today)
+      .eq('student_id', String(studentId))
+      .eq('lesson_date', today)
       .maybeSingle();
 
     if (attData) return; // Already recorded
@@ -76,34 +76,34 @@ export const recordAttendance = async (studentId: string) => {
     // 2. record attendance
     await supabase.from('attendance').insert({
       id: `${today}_${studentId}`, 
-      studentId, 
-      lessonDate: today, 
-      joinedAt: Date.now(), 
-      autoJoined: false, 
-      xpEarned: 100
+      student_id: String(studentId), 
+      lesson_date: today, 
+      joined_at: new Date().toISOString(), 
+      auto_joined: false, 
+      xp_earned: 100
     });
 
-    // 3. Get current student data (XP, Level)
+    // 3. Get current student data (snake_case)
     const { data: student } = await supabase
       .from('students')
-      .select('xp, level, streak, attendanceHistory')
-      .eq('id', studentId)
+      .select('xp, level, streak, attendance_history')
+      .eq('id', String(studentId))
       .maybeSingle();
 
     if (!student) {
-      // Create student entry if not exists (though usually exists on login)
+      // Create student entry if not exists
       await supabase.from('students').insert({
-        id: studentId,
+        id: String(studentId),
         xp: 100,
         level: 1,
         streak: 1,
-        attendanceHistory: [today]
+        attendance_history: [today]
       });
       return { xpEarned: 100, streak: 1, streakBonus: false };
     }
 
     const currentXP = student.xp || 0;
-    const history = student.attendanceHistory || [];
+    const history = student.attendance_history || [];
     
     // Streak logic
     const yesterday = new Date(now);
@@ -126,8 +126,8 @@ export const recordAttendance = async (studentId: string) => {
       xp: nextXP,
       level: nextLevel,
       streak: newStreak,
-      attendanceHistory: [...history, today]
-    }).eq('id', studentId);
+      attendance_history: [...history, today]
+    }).eq('id', String(studentId));
 
     return { xpEarned: earnedXP, streak: newStreak, streakBonus: streakBonus > 0 };
   } catch (error) {

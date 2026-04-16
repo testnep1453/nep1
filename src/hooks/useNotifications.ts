@@ -5,13 +5,11 @@ import { getSettingStore } from '../services/dbFirebase';
 const NOTIFICATIONS_ENABLED = true;
 
 export interface AppNotification {
-  id: string;
   user_id: string;
   title: string;
-  body: string; // 'message' mapped to 'body' for schema sync
-  type: 'lesson' | 'feedback' | 'system' | 'admin' | 'emergency' | 'info';
+  body: string;
   is_read: boolean;
-  created_at: number;
+  created_at: number | string; // Numeric timestamp in state, but string in DB
 }
 
 export const useNotifications = (studentId: string | null) => {
@@ -24,7 +22,7 @@ export const useNotifications = (studentId: string | null) => {
       // Fetch from notifications table (User-specific OR 'all')
       const { data, error } = await supabase
         .from('notifications')
-        .select('id, user_id, title, body, type, is_read, created_at')
+        .select('user_id, title, body, is_read, created_at')
         .or(`user_id.eq.${studentId},user_id.eq.all`)
         .order('created_at', { ascending: false })
         .limit(50);
@@ -32,13 +30,11 @@ export const useNotifications = (studentId: string | null) => {
       if (error) throw error;
 
       const appNotifs: AppNotification[] = (data || []).map(n => ({
-        id: n.id,
         user_id: n.user_id,
-        title: n.title,
-        body: n.body || '', // n.body used instead of n.message
-        type: n.type || 'system',
-        is_read: n.is_read,
-        created_at: new Date(n.created_at).getTime(),
+        title: n.title || 'Bildirim',
+        body: n.body || '',
+        is_read: n.is_read || false,
+        created_at: n.created_at // Keeping as raw for comparison, UI will format
       }));
 
       setNotifications(appNotifs);
@@ -77,11 +73,21 @@ export const useNotifications = (studentId: string | null) => {
     return () => { supabase.removeChannel(channel); };
   }, [studentId]);
 
-  const markAsRead = async (notifId: string) => {
+  const markAsRead = async (notif: AppNotification) => {
     try {
-      await supabase.from('notifications').update({ is_read: true }).eq('id', notifId);
+      // Since 'id' is removed, we match by content and timestamp
+      await supabase.from('notifications')
+        .update({ is_read: true })
+        .match({ 
+          user_id: notif.user_id, 
+          created_at: notif.created_at,
+          title: notif.title
+        });
+        
       // Local update for speed
-      setNotifications(prev => prev.map(n => n.id === notifId ? { ...n, is_read: true } : n));
+      setNotifications(prev => prev.map(n => 
+        (n.created_at === notif.created_at && n.user_id === notif.user_id) ? { ...n, is_read: true } : n
+      ));
       setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (err) {
       console.error('Error marking as read:', err);
@@ -106,15 +112,17 @@ export const useNotifications = (studentId: string | null) => {
 
 export const sendNotificationToAll = async (
   studentIds: string[],
-  notification: Omit<AppNotification, 'id' | 'user_id' | 'is_read' | 'created_at'>
+  notification: { title: string; body: string }
 ) => {
   if (!NOTIFICATIONS_ENABLED) return;
   try {
+    const timestamp = new Date().toISOString();
     const rows = studentIds.map(id => ({
-      user_id: id,
-      title: notification.title,
-      body: notification.body, // 'message' had become 'body' in the interface
-      type: notification.type
+      user_id: String(id),
+      title: notification.title || 'Sistem Mesajı',
+      body: notification.body || '',
+      is_read: false,
+      created_at: timestamp
     }));
     await supabase.from('notifications').insert(rows);
   } catch (err) {
@@ -124,15 +132,16 @@ export const sendNotificationToAll = async (
 
 export const sendNotification = async (
   studentIdOrAll: string,
-  notification: Omit<AppNotification, 'id' | 'user_id' | 'is_read' | 'created_at'>
+  notification: { title: string; body: string }
 ) => {
   if (!NOTIFICATIONS_ENABLED) return;
   try {
     await supabase.from('notifications').insert({
-      user_id: studentIdOrAll,
-      title: notification.title,
-      body: notification.body, // body
-      type: notification.type
+      user_id: String(studentIdOrAll),
+      title: notification.title || 'Sistem Mesajı',
+      body: notification.body || '',
+      is_read: false,
+      created_at: new Date().toISOString()
     });
   } catch (err) {
     console.error('Error sending notification:', err);

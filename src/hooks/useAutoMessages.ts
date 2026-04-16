@@ -57,8 +57,7 @@ export const useAutoMessages = (isAdmin: boolean) => {
 
         await sendNotification('all', {
           title: `⚠️ ${title.toUpperCase()}`,
-          body: body,
-          type: 'system'
+          body: body
         });
         
         // Action B: Firebase FCM (Kilit Ekranı)
