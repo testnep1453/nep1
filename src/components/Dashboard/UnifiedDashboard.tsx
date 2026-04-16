@@ -32,6 +32,7 @@ const Icons = {
   Film: () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M7 3v18"/><path d="M3 7.5h4"/><path d="M3 12h18"/><path d="M3 16.5h4"/><path d="M7 15h10"/><path d="M7 7.5h10"/></svg>,
   Star: () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z"/></svg>,
   Menu: () => <svg xmlns="http://www.w3.org/2000/svg" className="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>,
+  Shield: () => <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"/></svg>,
 };
 
 export const UnifiedDashboard = ({
@@ -440,22 +441,40 @@ export const UnifiedDashboard = ({
                   </div>
                 </div>
               )}
-              {isAdmin && (() => {
-                const THREE_WEEKS = 21 * 24 * 60 * 60 * 1000;
-                const inactiveAgents = students.filter(s => s.id !== '1002' && s.lastSeen && (Date.now() - s.lastSeen > THREE_WEEKS));
-                if (inactiveAgents.length === 0) return null;
-                return (
-                  <div className="bg-[#0A1128]/80 border border-[#FF4500]/30 p-4 sm:p-6 rounded-lg">
-                    <h3 className="text-[#FF4500] text-sm font-bold uppercase tracking-wider mb-3 flex items-center gap-2">
-                      <span>⚠️</span> {inactiveAgents.length} Ajan 3+ Hafta Devamsız
-                    </h3>
-                    <div className="flex flex-wrap gap-2">
-                      {inactiveAgents.slice(0, 10).map(a => <span key={a.id} className="text-xs bg-[#FF4500]/10 text-[#FF4500] px-2 py-1 rounded font-mono">{a.name} ({a.id})</span>)}
-                      {inactiveAgents.length > 10 && <span className="text-xs text-gray-500">+{inactiveAgents.length - 10} daha</span>}
-                    </div>
+              {/* GÜVENLİK VE ERİŞİM LOGLARI (SADECE ADMIN) */}
+              {isAdmin && (
+                <div className="bg-[#050505] border border-red-500/20 rounded-2xl overflow-hidden mb-8 shadow-2xl relative group">
+                  <div className="px-6 py-4 bg-red-500/5 border-b border-red-500/10 flex items-center justify-between">
+                    <h4 className="text-xs font-black uppercase tracking-[0.2em] text-red-500 flex items-center gap-2">
+                       <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.8)]" /> GÜVENLİK VE ERİŞİM LOGLARI
+                    </h4>
+                    <span className="text-[10px] text-red-900/60 font-mono tracking-tighter">PROTO_ALPHA_LIVE</span>
                   </div>
-                );
-              })()}
+                  <div className="h-64 overflow-y-auto p-4 font-mono text-[11px] custom-scrollbar bg-black/60 shadow-inner">
+                    {loginAlerts.length === 0 ? (
+                      <div className="text-red-900/40 animate-pulse py-10 text-center">LOG_STREAM::Analiz ediliyor...</div>
+                    ) : (
+                      <div className="space-y-1.5">
+                        {loginAlerts.map((log, idx) => (
+                          <div key={log.id || idx} className="flex items-start gap-3 border-l-2 border-red-900/20 pl-3 py-1 hover:bg-red-500/5 transition-colors group">
+                            <span className="text-red-900/40 whitespace-nowrap">[{new Date(log.created_at).toLocaleTimeString()}]</span>
+                            <span className="text-red-500 font-bold opacity-70 uppercase">ENTRY:</span>
+                            <div className="flex-1">
+                              <span className="text-slate-400">Agent:</span>
+                              <span className="text-[#39FF14] font-bold ml-1">{log.student_id}</span>
+                              <span className="text-slate-600 ml-2">ACCESS_OK</span>
+                              <span className="text-red-900/40 ml-2 text-[9px]">[{log.device_name} / {log.browser}]</span>
+                              {log.is_desktop === false && <span className="ml-2 text-orange-600 text-[10px] font-black underline decoration-red-900">! MOBILE</span>}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className="absolute inset-0 pointer-events-none border border-red-500/5 opacity-30 shadow-[inset_0_0_50px_rgba(239,68,68,0.05)]" />
+                </div>
+              )}
+
               <MessageFeed />
             </div>
           )}
@@ -527,7 +546,7 @@ export const UnifiedDashboard = ({
                 <h3 className="text-[#F5D32E] text-base sm:text-lg font-bold mb-4 uppercase tracking-widest flex items-center gap-2">
                   <span className="text-xl">📊</span> Excel ile Toplu Ajan Ekle
                 </h3>
-                <p className="text-gray-400 text-xs sm:text-sm mb-4">Excel formatı: Sütun A = ID, Sütun B = İsim, Sütun C = Takma Ad, Sütun D = E-posta</p>
+
                 <input ref={fileInputRef} type="file" accept=".xlsx,.xls,.csv" aria-label="Excel Dosyası Yükle" onChange={handleExcelUpload} className="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-[#F5D32E]/20 file:text-[#F5D32E] file:font-bold file:cursor-pointer hover:file:bg-[#F5D32E]/30 mb-3" />
                 {uploadMessage && <div className="bg-[#39FF14]/10 border border-[#39FF14]/30 rounded p-3 text-center text-[#39FF14] text-sm">{uploadMessage}</div>}
               </div>
@@ -774,13 +793,6 @@ export const UnifiedDashboard = ({
             <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
               <SystemConfigManager />
               
-              <div className="mt-12 p-6 bg-[#39FF14]/5 border border-[#39FF14]/20 rounded-2xl">
-                <h4 className="text-[#39FF14] font-bold text-sm mb-2 uppercase tracking-widest">Hızlı Bilgi</h4>
-                <p className="text-slate-400 text-xs leading-relaxed">
-                  Buradaki değişiklikler gerçek zamanlı (real-time) olarak tüm bağlı ajanlara yansıtılır. 
-                  Zoom linkini güncellediğinizde ajanların ekranındaki bağlantı anında güncellenecektir. 
-                </p>
-              </div>
             </div>
 
             <div className="p-6 border-t border-white/5 bg-black/20 flex justify-end">

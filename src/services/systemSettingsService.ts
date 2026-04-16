@@ -12,7 +12,11 @@ export interface SystemConfig {
   lesson_title: string;
   manual_lesson_active: boolean;
   login_alerts_enabled: boolean;
-  maintenance_mode: boolean;
+  maintenance_mode: {
+    global: boolean;
+    targeted_users: string[];
+  };
+  broadcast_message: string;
 }
 
 const FALLBACK_CONFIG: SystemConfig = {
@@ -20,7 +24,11 @@ const FALLBACK_CONFIG: SystemConfig = {
   lesson_title: 'NEP Haftalık Ders',
   manual_lesson_active: false,
   login_alerts_enabled: false,
-  maintenance_mode: false,
+  maintenance_mode: {
+    global: false,
+    targeted_users: [],
+  },
+  broadcast_message: '',
 };
 
 const SYSTEM_CONFIG_ID = 'system_config';
