@@ -1,18 +1,9 @@
 import { useEffect, useState } from 'react';
 import { Student } from '../../types/student';
 import confetti from 'canvas-confetti';
-import { updateStudentInFirebase } from '../../services/dbFirebase';
+import { getStudentBadges, checkAndAwardBadge } from '../../services/dbFirebase';
 
 const LEVEL_THRESHOLDS = [0, 200, 500, 1000, 2000, 3500, 5500, 8000, 12000, 18000, 25000];
-const BADGE_CONFIG = [
-  { id: 'first_login', label: 'İlk Giriş', emoji: '🎖️', desc: 'Sisteme ilk giriş yaptın!' },
-  { id: 'streak_7', label: '1 Hafta', emoji: '🔥', desc: 'Art arda 7 gün boyunca üsse giriş yap.' },
-  { id: 'quiz_master', label: 'Quiz Ustası', emoji: '🧠', desc: 'Bir quizi tam puan ile bitir.' },
-  { id: 'perfect', label: 'Mükemmel', emoji: '💯', desc: 'Derste tam katılım göster.' },
-  { id: 'fast', label: 'Hızlı', emoji: '⚡', desc: 'Derse ilk 1 dakikada katıl.' },
-  { id: 'team', label: 'Takım', emoji: '💛', desc: 'Takım çalışmasında öne çık.' },
-];
-
 const LEVEL_COLORS = [
   '#6b7280', // 1
   '#3b82f6', // 2
@@ -26,32 +17,75 @@ const LEVEL_COLORS = [
   '#FFD700', // 10
 ];
 
+interface BadgeMetadata {
+  key: string;
+  label: string;
+  emoji: string;
+  description: string;
+}
+
+const BADGE_METADATA: BadgeMetadata[] = [
+  { key: 'us_anahtari', label: 'ÜS ANAHTARI', emoji: '🎖️', description: 'Sisteme ilk sızma harekatı başarılı.' },
+  { key: 'kesintisiz_takip', label: 'KESİNTİSİZ TAKİP', emoji: '🔥', description: '7 gün boyunca üssü terk etmedin.' },
+  { key: 'veri_uzmani', label: 'VERİ UZMANI', emoji: '🧠', description: 'Quizi %100 doğrulukla tamamladın.' },
+  { key: 'kusursuz_ajan', label: 'KUSURSUZ AJAN', emoji: '💯', description: 'Tüm operasyonlara eksiksiz katılım.' },
+  { key: 'hizli_mudahele', label: 'HIZLI MÜDAHALE', emoji: '⚡', description: 'Görevi ilk 1 dakikada başlattın.' },
+  { key: 'takim_ruhu', label: 'TAKIM RUHU', emoji: '💛', description: 'Ekip operasyonlarında üstün başarı.' },
+];
+
 export const LevelProgress = ({ student }: { student: Student }) => {
   const currentLevel = student.level || 1;
   const currentXP = student.xp || 0;
-  const [localBadges, setLocalBadges] = useState(student.badges || []);
+  const [earnedBadges, setEarnedBadges] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [hoveredBadge, setHoveredBadge] = useState<string | null>(null);
+
+  const getRankTitle = (lvl: number) => {
+    if (lvl <= 2) return 'ÇAYLAK (RECRUIT)';
+    if (lvl <= 5) return 'GÖZCÜ (SCOUT)';
+    if (lvl <= 8) return 'UZMAN (SPECIALIST)';
+    return 'KOMUTAN (COMMANDER)';
+  };
 
   useEffect(() => {
-    // Rozet 'first_login' kontrolü ve eklenmesi
-    if (!localBadges.includes('first_login')) {
-      const newBadges = [...localBadges, 'first_login'];
-      setLocalBadges(newBadges);
-      void updateStudentInFirebase(student.id, { badges: newBadges });
-      // Confetti efekti
-      confetti({
-        particleCount: 150,
-        spread: 100,
-        origin: { y: 0.6 },
-        colors: ['#00F0FF', '#39FF14', '#FF4500'],
-        zIndex: 200
-      });
-    } else {
-      setLocalBadges(student.badges || []);
-    }
-  }, [student.id, student.badges]);
+    const fetchBadges = async () => {
+      try {
+        const badges = await getStudentBadges(student.id);
+        setEarnedBadges(badges);
+        
+        // İlk giriş ödülünü otomatik ver
+        const hasFirstLogin = badges.some((b: any) => b.badgeKey === 'us_anahtari');
+        if (!hasFirstLogin) {
+          const awarded = await checkAndAwardBadge(student.id, 'us_anahtari');
+          if (awarded) {
+            const updatedBadges = await getStudentBadges(student.id);
+            setEarnedBadges(updatedBadges);
+            confetti({
+              particleCount: 150,
+              spread: 100,
+              origin: { y: 0.6 },
+              colors: ['#00F0FF', '#39FF14', '#FF4500'],
+              zIndex: 200
+            });
+          }
+        }
+      } catch (err) {
+        console.error("Badge fetch error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBadges();
+  }, [student.id]);
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  };
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-8 animate-fade-in pb-12">
       {/* LEVEL YOL HARİTASI — Cyber-Rank Sistemi */}
       <div className="bg-gradient-to-br from-[#0A1128] to-[#050505] border-t-2 border-[#6358cc]/30 p-6 rounded-2xl relative overflow-hidden shadow-2xl">
         <div className="absolute inset-0 bg-[linear-gradient(rgba(99,88,204,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(99,88,204,0.05)_1px,transparent_1px)] bg-[length:20px_20px] pointer-events-none" />
@@ -61,11 +95,12 @@ export const LevelProgress = ({ student }: { student: Student }) => {
             <span className="text-[#00F0FF] text-2xl">⚡</span>
             Siber Rütbe Haritası
           </h3>
+          <div className="text-[10px] text-[#00F0FF] font-mono border border-[#00F0FF]/30 px-3 py-1 rounded bg-black/40">
+            Mevcut Rütbe: <span className="font-bold text-[#39FF14]">{getRankTitle(currentLevel)}</span>
+          </div>
         </div>
         
-        {/* Yatay Scroll Container */}
         <div className="flex items-center overflow-x-auto pb-8 pt-4 relative snap-x snap-mandatory scrollbar-hide">
-          {/* Arka Plan Ana Yolu (Siber Kablo) */}
           <div className="absolute top-1/2 left-0 right-0 h-1 bg-[#1a1f33] -translate-y-1/2 rounded-full overflow-hidden">
             <div 
               className="h-full bg-gradient-to-r from-[#00F0FF] via-[#6358cc] to-[#39FF14] transition-all duration-1000"
@@ -83,12 +118,10 @@ export const LevelProgress = ({ student }: { student: Student }) => {
 
               return (
                 <div key={lvl} className="flex flex-col items-center snap-center relative w-20">
-                  
-                  {/* Etiket — Sadece Mevcut Level'da veya MAX'ta göster */}
-                  <div className="h-6 mb-4 flex items-end">
+                  <div className="h-6 mb-4 flex items-end text-center">
                     {isCurrent && (
-                      <div className="bg-[#00F0FF]/10 border border-[#00F0FF]/50 text-[#00F0FF] px-2 py-0.5 text-[9px] uppercase font-black tracking-widest animate-pulse whitespace-nowrap">
-                        Operatör
+                      <div className="bg-[#00F0FF]/10 border border-[#00F0FF]/50 text-[#00F0FF] px-2 py-0.5 text-[8px] uppercase font-black tracking-widest animate-pulse whitespace-nowrap">
+                        {getRankTitle(lvl).split(' ')[0]}
                       </div>
                     )}
                     {isLast && !isCurrent && (
@@ -96,9 +129,7 @@ export const LevelProgress = ({ student }: { student: Student }) => {
                     )}
                   </div>
 
-                  {/* Elmas Şekilli Düğüm (Cyber Diamond) */}
                   <div className="relative flex justify-center items-center h-14 w-14">
-                    {/* Dış Elmas */}
                     <div
                       className="absolute inset-0 rotate-45 transition-transform duration-300"
                       style={{
@@ -108,8 +139,6 @@ export const LevelProgress = ({ student }: { student: Student }) => {
                         boxShadow: isCurrent ? `0 0 15px ${color}40` : 'none',
                       }}
                     />
-                    
-                    {/* İç Rakam (Düz Duran Rakam) */}
                     <div className="relative z-10 font-bold text-lg flex items-center justify-center transform transition-transform"
                       style={{
                         color: isUnlocked ? (isCurrent ? '#fff' : color) : '#4b5563',
@@ -121,45 +150,104 @@ export const LevelProgress = ({ student }: { student: Student }) => {
                     </div>
                   </div>
 
-                  {/* Alt Metin */}
                   <div className="mt-5 text-center transition-all">
                     <div className="text-[10px] font-black tracking-widest uppercase" style={{ color: isUnlocked ? color : '#4b5563' }}>
                       LVL {lvl}
                     </div>
-                    <div className="text-[9px] text-gray-500 font-mono mt-1 w-16 px-1 rounded bg-black/50 border border-white/5">
-                      {threshold.toLocaleString()} XP
+                    <div className="text-[9px] text-gray-500 font-mono mt-1 w-16 px-1 rounded bg-black/50 border border-white/5 mx-auto">
+                      {threshold.toLocaleString()}
                     </div>
                   </div>
-
                 </div>
               );
             })}
           </div>
         </div>
-        
-        {/* Scroll Hint */}
-        <div className="text-center mt-2 text-[10px] text-white/30 uppercase tracking-widest flex items-center justify-center gap-4">
-          <span className="w-8 h-[1px] bg-white/20"></span>
-          Haritayı Kaydır
-          <span className="w-8 h-[1px] bg-white/20"></span>
-        </div>
       </div>
 
-      {/* Rozetler */}
-      <div className="bg-[#0A1128]/80 border border-[#FF9F43]/30 p-6 rounded-lg">
-        <h3 className="text-[#FF9F43] font-bold text-sm uppercase tracking-wider mb-4">🏅 Rozetler</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-          {BADGE_CONFIG.map(badge => {
-            const earned = localBadges.includes(badge.id);
+      {/* MEDAL ROOM — Üstün Başarı Koleksiyonu */}
+      <div className="bg-[#0A1128] border border-[#00F0FF]/20 rounded-2xl p-6 relative overflow-visible shadow-[0_0_30px_rgba(0,0,0,0.5)]">
+        <div className="flex items-center justify-between mb-8 border-b border-white/5 pb-4">
+          <div>
+            <h3 className="text-white font-black text-xl tracking-[2px] uppercase flex items-center gap-3">
+              <span className="text-[#39FF14]">🏅</span>
+              MADALYA ODASI
+            </h3>
+            <p className="text-[10px] text-gray-500 font-mono mt-1 tracking-wider uppercase">
+              Operasyon başarımı ve özel yetki belgeleri
+            </p>
+          </div>
+          <div className="bg-[#39FF14]/10 border border-[#39FF14]/30 px-3 py-1 rounded text-[#39FF14] text-xs font-bold font-mono">
+            {earnedBadges.length} / {BADGE_METADATA.length} KOLEKSİYON
+          </div>
+        </div>
+
+        {/* Medals Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-6">
+          {BADGE_METADATA.map((badge) => {
+            const earnedInfo = earnedBadges.find(b => b.badgeKey === badge.key);
+            const isEarned = !!earnedInfo;
+            const isHovered = hoveredBadge === badge.key;
+
             return (
-              <div key={badge.id} className={`p-4 rounded-lg border text-center transition-all ${
-                earned
-                  ? 'bg-[#FF9F43]/10 border-[#FF9F43]/30 hover:border-[#FF9F43]/60 scale-105'
-                  : 'bg-gray-900/50 border-gray-800 opacity-40 grayscale'
-              }`}>
-                <div className={`text-3xl mb-2 ${earned ? 'drop-shadow-[0_0_10px_rgba(255,159,67,0.8)] animate-bounce-once' : ''}`}>{badge.emoji}</div>
-                <div className={`text-xs font-bold ${earned ? 'text-[#FF9F43]' : 'text-gray-600'}`}>{badge.label}</div>
-                <div className="text-[10px] text-gray-600 mt-1">{badge.desc}</div>
+              <div 
+                key={badge.key}
+                className="relative group cursor-help"
+                onMouseEnter={() => setHoveredBadge(badge.key)}
+                onMouseLeave={() => setHoveredBadge(null)}
+                onTouchStart={() => setHoveredBadge(badge.key === hoveredBadge ? null : badge.key)}
+              >
+                <div className={`
+                  relative p-4 rounded-xl border-2 transition-all duration-500 flex flex-col items-center justify-center gap-3 h-40 overflow-hidden
+                  ${isEarned 
+                    ? 'bg-gradient-to-b from-[#00F0FF]/10 to-[#39FF14]/5 border-[#00F0FF]/40 shadow-[0_0_20px_rgba(0,240,255,0.15)] opacity-100 scale-100' 
+                    : 'bg-black/40 border-white/5 opacity-30 grayscale scale-95 hover:opacity-50'
+                  }
+                `}>
+                  {/* Neon Glow Effects for earned badges */}
+                  {isEarned && (
+                    <>
+                      <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#00F0FF] to-transparent animate-pulse" />
+                      <div className="absolute -inset-1 bg-gradient-to-r from-[#00F0FF]/20 to-[#39FF14]/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
+                    </>
+                  )}
+
+                  <div className={`text-4xl transition-transform duration-500 ${isEarned ? 'group-hover:scale-110 drop-shadow-[0_0_15px_rgba(0,240,255,0.5)]' : ''}`}>
+                    {badge.emoji}
+                  </div>
+                  
+                  <div className="text-center">
+                    <h4 className={`text-[11px] font-black tracking-widest uppercase mb-1 ${isEarned ? 'text-white' : 'text-gray-600'}`}>
+                      {badge.label}
+                    </h4>
+                    {isEarned ? (
+                      <div className="text-[9px] text-[#39FF14] font-mono font-bold animate-pulse uppercase">
+                        Kazanıldı: {formatDate(earnedInfo.earned_at)}
+                      </div>
+                    ) : (
+                      <div className="text-[9px] text-gray-500 font-mono tracking-tighter uppercase border border-white/10 px-2 py-0.5 rounded">
+                        KİLİTLİ
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Terminal Tooltip */}
+                  {isHovered && (
+                    <div className="absolute inset-0 z-50 bg-[#050505] border border-[#00F0FF]/50 p-4 animate-in fade-in zoom-in duration-200 flex flex-col justify-center shadow-2xl">
+                      <div className="flex items-center gap-2 mb-2">
+                        <div className="w-1.5 h-1.5 bg-[#00F0FF] rounded-full animate-pulse" />
+                        <span className="text-[9px] text-[#00F0FF] font-mono tracking-widest uppercase italic">DETAY_SORGUSU_...</span>
+                      </div>
+                      <p className="text-[11px] text-white font-mono leading-relaxed lowercase italic border-l-2 border-[#00F0FF]/30 pl-2">
+                        &gt; {badge.description}
+                      </p>
+                      <div className="mt-4 pt-2 border-t border-[#00F0FF]/20 flex justify-between items-center text-[8px] text-gray-500 font-mono">
+                        <span>DURUM: {isEarned ? 'DOĞRULANDI' : 'ŞİFRELİ'}</span>
+                        <span className="text-[#00F0FF] opacity-50 tabular-nums">0x{badge.key.length}FF</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             );
           })}

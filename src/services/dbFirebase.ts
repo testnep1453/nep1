@@ -147,3 +147,31 @@ export const subscribeToSettingStore = <T>(id: string, defaultData: T, callback:
     .subscribe();
   return () => { supabase.removeChannel(channel); };
 };
+
+// ── Student Badges System (Medal Room) ──
+export const checkAndAwardBadge = async (studentId: string, badgeKey: string) => {
+  const { data: existing } = await supabase
+    .from('student_badges')
+    .select('*')
+    .eq('studentId', studentId)
+    .eq('badgeKey', badgeKey)
+    .maybeSingle();
+
+  if (!existing) {
+    await supabase.from('student_badges').insert([{
+      studentId,
+      badgeKey,
+      earned_at: new Date().toISOString()
+    }]);
+    return true;
+  }
+  return false;
+};
+
+export const getStudentBadges = async (studentId: string) => {
+  const { data } = await supabase
+    .from('student_badges')
+    .select('*')
+    .eq('studentId', studentId);
+  return data || [];
+};

@@ -24,11 +24,41 @@ export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps
   const [nicknameValue, setNicknameValue] = useState(student.nickname || '');
   const [saving, setSaving] = useState(false);
   const [xpChanged, setXpChanged] = useState(false);
+  const [scrambledCode, setScrambledCode] = useState('');
+
+  const agentCode = `AGENT-TR-${student.id}`;
   
   const totalXpInLevel = 200;
   const xpForNextLevel = totalXpInLevel;
   const currentXpProgress = student.xp % totalXpInLevel;
   const xpProgress = (currentXpProgress / totalXpInLevel) * 100;
+
+  // Rank title logic
+  const getRankTitle = (lvl: number) => {
+    if (lvl <= 2) return 'ÇAYLAK (RECRUIT)';
+    if (lvl <= 5) return 'GÖZCÜ (SCOUT)';
+    if (lvl <= 8) return 'UZMAN (SPECIALIST)';
+    return 'KOMUTAN (COMMANDER)';
+  };
+
+  // Scramble animation effect for Agent Code
+  useEffect(() => {
+    let iterations = 0;
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
+    const interval = setInterval(() => {
+      setScrambledCode(prev => 
+        agentCode.split('')
+          .map((char, index) => {
+            if (index < iterations) return agentCode[index];
+            return chars[Math.floor(Math.random() * chars.length)];
+          })
+          .join('')
+      );
+      if (iterations >= agentCode.length) clearInterval(interval);
+      iterations += 1/3;
+    }, 30);
+    return () => clearInterval(interval);
+  }, [agentCode]);
 
   // Visual feedback on level up or XP gain
   useEffect(() => {
@@ -69,32 +99,38 @@ export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps
     }
   };
 
-
-
   return (
     <div className="bg-gradient-to-br from-[#1a1d2e] to-[#0A1128] rounded-3xl p-5 md:p-10 border border-[#00F0FF]/30 shadow-[0_0_40px_rgba(0,240,255,0.05)] w-full h-full flex flex-col lg:flex-row items-center justify-center gap-6 lg:gap-16 overflow-hidden">
 
-
-
       {/* SOL: KİMLİK */}
       <div className="flex flex-col items-center text-center w-full lg:w-1/3 shrink-0">
-        <div className="relative mb-4">
+        <div className="relative mb-2">
           <div className="bg-[#00F0FF] text-[#0A1128] font-black text-sm md:text-base px-6 py-2 rounded-xl border-2 border-[#0A1128] shadow-lg whitespace-nowrap">
             LVL {student.level}
           </div>
         </div>
 
-        <h2 className="text-2xl md:text-4xl font-black text-white uppercase tracking-wider mt-3">{student.name}</h2>
+        <div className="mb-4">
+          <div className="text-[#00F0FF] text-[10px] md:text-xs font-mono tracking-[0.3em] font-black uppercase mb-1">Kimlik_Dosyası</div>
+          <h2 className="text-2xl md:text-4xl font-black text-white uppercase tracking-wider">{student.name}</h2>
+          <div className="text-gray-500 font-mono text-[9px] md:text-[11px] mt-1 tracking-widest bg-black/30 px-3 py-1 rounded inline-block">
+            {scrambledCode}
+          </div>
+        </div>
+
+        <div className="text-[10px] md:text-xs text-[#39FF14] font-black tracking-widest uppercase mb-1 bg-[#39FF14]/10 px-3 py-1 rounded border border-[#39FF14]/20">
+          Rank: {getRankTitle(student.level)}
+        </div>
 
         {isEditingNickname ? (
-          <div className="flex items-center justify-center gap-2 mt-3">
+          <div className="flex items-center justify-center gap-2 mt-3 w-full max-w-[200px]">
             <input
               type="text"
               value={nicknameValue}
               onChange={e => setNicknameValue(e.target.value)}
               maxLength={20}
               autoFocus
-              className="bg-[#050505] border border-[#00F0FF] text-[#00F0FF] px-3 py-1.5 text-sm rounded font-mono focus:outline-none w-full max-w-[160px]"
+              className="bg-[#050505] border border-[#00F0FF] text-[#00F0FF] px-3 py-1.5 text-sm rounded font-mono focus:outline-none w-full"
             />
             <button
               onClick={handleSaveNickname}
@@ -105,16 +141,18 @@ export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps
             </button>
           </div>
         ) : (
-          <div className="flex items-center justify-center gap-2 mt-2">
-            <div className="text-[#00F0FF] font-mono tracking-widest text-sm md:text-base font-bold">» {student.nickname || 'AJAN'} «</div>
-            <button onClick={() => setIsEditingNickname(true)} className="text-gray-600 hover:text-[#00F0FF] transition-colors">✏️</button>
+          <div className="flex items-center justify-center gap-2 mt-2 group">
+            <div className="text-[#00F0FF] font-mono tracking-[0.2em] text-sm md:text-base font-bold bg-white/5 px-4 py-1 rounded-full border border-white/5 group-hover:border-[#00F0FF]/30 transition-all">
+              &gt; {student.nickname || 'FIELD_AGENT'} &lt;
+            </div>
+            <button onClick={() => setIsEditingNickname(true)} className="opacity-40 group-hover:opacity-100 hover:text-[#00F0FF] transition-all">✏️</button>
           </div>
         )}
 
         {!isAdmin && (
           <div className="flex items-center gap-2 mt-4 bg-white/5 inline-flex px-4 py-2 rounded-lg border border-white/10">
             <Zap className="w-4 h-4 text-[#39FF14]" fill="#39FF14" />
-            <span className="text-gray-300 text-sm font-mono">XP Puanı: <span className="text-[#39FF14] font-bold text-lg">{student.xp}</span></span>
+            <span className="text-gray-300 text-sm font-mono">Veri_Puanı: <span className="text-[#39FF14] font-bold text-lg">{student.xp}</span></span>
           </div>
         )}
       </div>
