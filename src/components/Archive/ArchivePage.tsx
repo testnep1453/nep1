@@ -27,67 +27,87 @@ export const ArchivePage = () => {
   return (
     <div className="space-y-6 animate-fade-in">
       {/* Seçili video oynatıcı */}
-      {selectedVideo && (
-        <div className="bg-[#0A1128]/80 border border-[#FF4500]/30 rounded-lg overflow-hidden">
-          <div className="aspect-video">
-            <iframe
-              src={(selectedVideo.youtube_id || selectedVideo.youtube_url) ? `https://www.youtube.com/embed/${extractYoutubeId(selectedVideo.youtube_id || selectedVideo.youtube_url)}?autoplay=1` : ''}
-              className="w-full h-full"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-              referrerPolicy="strict-origin-when-cross-origin"
-            />
+      {selectedVideo && (() => {
+        const activeId = selectedVideo.youtube_id || extractYoutubeId(selectedVideo.youtube_url);
+        return (
+          <div className="bg-[#0A1128]/80 border border-[#FF4500]/30 rounded-lg overflow-hidden">
+            <div className="aspect-video">
+              {activeId ? (
+                <iframe
+                  src={`https://www.youtube.com/embed/${activeId}?autoplay=1`}
+                  className="w-full h-full"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  referrerPolicy="strict-origin-when-cross-origin"
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-black text-gray-500 font-mono text-sm">
+                  ⚠️ VİDEO KAYNAĞI BULUNAMADI
+                </div>
+              )}
+            </div>
+            <div className="p-4 flex items-center justify-between">
+              <h3 className="text-white font-bold">{selectedVideo.title}</h3>
+              <button onClick={() => setSelectedVideo(null)}
+                className="text-gray-500 hover:text-[#FF4500] text-sm transition-colors">
+                ✕ Kapat
+              </button>
+            </div>
           </div>
-          <div className="p-4 flex items-center justify-between">
-            <h3 className="text-white font-bold">{selectedVideo.title}</h3>
-            <button onClick={() => setSelectedVideo(null)}
-              className="text-gray-500 hover:text-[#FF4500] text-sm transition-colors">
-              ✕ Kapat
-            </button>
-          </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Video Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {videos.map(video => (
-          <div key={video.id}
-            onClick={() => setSelectedVideo(video)}
-            className="bg-[#0A1128]/80 border border-gray-800 rounded-lg overflow-hidden cursor-pointer hover:border-[#00F0FF]/30 transition-all group">
-            <div className="aspect-video relative overflow-hidden">
-              <img src={video.thumbnail_url?.replace('hqdefault', 'mqdefault')} alt={video.title}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  // If thumbnail fails, try default.jpg, or finally hide it
-                  if (!target.src.endsWith('default.jpg')) {
-                    target.src = `https://img.youtube.com/vi/${extractYoutubeId(video.youtube_id || video.youtube_url)}/default.jpg`;
-                  } else {
-                    target.style.display = 'none';
-                    if (target.nextElementSibling) {
-                      (target.nextElementSibling as HTMLElement).style.display = 'flex';
-                    }
-                  }
-                }}
-              />
-              <div className="absolute inset-0 bg-gray-900 hidden items-center justify-center flex-col gap-2">
-                <span className="text-4xl">🎞️</span>
-                <span className="text-xs text-gray-500 font-mono">Önizleme Yok</span>
-              </div>
-              <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
-                  <span className="text-2xl ml-1">▶</span>
+        {videos.map(video => {
+          const activeId = video.youtube_id || extractYoutubeId(video.youtube_url);
+          const thumbUrl = video.thumbnail_url || (activeId ? `https://img.youtube.com/vi/${activeId}/mqdefault.jpg` : '');
+
+          return (
+            <div key={video.id}
+              onClick={() => setSelectedVideo(video)}
+              className="bg-[#0A1128]/80 border border-gray-800 rounded-lg overflow-hidden cursor-pointer hover:border-[#00F0FF]/30 transition-all group">
+              <div className="aspect-video relative overflow-hidden">
+                {thumbUrl ? (
+                  <img src={thumbUrl} alt={video.title}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
+                    onError={(e) => {
+                      const target = e.target as HTMLImageElement;
+                      if (!target.src.endsWith('default.jpg') && activeId) {
+                        target.src = `https://img.youtube.com/vi/${activeId}/default.jpg`;
+                      } else {
+                        target.style.display = 'none';
+                        if (target.nextElementSibling) {
+                          (target.nextElementSibling as HTMLElement).style.display = 'flex';
+                        }
+                      }
+                    }}
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gray-900 flex items-center justify-center flex-col gap-2">
+                    <span className="text-4xl">🎬</span>
+                    <span className="text-xs text-gray-500 font-mono">Resim Yok</span>
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-gray-900 hidden items-center justify-center flex-col gap-2">
+                  <span className="text-4xl">🎞️</span>
+                  <span className="text-xs text-gray-500 font-mono">Önizleme Yok</span>
+                </div>
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="w-14 h-14 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center">
+                    <span className="text-2xl ml-1">▶</span>
+                  </div>
                 </div>
               </div>
+              <div className="p-3">
+                <h4 className="text-white font-bold text-sm truncate">{video.title}</h4>
+                {video.added_at && (
+                  <p className="text-gray-600 text-xs font-mono mt-1">{new Date(video.added_at).toLocaleDateString()}</p>
+                )}
+              </div>
             </div>
-            <div className="p-3">
-              <h4 className="text-white font-bold text-sm truncate">{video.title}</h4>
-              {video.added_at && (
-                <p className="text-gray-600 text-xs font-mono mt-1">{new Date(video.added_at).toLocaleDateString()}</p>
-              )}
-            </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

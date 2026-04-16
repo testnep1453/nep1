@@ -106,43 +106,41 @@ export const ArchiveManager = ({ isAdmin = false }: Props) => {
           <div className="text-center py-10 text-gray-600">Arşivde henüz video yok.</div>
         ) : (
           <div className="divide-y divide-gray-800">
-            {videos.map(v => (
-              <div key={v.id} className="flex items-center gap-4 p-4 hover:bg-white/5 transition-colors">
-                <img
-                  src={v.thumbnail_url?.replace('hqdefault', 'mqdefault')}
-                  alt={v.title}
-                  className="w-24 h-16 object-cover rounded flex-shrink-0 bg-gray-900"
-                  onError={(e) => {
-                    const img = e.target as HTMLImageElement;
-                    if (!img.src.endsWith('default.jpg')) {
-                      // Try default.jpg (usually exists even for unlisted)
-                      if (v.youtube_id) img.src = `https://img.youtube.com/vi/${extractYoutubeId(v.youtube_id || v.youtube_url)}/default.jpg`;
-                      else {
-                        img.style.display = 'none';
-                        const placeholder = img.nextElementSibling as HTMLElement;
-                        if (placeholder) placeholder.style.display = 'flex';
-                      }
-                    } else {
-                      img.style.display = 'none';
-                      const placeholder = img.nextElementSibling as HTMLElement;
-                      if (placeholder) placeholder.style.display = 'flex';
-                    }
-                  }}
-                />
-                <div
-                  className="w-24 h-16 rounded flex-shrink-0 bg-gray-900 items-center justify-center text-2xl"
-                  style={{ display: 'none' }}
-                >
-                  🎬
-                </div>
+            {videos.map(v => {
+              const activeId = v.youtube_id || extractYoutubeId(v.youtube_url);
+              const thumbUrl = v.thumbnail_url || (activeId ? `https://img.youtube.com/vi/${activeId}/mqdefault.jpg` : '');
 
-                <div className="flex-1 min-w-0">
-                  <div className="text-white font-bold text-sm truncate">{v.title}</div>
-                  <div className="text-gray-600 text-xs font-mono mt-0.5 truncate">{v.youtube_url}</div>
-                  {v.added_at && (
-                    <div className="text-gray-500 text-[10px] font-mono mt-1">EKLENME: {new Date(v.added_at).toLocaleDateString()}</div>
-                  )}
-                </div>
+              return (
+                <div key={v.id} className="flex items-center gap-4 p-4 hover:bg-white/5 transition-colors">
+                  <div className="w-24 h-16 relative flex-shrink-0 bg-gray-900 rounded overflow-hidden">
+                    {thumbUrl ? (
+                      <img
+                        src={thumbUrl}
+                        alt={v.title}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          const img = e.target as HTMLImageElement;
+                          if (!img.src.endsWith('default.jpg') && activeId) {
+                            img.src = `https://img.youtube.com/vi/${activeId}/default.jpg`;
+                          } else {
+                            img.style.display = 'none';
+                            if (img.nextElementSibling) (img.nextElementSibling as HTMLElement).style.display = 'flex';
+                          }
+                        }}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-xl">🎬</div>
+                    )}
+                    <div className="hidden absolute inset-0 items-center justify-center text-xl bg-gray-900">🎬</div>
+                  </div>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="text-white font-bold text-sm truncate">{v.title}</div>
+                    <div className="text-gray-600 text-xs font-mono mt-0.5 truncate">{v.youtube_url}</div>
+                    {v.added_at && (
+                      <div className="text-gray-500 text-[10px] font-mono mt-1">EKLENME: {new Date(v.added_at).toLocaleDateString()}</div>
+                    )}
+                  </div>
                 {/* Silme butonu sadece admin */}
                 {isAdmin && (
                   <button
