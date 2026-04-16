@@ -35,6 +35,9 @@ export const TopBar = ({ student, unreadCount, theme = 'dark', onThemeChange, on
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showManualPrompt, setShowManualPrompt] = useState(false);
   const [isStandalone, setIsStandalone] = useState(false);
+  const [guideDismissed, setGuideDismissed] = useState(() => {
+    return localStorage.getItem('pwa_guide_dismissed') === 'true';
+  });
 
   // Cihaz/Tarayıcı Algılama
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
@@ -72,7 +75,7 @@ export const TopBar = ({ student, unreadCount, theme = 'dark', onThemeChange, on
     <>
       <div className="flex items-center gap-2 sm:gap-3 relative">
         
-        {!isStandalone && (
+        {!isStandalone && (deferredPrompt || !guideDismissed) && (
           <div className="relative flex items-center">
             <button
               onClick={handleInstallClick}
@@ -116,7 +119,14 @@ export const TopBar = ({ student, unreadCount, theme = 'dark', onThemeChange, on
                     </>
                   )}
                 </div>
-                <button onClick={() => setShowManualPrompt(false)} className="mt-4 w-full bg-[#00F0FF]/20 text-[#00F0FF] hover:bg-[#00F0FF]/30 py-2 rounded-lg font-bold transition-colors">
+                <button 
+                  onClick={() => {
+                    setShowManualPrompt(false);
+                    localStorage.setItem('pwa_guide_dismissed', 'true');
+                    setGuideDismissed(true);
+                  }} 
+                  className="mt-4 w-full bg-[#00F0FF]/20 text-[#00F0FF] hover:bg-[#00F0FF]/30 py-2 rounded-lg font-bold transition-colors"
+                >
                   Anladım
                 </button>
               </div>
