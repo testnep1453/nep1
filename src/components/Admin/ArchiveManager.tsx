@@ -150,8 +150,9 @@ export const ArchiveManager = ({ isAdmin = false }: Props) => {
                     SİL
                   </button>
                 )}
-              </div>
-            ))}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
