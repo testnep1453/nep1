@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../config/supabase';
 import { isLessonActive, isLessonEnded, getNextLesson } from '../config/lessonSchedule';
-import { subscribeToSystemKey } from '../services/systemSettingsService';
+import { subscribeToSettingStore } from '../services/dbFirebase';
 
 interface AutoZoomState {
   status: 'waiting' | 'redirecting' | 'in_lesson' | 'lesson_ended' | 'feedback';
@@ -30,21 +30,21 @@ export const useAutoZoom = (
 
   // Verileri Supabase'den gerçek zamanlı dinle
   useEffect(() => {
-    // Zoom linkini dinle
-    const unsubLink = subscribeToSystemKey('zoom_link', (val: string) => {
-      if (val) setLiveZoomLink(val);
+    try {
+      const unsub = subscribeToSettingStore<Record<string, any> | null>('system_config', null, (data) => {
+        if (!data) return;
+        
+        manualOverrideRef.current = data.manual_lesson_active === true;
+        if (data.zoom_link) {
+          setLiveZoomLink(data.zoom_link);
+        }
+        setIsLoading(false);
+      });
+      return () => unsub();
+    } catch (err) {
+      console.warn("Sistem ayarları yüklenemedi (401 veya tablo boş):", err);
       setIsLoading(false);
-    });
-    
-    // Manuel ders durumunu dinle
-    const unsubManual = subscribeToSystemKey('manual_lesson_active', (val: string) => {
-      manualOverrideRef.current = val === 'true' || val === true;
-    });
-
-    return () => {
-      unsubLink();
-      unsubManual();
-    };
+    }
   }, []);
 
   // Link eksikliği uyarısını sadece veri yüklendiğinde ve link gerçekten yoksa 1 kez ver

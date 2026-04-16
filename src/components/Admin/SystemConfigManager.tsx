@@ -25,7 +25,6 @@ export const SystemConfigManager = () => {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    clearSystemConfigCache();
     await saveSystemConfig({ zoom_link: zoomLink.trim(), lesson_title: lessonTitle.trim() });
     setSaving(false);
     setSaved(true);
@@ -93,8 +92,7 @@ export const SystemConfigManager = () => {
       {/* Bilgi kutusu */}
       <div className="bg-[#0A1128]/40 border border-gray-800 rounded-xl p-4 text-xs text-gray-500 space-y-1 font-mono">
         <p className="text-gray-400 font-bold mb-2">📋 Supabase Tablo Gereksinimleri</p>
-        <p>• <span className="text-[#00F0FF]">system_settings</span> tablosu (key, value) sütunlarını kullanır (zoom_link, manual_lesson_active)</p>
-        <p>• <span className="text-[#00F0FF]">settings</span> tablosu (id, data) sütunlarını kullanır (trailer, surveys, admin_auth)</p>
+        <p>• <span className="text-[#00F0FF]">settings</span> tablosu (id, data) sütunlarını kullanır (zoom_link, trailer, surveys, admin_auth)</p>
         <p>• <span className="text-[#39FF14]">login_alerts</span> tablosu oluşturulduğunda loginAlertService içindeki <span className="text-[#FF4500]">LOGIN_ALERTS_ENABLED=false</span> → <span className="text-[#39FF14]">true</span> yap</p>
       </div>
     </div>
