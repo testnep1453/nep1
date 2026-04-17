@@ -32,14 +32,27 @@ export const requestNotificationPermission = async (studentId?: string): Promise
   } catch { return null; }
 };
 
+// KRİTİK: App.tsx'in beklediği eksik export geri eklendi
+export const setupNotificationListener = async (
+  callback: (payload: MessagePayload) => void
+) => {
+  try {
+    const messaging = await getMessagingInstance();
+    if (!messaging) return;
+    onMessage(messaging, (payload) => {
+      callback(payload);
+    });
+  } catch { }
+};
+
 export const sendPushNotification = async (title: string, body: string, userId: string = 'all') => {
   try {
-    await supabase.from('fcm_queue').insert([{ 
+    await supabase.from('fcm_queue').insert([{
       "userId": String(userId),
-      "title": title || 'NEP Operasyon', 
-      "body": body || '', 
+      "title": title || 'NEP Operasyon',
+      "body": body || '',
       "isRead": false,
-      "createdAt": new Date().toISOString() 
+      "createdAt": new Date().toISOString()
     }]);
   } catch (error) {
     console.warn('FCM error:', error);
