@@ -118,11 +118,11 @@ export const recordAttendance = async (studentId: string, targetDate?: string, a
 
     await supabase.from('attendance').insert({
       id: `${today}_${studentId}`,
-      student_id: String(studentId),
-      lesson_date: today,
-      joined_at: new Date().toISOString(),
-      auto_joined: autoJoined,
-      xp_earned: 100
+      studentId: String(studentId),
+      lessonDate: today,
+      joinedAt: new Date().toISOString(),
+      autoJoined: autoJoined,
+      xpEarned: 100
     });
 
     const { data: student } = await supabase
@@ -137,13 +137,13 @@ export const recordAttendance = async (studentId: string, targetDate?: string, a
         xp: 100,
         level: 1,
         streak: 1,
-        attendance_history: [today]
+        attendanceHistory: [today]
       });
       return { xpEarned: 100, streak: 1, streakBonus: false };
     }
 
     const currentXP = student.xp || 0;
-    const history = student.attendance_history || [];
+    const history = student.attendanceHistory || [];
 
     const yesterday = new Date(now);
     yesterday.setDate(yesterday.getDate() - 1);
@@ -164,7 +164,7 @@ export const recordAttendance = async (studentId: string, targetDate?: string, a
       xp: nextXP,
       level: nextLevel,
       streak: newStreak,
-      attendance_history: [...history, today]
+      attendanceHistory: [...history, today]
     }).eq('id', String(studentId));
 
     return { xpEarned: earnedXP, streak: newStreak, streakBonus: streakBonus > 0 };
