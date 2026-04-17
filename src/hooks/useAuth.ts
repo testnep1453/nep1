@@ -135,13 +135,23 @@ export const useAuth = () => {
     return false;
   };
 
-  // YENİ: Sadece Google'a yönlendirir, anında hata vermez!
+  // Güvenli env erişimi
+const getBaseUrl = (): string => {
+  try {
+    const base = import.meta.env.BASE_URL;
+    return typeof base === 'string' ? base : '/';
+  } catch {
+    return '/';
+  }
+};
+
+// YENİ: Sadece Google'a yönlendirir, anında hata vermez!
 const loginWithGoogle = async () => {
     await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: { 
         // GitHub Pages alt klasör yapısı (/nep1/) ve localhost için kurşungeçirmez yönlendirme
-        redirectTo: window.location.origin + import.meta.env.BASE_URL 
+        redirectTo: window.location.origin + getBaseUrl() 
       }
     });
     return true; 
