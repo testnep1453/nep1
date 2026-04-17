@@ -31,7 +31,7 @@ export const upsertStudent = async (student: Student): Promise<boolean> => {
       id: student.id,
       name: student.name,
       nickname: student.nickname,
-      email: student.email,
+      studentEmail: student.email,
       xp: student.xp,
       level: student.level,
       avatar: student.avatar,
@@ -46,8 +46,8 @@ export const upsertStudent = async (student: Student): Promise<boolean> => {
   }
 };
 
-export const updateStudentEmail = async (studentId: string, email: string) => {
-  await supabase.from('students').update({ email }).eq('studentId', studentId);
+export const saveStudentEmail = async (studentId: string, email: string): Promise<void> => {
+  await supabase.from('students').update({ studentEmail: email }).eq('studentId', studentId);
 };
 
 export const signOutUser = async () => {
