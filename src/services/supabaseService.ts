@@ -2,6 +2,9 @@ import { supabase } from '../config/supabase';
 import { Student, Trailer, FeedbackEntry } from '../types/student';
 import seedData from '../student_list.json';
 
+/**
+ * Öğrencileri çeker (camelCase)
+ */
 export const fetchStudents = async (): Promise<Student[]> => {
   const { data } = await supabase.from('students').select('*');
   if (!data || data.length === 0) return seedData as Student[];
@@ -14,6 +17,9 @@ export const fetchStudents = async (): Promise<Student[]> => {
   })) as Student[];
 };
 
+/**
+ * Öğrenci oluşturur/günceller (Quoted camelCase)
+ */
 export const upsertStudent = async (student: Student) => {
   await supabase.from('students').upsert({
     "id": student.id,
@@ -31,6 +37,9 @@ export const upsertStudent = async (student: Student) => {
   });
 };
 
+/**
+ * Öğrenci bilgilerini günceller
+ */
 export const updateStudent = async (id: string, updates: Partial<Student>) => {
   const mappedUpdates: Record<string, unknown> = { ...updates };
   if (updates.lastSeen) mappedUpdates.lastSeen = new Date(updates.lastSeen).toISOString();
@@ -44,37 +53,64 @@ export const removeStudent = async (id: string) => {
   await supabase.from('students').delete().eq('"id"', id);
 };
 
+// ==========================================
+// FRAGMAN (TRAILER) - UnifiedDashboard.tsx'in beklediği eksik fonksiyonlar
+// ==========================================
+
+export const subscribeToTrailer = (callback: (trailer: Trailer | null) => void) => {
+  const fetchTrailer = async () => {
+    const { data } = await supabase.from('settings').select('"data"').eq('"id"', 'trailer').maybeSingle();
+    callback(data ? (data.data as Trailer) : null);
+  };
+  fetchTrailer();
+  const channel = supabase.channel(`trailer_${Math.random()}`)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'settings', filter: `"id"=eq.trailer` }, fetchTrailer)
+    .subscribe();
+  return () => { supabase.removeChannel(channel); };
+};
+
+export const setTrailer = async (trailer: Omit<Trailer, 'isActive'>) => {
+  await supabase.from('settings').upsert({
+    "id": 'trailer',
+    "data": { ...trailer, isActive: true }
+  });
+};
+
+export const disableTrailer = async () => {
+  await supabase.from('settings').upsert({
+    "id": 'trailer',
+    "data": { youtubeId: '', showDate: '', showTime: '', isActive: false }
+  });
+};
+
+// ==========================================
+// YOKLAMA VE DİĞER SERVİSLER
+// ==========================================
+
+export const extractYoutubeId = (url: string): string => {
+  if (!url) return '';
+  const match = url.match(/(?:v\/|youtu\.be\/|v=|embed\/|shorts\/)([^&?\s]{11})/i);
+  return match ? match[1] : url.trim();
+};
+
 export const recordAttendance = async (studentId: string, targetDate?: string, autoJoined: boolean = false) => {
   const now = new Date();
   const today = targetDate || now.toISOString().slice(0, 10);
   try {
-    const { data: attData } = await supabase
-      .from('attendance')
-      .select('"studentId"')
-      .eq('"studentId"', String(studentId))
-      .eq('"lessonDate"', today)
-      .maybeSingle();
+    const { data: attData } = await supabase.from('attendance')
+      .select('"studentId"').eq('"studentId"', String(studentId)).eq('"lessonDate"', today).maybeSingle();
 
     if (attData) return null;
 
     await supabase.from('attendance').insert({
-      "studentId": String(studentId),
-      "lessonDate": today,
-      "joinedAt": new Date().toISOString(),
-      "autoJoined": autoJoined,
-      "xpEarned": 100
+      "studentId": String(studentId), "lessonDate": today, "joinedAt": new Date().toISOString(), "autoJoined": autoJoined, "xpEarned": 100
     });
 
-    const { data: student } = await supabase
-      .from('students')
-      .select('"xp", "level", "streak", "attendanceHistory"')
-      .eq('"id"', String(studentId))
-      .maybeSingle();
+    const { data: student } = await supabase.from('students')
+      .select('"xp", "level", "streak", "attendanceHistory"').eq('"id"', String(studentId)).maybeSingle();
 
     if (!student) {
-      await supabase.from('students').insert({
-        "id": String(studentId), "xp": 100, "level": 1, "streak": 1, "attendanceHistory": [today]
-      });
+      await supabase.from('students').insert({ "id": String(studentId), "xp": 100, "level": 1, "streak": 1, "attendanceHistory": [today] });
       return { xpEarned: 100, streak: 1, streakBonus: false };
     }
 
@@ -95,31 +131,19 @@ export const recordAttendance = async (studentId: string, targetDate?: string, a
     const nextXP = currentXP + earnedXP;
     const nextLevel = Math.floor(nextXP / 200) + 1;
 
-    await supabase.from('students').update({
-      "xp": nextXP, "level": nextLevel, "streak": newStreak, "attendanceHistory": [...history, today]
-    }).eq('"id"', String(studentId));
-
+    await supabase.from('students').update({ "xp": nextXP, "level": nextLevel, "streak": newStreak, "attendanceHistory": [...history, today] }).eq('"id"', String(studentId));
     return { xpEarned: earnedXP, streak: newStreak, streakBonus: streakBonus > 0 };
   } catch (error) { return null; }
 };
 
 export const getAttendanceForLesson = async (lessonDate: string) => {
-  const { data } = await supabase.from('attendance')
-    .select('"studentId", "lessonDate", "joinedAt", "autoJoined", "xpEarned"')
-    .eq('"lessonDate"', lessonDate);
+  const { data } = await supabase.from('attendance').select('"studentId", "lessonDate", "joinedAt", "autoJoined", "xpEarned"').eq('"lessonDate"', lessonDate);
   return data || [];
 };
 
 export const getAllFeedback = async (): Promise<FeedbackEntry[]> => {
   const { data } = await supabase.from('feedback').select('*').order('"createdAt"', { ascending: false });
   return (data || []) as FeedbackEntry[];
-};
-
-// YouTubePlayer.tsx için kritik fonksiyon
-export const extractYoutubeId = (url: string): string => {
-  if (!url) return '';
-  const match = url.match(/(?:v\/|youtu\.be\/|v=|embed\/|shorts\/)([^&?\s]{11})/i);
-  return match ? match[1] : url.trim();
 };
 
 export const updateDisplayName = async (id: string, displayName: string) => {
