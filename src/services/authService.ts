@@ -2,7 +2,7 @@ import { supabase } from '../config/supabase';
 import { Student } from '../types/student';
 
 /**
- * Öğrenci verisini ID ile çeker (camelCase ve tırnaklı)
+ * Öğrenci verisini ID ile çeker (Strict camelCase & Quoted)
  */
 export const getStudentById = async (id: string): Promise<Student | null> => {
   try {
@@ -74,7 +74,7 @@ export const saveStudentEmail = async (studentId: string, email: string) => {
 };
 
 // ==========================================
-// OTP VE GÜVENLİK (Eksik olanlar eklendi)
+// OTP VE GÜVENLİK
 // ==========================================
 
 /**
@@ -110,6 +110,31 @@ export const verifyEmailCode = async (email: string, code: string): Promise<bool
     return !error && !!data.user;
   } catch {
     return false;
+  }
+};
+
+/**
+ * KRİTİK: AdminAuth.tsx tarafından beklenen eksik export
+ */
+export const notifyAdminSuspiciousActivity = async (email: string, reason: string): Promise<void> => {
+  try {
+    let ip = 'Bilinmiyor';
+    try {
+      const ipRes = await fetch('https://api.ipify.org?format=json');
+      const ipData = await ipRes.json();
+      ip = ipData.ip;
+    } catch {
+      console.warn("IP alınamadı, bildirime devam ediliyor.");
+    }
+
+    await supabase.from('security_alerts').insert({
+      "email": email,
+      "ipAddress": ip,
+      "reason": reason,
+      "userAgent": navigator.userAgent
+    });
+  } catch (error) {
+    console.error('Güvenlik uyarısı kaydedilemedi:', error);
   }
 };
 
