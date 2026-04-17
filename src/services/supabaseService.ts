@@ -110,24 +110,24 @@ export const recordAttendance = async (studentId: string, targetDate?: string, a
     const { data: attData } = await supabase
       .from('attendance')
       .select('id')
-      .eq('student_id', String(studentId))
-      .eq('lesson_date', today)
+      .eq('studentId', String(studentId))
+      .eq('lessonDate', today)
       .maybeSingle();
 
     if (attData) return null;
 
     await supabase.from('attendance').insert({
-      id: `${today}_${studentId}`, 
-      student_id: String(studentId), 
-      lesson_date: today, 
-      joined_at: new Date().toISOString(), 
-      auto_joined: autoJoined, 
-      xp_earned: 100
+      id: `${today}_${studentId}`,
+      studentId: String(studentId),
+      lessonDate: today,
+      joinedAt: new Date().toISOString(),
+      autoJoined: autoJoined,
+      xpEarned: 100
     });
 
     const { data: student } = await supabase
       .from('students')
-      .select('xp, level, streak, attendance_history')
+      .select('xp, level, streak, attendanceHistory')
       .eq('id', String(studentId))
       .maybeSingle();
 
@@ -143,7 +143,7 @@ export const recordAttendance = async (studentId: string, targetDate?: string, a
     }
 
     const currentXP = student.xp || 0;
-    const history = student.attendance_history || [];
+    const history = student.attendanceHistory || [];
     
     const yesterday = new Date(now);
     yesterday.setDate(yesterday.getDate() - 1);
@@ -175,12 +175,12 @@ export const recordAttendance = async (studentId: string, targetDate?: string, a
 };
 
 export const getAttendanceForLesson = async (lessonDate: string) => {
-  const { data } = await supabase.from('attendance').select('student_id, joined_at, auto_joined').eq('lesson_date', lessonDate);
+  const { data } = await supabase.from('attendance').select('studentId, joinedAt, autoJoined').eq('lessonDate', lessonDate);
   return data || [];
 };
 
 export const getAllFeedback = async (): Promise<FeedbackEntry[]> => {
-  const { data } = await supabase.from('feedback').select('*').order('created_at', { ascending: false });
+  const { data } = await supabase.from('feedback').select('*').order('createdAt', { ascending: false });
   return (data || []) as FeedbackEntry[];
 };
 
@@ -213,18 +213,18 @@ export const subscribeToSettingStore = <T>(id: string, defaultData: T, callback:
 };
 
 export const checkAndAwardBadge = async (studentId: string, badgeKey: string) => {
-  const { data: existing } = await supabase
+  const { data } = await supabase
     .from('student_badges')
     .select('*')
-    .eq('student_id', studentId)
-    .eq('badge_key', badgeKey)
+    .eq('studentId', studentId)
+    .eq('badgeKey', badgeKey)
     .maybeSingle();
 
-  if (!existing) {
+  if (!data) {
     await supabase.from('student_badges').insert([{
-      student_id: studentId,
-      badge_key: badgeKey,
-      earned_at: new Date().toISOString()
+      studentId: studentId,
+      badgeKey: badgeKey,
+      earnedAt: new Date().toISOString()
     }]);
     return true;
   }
@@ -235,7 +235,7 @@ export const getStudentBadges = async (studentId: string) => {
   const { data } = await supabase
     .from('student_badges')
     .select('*')
-    .eq('student_id', studentId);
+    .eq('studentId', studentId);
   return data || [];
 };
 
