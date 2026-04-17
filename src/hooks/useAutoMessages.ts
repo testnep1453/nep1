@@ -14,7 +14,7 @@ import { useEffect, useRef } from 'react';
 import { getSettingStore, saveSettingStore } from '../services/supabaseService';
 import { getNextLesson } from '../config/lessonSchedule';
 import { sendPushNotification } from '../services/fcm';
-import { sendNotification } from './useNotifications';
+import { sendNotification } from '../services/notificationService';
 
 /** Supabase'de saklanan gönderilmiş mesaj ID'leri */
 const SENT_MSGS_STORE_KEY = 'auto_messages_sent';
