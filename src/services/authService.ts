@@ -116,3 +116,11 @@ export const notifyAdminSuspiciousActivity = async (email: string, reason: strin
 // Köprü: useAuth hala bu fonksiyonu içe aktarıyor
 export const signInAndMapStudent = async (studentId: string): Promise<any> => { return { uid: studentId }; };
 
+export const saveStudentEmail = async (studentId: string, email: string) => {
+  const { error } = await supabase
+    .from('students')
+    .update({ studentEmail: email })
+    .eq('studentId', studentId);
+
+  if (error) throw error;
+};
