@@ -12,9 +12,9 @@ export const fetchStudents = async (): Promise<Student[]> => {
   
   return data.map(s => ({
     ...s,
-    nickname: s.display_name || s.nickname || 'AJAN',
-    lastSeen: s.last_seen ? new Date(s.last_seen).getTime() : Date.now(),
-    attendanceHistory: s.attendance_history || []
+    nickname: (s as any).displayName || s.nickname || 'AJAN',
+    lastSeen: (s as any).lastSeen ? new Date((s as any).lastSeen).getTime() : Date.now(),
+    attendanceHistory: (s as any).attendanceHistory || []
   })) as Student[];
 };
 
@@ -23,13 +23,13 @@ export const upsertStudent = async (student: Student) => {
     id: student.id,
     name: student.name,
     nickname: student.nickname,
-    display_name: student.nickname,
+    "displayName": student.nickname,
     email: student.email,
     xp: student.xp,
     level: student.level,
     avatar: student.avatar,
-    last_seen: new Date(student.lastSeen || Date.now()).toISOString(),
-    attendance_history: student.attendanceHistory || [],
+    "lastSeen": new Date(student.lastSeen || Date.now()).toISOString(),
+    "attendanceHistory": student.attendanceHistory || [],
     streak: student.streak || 0,
     badges: student.badges || []
   });
@@ -39,15 +39,15 @@ export const updateStudent = async (id: string, updates: Partial<Student>) => {
   const mappedUpdates: Record<string, unknown> = { ...updates };
   
   if (updates.lastSeen) {
-    mappedUpdates.last_seen = new Date(updates.lastSeen).toISOString();
+    mappedUpdates["lastSeen"] = new Date(updates.lastSeen).toISOString();
     delete mappedUpdates.lastSeen;
   }
   if (updates.attendanceHistory) {
-    mappedUpdates.attendance_history = updates.attendanceHistory;
+    mappedUpdates["attendanceHistory"] = updates.attendanceHistory;
     delete mappedUpdates.attendanceHistory;
   }
   if (updates.nickname) {
-    mappedUpdates.display_name = updates.nickname;
+    mappedUpdates["displayName"] = updates.nickname;
   }
 
   await supabase.from('students').update(mappedUpdates).eq('id', id);
@@ -89,13 +89,13 @@ export const addStudentsBatch = async (students: Student[]) => {
     id: s.id,
     name: s.name,
     nickname: s.nickname,
-    display_name: s.nickname,
+    "displayName": s.nickname,
     email: s.email,
     xp: s.xp,
     level: s.level,
     avatar: s.avatar,
-    last_seen: new Date(s.lastSeen || Date.now()).toISOString(),
-    attendance_history: s.attendanceHistory || [],
+    "lastSeen": new Date(s.lastSeen || Date.now()).toISOString(),
+    "attendanceHistory": s.attendanceHistory || [],
     streak: s.streak || 0,
     badges: s.badges || []
   }));
@@ -110,24 +110,24 @@ export const recordAttendance = async (studentId: string, targetDate?: string, a
     const { data: attData } = await supabase
       .from('attendance')
       .select('id')
-      .eq('studentId', String(studentId))
-      .eq('lessonDate', today)
+      .eq('"studentId"', String(studentId))
+      .eq('"lessonDate"', today)
       .maybeSingle();
 
     if (attData) return null;
 
     await supabase.from('attendance').insert({
       id: `${today}_${studentId}`,
-      studentId: String(studentId),
-      lessonDate: today,
-      joinedAt: new Date().toISOString(),
-      autoJoined: autoJoined,
-      xpEarned: 100
+      "studentId": String(studentId),
+      "lessonDate": today,
+      "joinedAt": new Date().toISOString(),
+      "autoJoined": autoJoined,
+      "xpEarned": 100
     });
 
     const { data: student } = await supabase
       .from('students')
-      .select('xp, level, streak, attendanceHistory')
+      .select('xp, level, streak, "attendanceHistory"')
       .eq('id', String(studentId))
       .maybeSingle();
 
@@ -137,13 +137,13 @@ export const recordAttendance = async (studentId: string, targetDate?: string, a
         xp: 100,
         level: 1,
         streak: 1,
-        attendance_history: [today]
+        "attendanceHistory": [today]
       });
       return { xpEarned: 100, streak: 1, streakBonus: false };
     }
 
     const currentXP = student.xp || 0;
-    const history = student.attendanceHistory || [];
+    const history = (student as any).attendanceHistory || [];
     
     const yesterday = new Date(now);
     yesterday.setDate(yesterday.getDate() - 1);
@@ -164,7 +164,7 @@ export const recordAttendance = async (studentId: string, targetDate?: string, a
       xp: nextXP,
       level: nextLevel,
       streak: newStreak,
-      attendance_history: [...history, today]
+      "attendanceHistory": [...history, today]
     }).eq('id', String(studentId));
 
     return { xpEarned: earnedXP, streak: newStreak, streakBonus: streakBonus > 0 };
@@ -175,7 +175,7 @@ export const recordAttendance = async (studentId: string, targetDate?: string, a
 };
 
 export const getAttendanceForLesson = async (lessonDate: string) => {
-  const { data } = await supabase.from('attendance').select('studentId, joinedAt, autoJoined').eq('lessonDate', lessonDate);
+  const { data } = await supabase.from('attendance').select('"studentId", "joinedAt", "autoJoined"').eq('"lessonDate"', lessonDate);
   return data || [];
 };
 
@@ -216,15 +216,15 @@ export const checkAndAwardBadge = async (studentId: string, badgeKey: string) =>
   const { data } = await supabase
     .from('student_badges')
     .select('*')
-    .eq('studentId', studentId)
-    .eq('badgeKey', badgeKey)
+    .eq('"studentId"', studentId)
+    .eq('"badgeKey"', badgeKey)
     .maybeSingle();
 
   if (!data) {
     await supabase.from('student_badges').insert([{
-      studentId: studentId,
-      badgeKey: badgeKey,
-      earnedAt: new Date().toISOString()
+      "studentId": studentId,
+      "badgeKey": badgeKey,
+      "earnedAt": new Date().toISOString()
     }]);
     return true;
   }
@@ -235,7 +235,7 @@ export const getStudentBadges = async (studentId: string) => {
   const { data } = await supabase
     .from('student_badges')
     .select('*')
-    .eq('studentId', studentId);
+    .eq('"studentId"', studentId);
   return data || [];
 };
 

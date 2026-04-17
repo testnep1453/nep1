@@ -64,10 +64,10 @@ export const requestNotificationPermission = async (studentId?: string): Promise
  */
 const saveTokenToDatabase = async (studentId: string, token: string) => {
   try {
-    // fcmTokens tablosu yerine doğrudan students tablosuna (snake_case)
+    // fcmTokens tablosu yerine doğrudan students tablosuna (camelCase)
     await supabase.from('students').update({
-      fcm_token: token,
-      last_seen: new Date().toISOString()
+      "fcmToken": token,
+      "lastSeen": new Date().toISOString()
     }).eq('id', studentId);
   } catch {
     // Token kaydedilemedi — sessiz

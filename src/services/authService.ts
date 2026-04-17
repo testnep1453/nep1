@@ -10,14 +10,14 @@ export const getStudentById = async (id: string): Promise<Student | null> => {
     return {
       id: student.id,
       name: student.name,
-      nickname: student.display_name || student.nickname || 'AJAN',
+      nickname: (student as any).displayName || student.nickname || 'AJAN',
       email: student.email,
       xp: student.xp ?? 0,
       level: student.level ?? 1,
       badges: student.badges || [],
       avatar: student.avatar || 'hero_1',
-      lastSeen: new Date(student.last_seen || Date.now()).getTime(),
-      attendanceHistory: student.attendance_history || [],
+      lastSeen: new Date((student as any).lastSeen || Date.now()).getTime(),
+      attendanceHistory: (student as any).attendanceHistory || [],
       streak: student.streak ?? 0,
     };
   } catch {
@@ -37,8 +37,8 @@ export const upsertStudent = async (student: Student): Promise<boolean> => {
       avatar: student.avatar, 
       streak: student.streak,
       badges: student.badges, 
-      attendance_history: student.attendanceHistory || [], 
-      last_seen: new Date().toISOString()
+      "attendanceHistory": student.attendanceHistory || [], 
+      "lastSeen": new Date().toISOString()
     });
     return !error;
   } catch {
