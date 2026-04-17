@@ -109,7 +109,7 @@ export const recordAttendance = async (studentId: string, targetDate?: string, a
   try {
     const { data: attData } = await supabase
       .from('attendance')
-      .select('id')
+      .select('"studentId"')
       .eq('studentId', String(studentId))
       .eq('lessonDate', today)
       .maybeSingle();
@@ -117,7 +117,6 @@ export const recordAttendance = async (studentId: string, targetDate?: string, a
     if (attData) return null;
 
     await supabase.from('attendance').insert({
-      id: `${today}_${studentId}`,
       studentId: String(studentId),
       lessonDate: today,
       joinedAt: new Date().toISOString(),

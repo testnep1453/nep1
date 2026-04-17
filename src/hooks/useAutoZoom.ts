@@ -142,13 +142,13 @@ const recordAutoAttendance = async (studentId: string, lessonDate: string) => {
     // Zaten kayıtlıysa tekrar yazma
     const { data: existing } = await supabase
       .from('attendance')
-      .select('id')
-      .eq('id', id)
+      .select('"studentId"')
+      .eq('studentId', studentId)
+      .eq('lessonDate', lessonDate)
       .maybeSingle();
     if (existing) return;
 
     await supabase.from('attendance').insert([{
-      id,
       studentId: studentId,
       lessonDate: lessonDate,
       joinedAt: new Date().toISOString(),
