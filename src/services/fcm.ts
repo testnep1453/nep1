@@ -68,7 +68,7 @@ const saveTokenToDatabase = async (studentId: string, token: string) => {
     await supabase.from('students').update({
       "fcmToken": token,
       "lastSeen": new Date().toISOString()
-    }).eq('id', studentId);
+    }).eq('studentId', studentId);
   } catch {
     // Token kaydedilemedi — sessiz
   }

@@ -50,11 +50,11 @@ export const updateStudent = async (id: string, updates: Partial<Student>) => {
     mappedUpdates.display_name = updates.nickname;
   }
 
-  await supabase.from('students').update(mappedUpdates).eq('id', id);
+  await supabase.from('students').update(mappedUpdates).eq('studentId', id);
 };
 
 export const removeStudent = async (id: string) => {
-  await supabase.from('students').delete().eq('id', id);
+  await supabase.from('students').delete().eq('studentId', id);
 };
 
 export const subscribeToTrailer = (callback: (trailer: Trailer | null) => void) => {
@@ -110,8 +110,8 @@ export const recordAttendance = async (studentId: string, targetDate?: string, a
     const { data: attData } = await supabase
       .from('attendance')
       .select('id')
-      .eq('student_id', String(studentId))
-      .eq('lesson_date', today)
+      .eq('studentId', String(studentId))
+      .eq('lessonDate', today)
       .maybeSingle();
 
     if (attData) return null;
@@ -128,7 +128,7 @@ export const recordAttendance = async (studentId: string, targetDate?: string, a
     const { data: student } = await supabase
       .from('students')
       .select('xp, level, streak, "attendanceHistory"')
-      .eq('id', String(studentId))
+      .eq('studentId', String(studentId))
       .maybeSingle();
 
     if (!student) {
@@ -165,7 +165,7 @@ export const recordAttendance = async (studentId: string, targetDate?: string, a
       level: nextLevel,
       streak: newStreak,
       attendance_history: [...history, today]
-    }).eq('id', String(studentId));
+    }).eq('studentId', String(studentId));
 
     return { xpEarned: earnedXP, streak: newStreak, streakBonus: streakBonus > 0 };
   } catch (error) {
@@ -175,12 +175,12 @@ export const recordAttendance = async (studentId: string, targetDate?: string, a
 };
 
 export const getAttendanceForLesson = async (lessonDate: string) => {
-  const { data } = await supabase.from('attendance').select('student_id, joined_at, auto_joined').eq('lesson_date', lessonDate);
+  const { data } = await supabase.from('attendance').select('"studentId", "joinedAt", "autoJoined"').eq('lessonDate', lessonDate);
   return data || [];
 };
 
 export const getAllFeedback = async (): Promise<FeedbackEntry[]> => {
-  const { data } = await supabase.from('feedback').select('*').order('createdAt', { ascending: false });
+  const { data } = await supabase.from('feedback').select('*').order('"createdAt"', { ascending: false });
   return (data || []) as FeedbackEntry[];
 };
 
@@ -188,21 +188,21 @@ export const updateNickname = async (studentId: string, nickname: string) => {
   await supabase.from('students').update({
     nickname,
     display_name: nickname
-  }).eq('id', studentId);
+  }).eq('studentId', studentId);
 };
 
 export const getAgentData = async (id: string) => {
-  const { data, error } = await supabase.from('students').select('*').eq('id', id).single();
+  const { data, error } = await supabase.from('students').select('*').eq('studentId', id).single();
   if (error) return null;
   return data;
 };
 
 export const updateAgentXP = async (id: string, xp: number, level: number) => {
-  await supabase.from('students').update({ xp, level }).eq('id', id);
+  await supabase.from('students').update({ xp, level }).eq('studentId', id);
 };
 
 export const updateDisplayName = async (id: string, displayName: string) => {
-  await supabase.from('students').update({ display_name: displayName, nickname: displayName }).eq('id', id);
+  await supabase.from('students').update({ display_name: displayName, nickname: displayName }).eq('studentId', id);
 };
 
 export const saveAdminPassword = async (hashedPassword: string) => {

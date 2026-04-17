@@ -149,18 +149,18 @@ const recordAutoAttendance = async (studentId: string, lessonDate: string) => {
 
     await supabase.from('attendance').insert([{
       id,
-      student_id: studentId,
-      lesson_date: lessonDate,
-      joined_at: new Date().toISOString(),
-      auto_joined: true,
-      xp_earned: 100,
+      studentId: studentId,
+      lessonDate: lessonDate,
+      joinedAt: new Date().toISOString(),
+      autoJoined: true,
+      xpEarned: 100,
     }]);
 
     // Öğrencinin XP'sini güncelle
     const { data: studentData } = await supabase
       .from('students')
       .select('xp')
-      .eq('id', studentId)
+      .eq('studentId', studentId)
       .maybeSingle();
 
     if (studentData) {
@@ -169,7 +169,7 @@ const recordAutoAttendance = async (studentId: string, lessonDate: string) => {
         xp: newXp,
         level: Math.floor(newXp / 200) + 1,
         last_seen: new Date().toISOString(),
-      }).eq('id', studentId);
+      }).eq('studentId', studentId);
     }
   } catch (error) {
     console.error('Yoklama kaydı hatası:', error);

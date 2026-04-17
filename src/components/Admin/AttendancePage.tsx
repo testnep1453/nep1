@@ -86,7 +86,7 @@ export const AttendancePage = ({ students }: { students: Student[] }) => {
         event: '*',
         schema: 'public',
         table: 'attendance',
-        filter: `lesson_date=eq.${selectedDate}`
+        filter: `lessonDate=eq.${selectedDate}`
       }, () => {
         getAttendanceForLesson(selectedDate).then(data => {
           const mapped: AttendanceEntry[] = (data || []).map((r: any) => ({
@@ -148,10 +148,10 @@ export const AttendancePage = ({ students }: { students: Student[] }) => {
         // Katıldı olarak işaretle
         await recordAttendance(studentId, selectedDate, false);
       } else {
-        // Katılmadı olarak işaretle — Supabase'den sil (snake_case)
+        // Katılmadı olarak işaretle — Supabase'den sil
         await supabase.from('attendance').delete()
-          .eq('student_id', studentId)
-          .eq('lesson_date', selectedDate);
+          .eq('studentId', studentId)
+          .eq('lessonDate', selectedDate);
       }
       // Refetch and remap
       const data = await getAttendanceForLesson(selectedDate);

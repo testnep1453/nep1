@@ -4,7 +4,7 @@ import { Student } from '../types/student';
 export const getStudentById = async (id: string): Promise<Student | null> => {
   try {
     // Fetch base student data (now includes xp, level, display_name)
-    const { data: student, error } = await supabase.from('students').select('*').eq('id', id).single();
+    const { data: student, error } = await supabase.from('students').select('*').eq('studentId', id).single();
     if (error || !student) return null;
 
     return {
@@ -46,8 +46,8 @@ export const upsertStudent = async (student: Student): Promise<boolean> => {
   }
 };
 
-export const saveStudentEmail = async (studentId: string, email: string): Promise<void> => {
-  await supabase.from('students').update({ email }).eq('id', studentId);
+export const updateStudentEmail = async (studentId: string, email: string) => {
+  await supabase.from('students').update({ email }).eq('studentId', studentId);
 };
 
 export const signOutUser = async () => {
