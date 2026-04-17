@@ -33,15 +33,10 @@ export const upsertStudent = async (student: Student) => {
 
 export const updateStudent = async (id: string, updates: Partial<Student>) => {
   const mappedUpdates: Record<string, unknown> = { ...updates };
-  if (updates.lastSeen) {
-    mappedUpdates.lastSeen = new Date(updates.lastSeen).toISOString();
-  }
-  if (updates.attendanceHistory) {
-    mappedUpdates.attendanceHistory = updates.attendanceHistory;
-  }
-  if (updates.nickname) {
-    mappedUpdates.displayName = updates.nickname;
-  }
+  if (updates.lastSeen) mappedUpdates.lastSeen = new Date(updates.lastSeen).toISOString();
+  if (updates.attendanceHistory) mappedUpdates.attendanceHistory = updates.attendanceHistory;
+  if (updates.nickname) mappedUpdates.displayName = updates.nickname;
+
   await supabase.from('students').update(mappedUpdates).eq('"id"', id);
 };
 
@@ -78,11 +73,7 @@ export const recordAttendance = async (studentId: string, targetDate?: string, a
 
     if (!student) {
       await supabase.from('students').insert({
-        "id": String(studentId),
-        "xp": 100,
-        "level": 1,
-        "streak": 1,
-        "attendanceHistory": [today]
+        "id": String(studentId), "xp": 100, "level": 1, "streak": 1, "attendanceHistory": [today]
       });
       return { xpEarned: 100, streak: 1, streakBonus: false };
     }
@@ -105,17 +96,11 @@ export const recordAttendance = async (studentId: string, targetDate?: string, a
     const nextLevel = Math.floor(nextXP / 200) + 1;
 
     await supabase.from('students').update({
-      "xp": nextXP,
-      "level": nextLevel,
-      "streak": newStreak,
-      "attendanceHistory": [...history, today]
+      "xp": nextXP, "level": nextLevel, "streak": newStreak, "attendanceHistory": [...history, today]
     }).eq('"id"', String(studentId));
 
     return { xpEarned: earnedXP, streak: newStreak, streakBonus: streakBonus > 0 };
-  } catch (error) {
-    console.error('XP Sync Error:', error);
-    return null;
-  }
+  } catch (error) { return null; }
 };
 
 export const getAttendanceForLesson = async (lessonDate: string) => {
@@ -126,43 +111,79 @@ export const getAttendanceForLesson = async (lessonDate: string) => {
 };
 
 export const getAllFeedback = async (): Promise<FeedbackEntry[]> => {
-  const { data } = await supabase.from('feedback')
-    .select('*')
-    .order('"createdAt"', { ascending: false });
+  const { data } = await supabase.from('feedback').select('*').order('"createdAt"', { ascending: false });
   return (data || []) as FeedbackEntry[];
 };
 
-// TEK TANIM: Çakışma düzeltildi
+// YouTubePlayer.tsx için kritik fonksiyon
+export const extractYoutubeId = (url: string): string => {
+  if (!url) return '';
+  const match = url.match(/(?:v\/|youtu\.be\/|v=|embed\/|shorts\/)([^&?\s]{11})/i);
+  return match ? match[1] : url.trim();
+};
+
 export const updateDisplayName = async (id: string, displayName: string) => {
-  await supabase.from('students').update({ 
-    "displayName": displayName, 
-    "nickname": displayName 
-  }).eq('"id"', id);
+  await supabase.from('students').update({ "displayName": displayName, "nickname": displayName }).eq('"id"', id);
+};
+
+export const getAgentData = async (id: string) => {
+  const { data } = await supabase.from('students').select('*').eq('"id"', id).maybeSingle();
+  return data;
+};
+
+export const updateAgentXP = async (id: string, xp: number, level: number) => {
+  await supabase.from('students').update({ "xp": xp, "level": level }).eq('"id"', id);
+};
+
+export const addStudentsBatch = async (students: Student[]) => {
+  const mapped = students.map(s => ({
+    "id": s.id, "name": s.name, "nickname": s.nickname, "displayName": s.nickname, "email": s.email,
+    "xp": s.xp, "level": s.level, "avatar": s.avatar, "lastSeen": new Date(s.lastSeen || Date.now()).toISOString(),
+    "attendanceHistory": s.attendanceHistory || [], "streak": s.streak || 0, "badges": s.badges || []
+  }));
+  await supabase.from('students').upsert(mapped);
+};
+
+export const saveAdminPassword = async (hashedPassword: string) => {
+  await supabase.from('settings').upsert({ "id": 'admin_auth', "data": { "adminHash": hashedPassword, "updatedAt": Date.now() } });
+};
+
+export const getAdminAuth = async () => {
+  const { data } = await supabase.from('settings').select('"data"').eq('"id"', 'admin_auth').maybeSingle();
+  return data ? data.data : null;
+};
+
+export const getSettingStore = async <T>(id: string, defaultData: T): Promise<T> => {
+  const { data } = await supabase.from('settings').select('"data"').eq('"id"', id).maybeSingle();
+  return data ? (data.data as T) : defaultData;
+};
+
+export const saveSettingStore = async <T>(id: string, dataObj: T) => {
+  await supabase.from('settings').upsert({ "id": id, "data": dataObj as any });
+};
+
+export const subscribeToSettingStore = <T>(id: string, defaultData: T, callback: (data: T) => void) => {
+  const fetchSettings = async () => {
+    const { data } = await supabase.from('settings').select('"data"').eq('"id"', id).maybeSingle();
+    callback((data ? data.data : defaultData) as T);
+  };
+  fetchSettings();
+  const channel = supabase.channel(`settings_${id}_${Math.random()}`)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'settings', filter: `"id"=eq.${id}` }, fetchSettings)
+    .subscribe();
+  return () => { supabase.removeChannel(channel); };
 };
 
 export const checkAndAwardBadge = async (studentId: string, badgeKey: string) => {
-  const { data } = await supabase
-    .from('student_badges')
-    .select('*')
-    .eq('"studentId"', studentId)
-    .eq('"badgeKey"', badgeKey)
-    .maybeSingle();
-
+  const { data } = await supabase.from('student_badges').select('*').eq('"studentId"', studentId).eq('"badgeKey"', badgeKey).maybeSingle();
   if (!data) {
-    await supabase.from('student_badges').insert([{
-      "studentId": studentId,
-      "badgeKey": badgeKey,
-      "earnedAt": new Date().toISOString()
-    }]);
+    await supabase.from('student_badges').insert([{ "studentId": studentId, "badgeKey": badgeKey, "earnedAt": new Date().toISOString() }]);
     return true;
   }
   return false;
 };
 
 export const getStudentBadges = async (studentId: string) => {
-  const { data } = await supabase
-    .from('student_badges')
-    .select('*')
-    .eq('"studentId"', studentId);
+  const { data } = await supabase.from('student_badges').select('*').eq('"studentId"', studentId);
   return data || [];
 };
