@@ -46,14 +46,6 @@ export const upsertStudent = async (student: Student): Promise<boolean> => {
   }
 };
 
-export const saveStudentEmail = async (studentId: string, email: string): Promise<void> => {
-  await supabase.from('students').update({ studentEmail: email }).eq('studentId', studentId);
-};
-
-export const signOutUser = async () => {
-  await supabase.auth.signOut();
-};
-
 // ==========================================
 // OTP VE GÜVENLİK
 // ==========================================
