@@ -1,8 +1,6 @@
 import { supabase } from '../config/supabase';
 import { Student } from '../types/student';
 
-const ADMIN_STUDENT_ID = import.meta.env.VITE_ADMIN_ID || '';
-
 export const getStudentById = async (id: string): Promise<Student | null> => {
   try {
     // Fetch base student data (now includes xp, level, display_name)
@@ -54,25 +52,6 @@ export const saveStudentEmail = async (studentId: string, email: string): Promis
 
 export const signOutUser = async () => {
   await supabase.auth.signOut();
-};
-
-export const signInWithGoogle = async (): Promise<{ email: string; user: any } | null> => {
-  const { data, error } = await supabase.auth.signInWithOAuth({
-    provider: 'google',
-    options: { redirectTo: window.location.origin }
-  });
-  if (error) return null;
-  return { email: '', user: data };
-};
-
-export const findStudentByEmail = async (email: string): Promise<string | null> => {
-  try {
-    const { data, error } = await supabase.from('students').select('id').eq('email', email).maybeSingle();
-    if (error || !data) return null;
-    return data.id;
-  } catch {
-    return null;
-  }
 };
 
 // ==========================================
@@ -134,16 +113,6 @@ export const notifyAdminSuspiciousActivity = async (email: string, reason: strin
   }
 };
 
-export const deleteSecurityAlert = async (alertId: string) => {
-  const { error } = await supabase.from('security_alerts').delete().eq('id', alertId);
-  return !error;
-};
-
-// Çökmeyi engelleyen köprüler
+// Köprü: useAuth hala bu fonksiyonu içe aktarıyor
 export const signInAndMapStudent = async (studentId: string): Promise<any> => { return { uid: studentId }; };
-export const mapGoogleUserToStudent = async (user: any, studentId: string): Promise<void> => {};
-export const handleEmailLinkVerification = async () => { return null; };
-export const getStudentMapping = async (uid: string) => { return { studentId: uid, isAdmin: uid === ADMIN_STUDENT_ID }; };
-export const getCurrentUser = (): any => { return null; };
-export const sendVerificationLink = async () => { return false; };
 

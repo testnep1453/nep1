@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { supabase } from '../config/supabase';
 import { isLessonActive, isLessonEnded, getNextLesson } from '../config/lessonSchedule';
-import { getSettingStore, saveSettingStore } from '../services/supabaseService';
+import { getSettingStore, saveSettingStore, subscribeToSettingStore } from '../services/supabaseService';
 
 interface AutoZoomState {
   status: 'waiting' | 'redirecting' | 'in_lesson' | 'lesson_ended' | 'feedback';

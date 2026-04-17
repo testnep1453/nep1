@@ -184,40 +184,6 @@ export const getAllFeedback = async (): Promise<FeedbackEntry[]> => {
   return (data || []) as FeedbackEntry[];
 };
 
-export const updateNickname = async (studentId: string, nickname: string) => {
-  await supabase.from('students').update({ 
-    nickname, 
-    display_name: nickname 
-  }).eq('id', studentId);
-};
-
-export const getAgentData = async (id: string) => {
-  const { data, error } = await supabase.from('students').select('*').eq('id', id).single();
-  if (error) return null;
-  return data;
-};
-
-export const updateAgentXP = async (id: string, xp: number, level: number) => {
-  await supabase.from('students').update({ xp, level }).eq('id', id);
-};
-
-export const updateDisplayName = async (id: string, displayName: string) => {
-  await supabase.from('students').update({ display_name: displayName, nickname: displayName }).eq('id', id);
-};
-
-export const saveAdminPassword = async (hashedPassword: string) => {
-  await supabase.from('settings').upsert({ id: 'admin_auth', data: { admin_hash: hashedPassword, updatedAt: Date.now() } });
-};
-
-interface AdminAuthData {
-  admin_hash: string;
-}
-
-export const getAdminAuth = async (): Promise<AdminAuthData | null> => {
-  const { data } = await supabase.from('settings').select('data').eq('id', 'admin_auth').maybeSingle();
-  return data ? (data.data as AdminAuthData) : null;
-};
-
 export const getSettingStore = async <T>(id: string, defaultData: T): Promise<T> => {
   try {
     const { data, error } = await supabase.from('settings').select('data').eq('id', id).maybeSingle();

@@ -80,9 +80,3 @@ export const setManualLessonActive = async (active: boolean): Promise<void> => {
   await saveSystemConfig({ manual_lesson_active: active });
 };
 
-/**
- * 'settings' tablosundaki 'system_config' satırını dinlemek için abonelik.
- * supabaseService içindeki subscribeToSettingStore kullanılabilir.
- */
-export { subscribeToSettingStore as subscribeToSystemConfig } from './supabaseService';
-
