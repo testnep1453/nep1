@@ -108,6 +108,3 @@ export const useNotifications = (studentId: string | null) => {
 
   return { notifications, unreadCount, markAsRead, markAllRead };
 };
-
-// Re-export from notificationService for backward compatibility
-export { sendNotification, sendNotificationToAll } from '../services/notificationService';

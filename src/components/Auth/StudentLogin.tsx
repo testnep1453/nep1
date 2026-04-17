@@ -166,7 +166,7 @@ export const StudentLogin = ({
 
       <div className="w-full max-w-sm flex flex-col items-center justify-center z-10 relative">
         <img
-          src={`${import.meta.env.BASE_URL}nep-logo.png`}
+          src={`${(typeof import.meta.env !== 'undefined' && import.meta.env.BASE_URL) || '/'}nep-logo.png`}
           alt="NEP Logo"
           className="h-24 sm:h-28 object-contain mb-8 brightness-0 invert drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]"
         />

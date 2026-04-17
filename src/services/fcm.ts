@@ -9,6 +9,16 @@ import { supabase } from '../config/supabase';
  * - Token yenileme
  */
 
+// Güvenli env erişimi
+const getEnvVar = (key: string): string => {
+  try {
+    const value = import.meta.env[key];
+    return typeof value === 'string' ? value : '';
+  } catch {
+    return '';
+  }
+};
+
 /**
  * Bildirim izni iste ve FCM token al
  * Token'ı Firestore'a kaydeder
@@ -27,11 +37,11 @@ export const requestNotificationPermission = async (studentId?: string): Promise
     if (permission !== 'granted') return null;
 
     try {
-      const swUrl = import.meta.env.BASE_URL + 'firebase-messaging-sw.js';
+      const swUrl = getEnvVar('BASE_URL') + 'firebase-messaging-sw.js';
       const registration = await navigator.serviceWorker.register(swUrl);
 
       const token = await getToken(messaging, {
-        vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY,
+        vapidKey: getEnvVar('VITE_FIREBASE_VAPID_KEY'),
         serviceWorkerRegistration: registration
       });
 
@@ -54,10 +64,10 @@ export const requestNotificationPermission = async (studentId?: string): Promise
  */
 const saveTokenToDatabase = async (studentId: string, token: string) => {
   try {
-    // fcmTokens tablosu yerine doğrudan students tablosuna (snake_case)
+    // fcmTokens tablosu yerine doğrudan students tablosuna (camelCase)
     await supabase.from('students').update({
-      fcm_token: token,
-      last_seen: new Date().toISOString()
+      "fcmToken": token,
+      "lastSeen": new Date().toISOString()
     }).eq('id', studentId);
   } catch {
     // Token kaydedilemedi — sessiz

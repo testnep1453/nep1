@@ -69,10 +69,19 @@ export const AgentDashboard = ({
     });
   }, [autoZoomState.status, autoZoomState.lessonDate, student.id]);
 
+  // tabs'i erken tanımla - TDZ hatasını önlemek için useEffect'ten önce
+  const tabs: { id: AgentTab; label: string; icon: JSX.Element }[] = [
+    { id: 'home', label: 'Ana Sayfa', icon: <Icons.Home /> },
+    { id: 'levels', label: '🎖️ RÜTBELERİM', icon: <Icons.Trophy /> },
+    { id: 'archive', label: '📂 GİZLİ DOSYALAR', icon: <Icons.Film /> },
+    { id: 'activity', label: '🎮 AJAN ARENASI', icon: <Icons.Calendar /> },
+    { id: 'feedback', label: 'Sorgu Odası', icon: <span className="text-xl -mt-1 -ml-0.5">📋</span> },
+  ];
+
   const attendanceRecorded = useRef(false);
   useEffect(() => {
     if (student && !attendanceRecorded.current) {
-      if (autoZoomState.status === 'active' || autoZoomState.status === 'trailer' || trailer?.isActive) {
+      if (autoZoomState.status === 'in_lesson' || autoZoomState.status === 'redirecting' || trailer?.isActive) {
         attendanceRecorded.current = true;
         void recordAttendance(student.id);
       }
@@ -133,17 +142,8 @@ export const AgentDashboard = ({
     return () => window.removeEventListener('system-navigation', handleNavigation);
   }, [tabs]);
 
-  let tabs: { id: AgentTab; label: string; icon: JSX.Element }[] = [
-    { id: 'home', label: 'Ana Sayfa', icon: <Icons.Home /> },
-    { id: 'levels', label: '🎖️ RÜTBELERİM', icon: <Icons.Trophy /> },
-    { id: 'archive', label: '📂 GİZLİ DOSYALAR', icon: <Icons.Film /> },
-    { id: 'activity', label: '🎮 AJAN ARENASI', icon: <Icons.Calendar /> },
-    { id: 'feedback', label: 'Sorgu Odası', icon: <span className="text-xl -mt-1 -ml-0.5">📋</span> },
-  ];
-
-  if (!hasPendingSurvey) {
-    tabs = tabs.filter(t => t.id !== 'feedback');
-  }
+  // Anket yoksa feedback tab'ini kaldır
+  const visibleTabs = !hasPendingSurvey ? tabs.filter(t => t.id !== 'feedback') : tabs;
 
   const tabTitles: Record<AgentTab, string> = {
     home: 'AJAN KARARGAHI', operation: 'OPERASYON', levels: '🎖️ RÜTBELERİM',
@@ -178,7 +178,7 @@ export const AgentDashboard = ({
         <button onClick={() => setDrawerOpen(true)} className="text-[#00F0FF] p-2 flex items-center justify-center">
           <Icons.Target />
         </button>
-        <img src={`${import.meta.env.BASE_URL}nep-logo.png`} alt="NEP" className="h-6 brightness-0 invert opacity-70" />
+        <img src={`${(typeof import.meta.env !== 'undefined' && import.meta.env.BASE_URL) || '/'}nep-logo.png`} alt="NEP" className="h-6 brightness-0 invert opacity-70" />
         <button onClick={() => setMobileNavOpen(!mobileNavOpen)} className="text-white p-2 flex items-center justify-center relative">
           <Icons.Menu />
           {unreadCount > 0 && <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#FF4500] rounded-full" />}
@@ -189,7 +189,7 @@ export const AgentDashboard = ({
       {mobileNavOpen && (
         <div className="md:hidden fixed inset-0 top-[48px] bg-black/80 z-20" onClick={() => setMobileNavOpen(false)}>
           <div className="bg-[#0A1128] border-b border-[#00F0FF]/20 p-4 space-y-2">
-            {tabs.map(tab => (
+            {visibleTabs.map(tab => (
               <button key={tab.id} onClick={() => { setActiveTab(tab.id); setMobileNavOpen(false); }}
                 className={`flex items-center gap-3 w-full p-3 rounded-md transition-all ${
                   activeTab === tab.id ? 'bg-[#00F0FF]/10 text-[#00F0FF]' : 'text-gray-400 hover:bg-white/5'
@@ -205,7 +205,7 @@ export const AgentDashboard = ({
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex w-64 bg-[#0A1128] border-r border-[#00F0FF]/20 z-10 flex-col h-full flex-none">
         <div className="p-6 border-b border-[#00F0FF]/20 flex items-center justify-center">
-          <img src={`${import.meta.env.BASE_URL}nep-logo.png`} alt="NEP" className="h-10 brightness-0 invert opacity-80" />
+          <img src={`${(typeof import.meta.env !== 'undefined' && import.meta.env.BASE_URL) || '/'}nep-logo.png`} alt="NEP" className="h-10 brightness-0 invert opacity-80" />
         </div>
         <div className="p-4 border-b border-[#6358cc]/20">
           <button onClick={() => setDrawerOpen(true)}
@@ -215,7 +215,7 @@ export const AgentDashboard = ({
           </button>
         </div>
         <nav className="flex-1 p-4 space-y-2">
-          {tabs.map(tab => (
+          {visibleTabs.map(tab => (
             <button key={tab.id} onClick={() => setActiveTab(tab.id)}
               className={`flex items-center gap-3 w-full p-3 rounded-md transition-all ${
                 activeTab === tab.id

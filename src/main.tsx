@@ -4,8 +4,12 @@ import App from './App.tsx';
 import './index.css';
 import { initErrorLogger } from './services/errorLogger';
 
-// Global hata dinleyicisini başlat (Supabase Logger)
-initErrorLogger();
+// Global hata dinleyicisini başlat (Supabase Logger) - TDZ hatalarını önlemek için try-catch içinde
+try {
+  initErrorLogger();
+} catch (e) {
+  console.warn('Error logger başlatılamadı:', e);
+}
 
 // PWA (Uygulama Yükleme) için Service Worker'ı manuel olarak sisteme kaydediyoruz
 if ('serviceWorker' in navigator) {

@@ -13,8 +13,8 @@ interface AttendanceEntry {
 // Gizlenen sistem hesapları
 const HIDDEN_IDS = new Set(['1001', '1002', '1003']);
 
-const MONTHS_TR = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran',
-  'Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+const MONTHS_TR = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran',
+  'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
 
 function formatDate(dateStr: string): string {
   const [_y, m, d] = dateStr.split('-').map(Number);
@@ -80,21 +80,21 @@ export const AttendancePage = ({ students }: { students: Student[] }) => {
       })
       .catch(() => setLoading(false));
 
-      // Realtime subscription - use camelCase in filter
+    // Realtime subscription - use camelCase in filter
     const channel = supabase.channel(`public:attendance:${selectedDate}`)
-      .on('postgres_changes', { 
-          event: '*', 
-          schema: 'public', 
-          table: 'attendance', 
-          filter: `lessonDate=eq.${selectedDate}` 
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'attendance',
+        filter: `lesson_date=eq.${selectedDate}`
       }, () => {
         getAttendanceForLesson(selectedDate).then(data => {
-           const mapped: AttendanceEntry[] = (data || []).map((r: any) => ({
-             studentId: r.studentId,
-             joinedAt: new Date(r.joinedAt || Date.now()).getTime(),
-             autoJoined: r.autoJoined
-           }));
-           setRecords(mapped);
+          const mapped: AttendanceEntry[] = (data || []).map((r: any) => ({
+            studentId: r.studentId,
+            joinedAt: new Date(r.joinedAt || Date.now()).getTime(),
+            autoJoined: r.autoJoined
+          }));
+          setRecords(mapped);
         });
       })
       .subscribe();
@@ -148,10 +148,10 @@ export const AttendancePage = ({ students }: { students: Student[] }) => {
         // Katıldı olarak işaretle
         await recordAttendance(studentId, selectedDate, false);
       } else {
-        // Katılmadı olarak işaretle — Supabase'den sil
+        // Katılmadı olarak işaretle — Supabase'den sil (snake_case)
         await supabase.from('attendance').delete()
-          .eq('studentId', studentId)
-          .eq('lessonDate', selectedDate);
+          .eq('student_id', studentId)
+          .eq('lesson_date', selectedDate);
       }
       // Refetch and remap
       const data = await getAttendanceForLesson(selectedDate);
@@ -193,11 +193,10 @@ export const AttendancePage = ({ students }: { students: Student[] }) => {
           <div className="flex flex-wrap gap-2">
             {sortedLessons.map(l => (
               <button key={l.date} onClick={() => setSelectedDate(l.date)}
-                className={`px-3 py-1.5 rounded text-xs font-mono transition-all ${
-                  selectedDate === l.date
+                className={`px-3 py-1.5 rounded text-xs font-mono transition-all ${selectedDate === l.date
                     ? 'bg-[#39FF14]/20 text-[#39FF14] border border-[#39FF14]/50'
                     : 'bg-[#0A1128] text-gray-500 border border-gray-800 hover:border-gray-600'
-                }`}>
+                  }`}>
                 <span className="font-bold">Ders {l.lessonNo}</span>
                 <span className="ml-1.5 opacity-60">{formatDate(l.date)}</span>
               </button>
