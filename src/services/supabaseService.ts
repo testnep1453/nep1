@@ -50,11 +50,11 @@ export const updateStudent = async (id: string, updates: Partial<Student>) => {
     mappedUpdates.display_name = updates.nickname;
   }
 
-  await supabase.from('students').update(mappedUpdates).eq('studentId', id);
+  await supabase.from('students').update(mappedUpdates).eq('id', id);
 };
 
 export const removeStudent = async (id: string) => {
-  await supabase.from('students').delete().eq('studentId', id);
+  await supabase.from('students').delete().eq('id', id);
 };
 
 export const subscribeToTrailer = (callback: (trailer: Trailer | null) => void) => {
@@ -128,7 +128,7 @@ export const recordAttendance = async (studentId: string, targetDate?: string, a
     const { data: student } = await supabase
       .from('students')
       .select('xp, level, streak, "attendanceHistory"')
-      .eq('studentId', String(studentId))
+      .eq('id', String(studentId))
       .maybeSingle();
 
     if (!student) {
@@ -165,7 +165,7 @@ export const recordAttendance = async (studentId: string, targetDate?: string, a
       level: nextLevel,
       streak: newStreak,
       attendance_history: [...history, today]
-    }).eq('studentId', String(studentId));
+    }).eq('id', String(studentId));
 
     return { xpEarned: earnedXP, streak: newStreak, streakBonus: streakBonus > 0 };
   } catch (error) {
@@ -188,21 +188,21 @@ export const updateNickname = async (studentId: string, nickname: string) => {
   await supabase.from('students').update({
     nickname,
     display_name: nickname
-  }).eq('studentId', studentId);
+  }).eq('id', studentId);
 };
 
 export const getAgentData = async (id: string) => {
-  const { data, error } = await supabase.from('students').select('*').eq('studentId', id).single();
+  const { data, error } = await supabase.from('students').select('*').eq('id', id).single();
   if (error) return null;
   return data;
 };
 
 export const updateAgentXP = async (id: string, xp: number, level: number) => {
-  await supabase.from('students').update({ xp, level }).eq('studentId', id);
+  await supabase.from('students').update({ xp, level }).eq('id', id);
 };
 
 export const updateDisplayName = async (id: string, displayName: string) => {
-  await supabase.from('students').update({ display_name: displayName, nickname: displayName }).eq('studentId', id);
+  await supabase.from('students').update({ display_name: displayName, nickname: displayName }).eq('id', id);
 };
 
 export const saveAdminPassword = async (hashedPassword: string) => {
