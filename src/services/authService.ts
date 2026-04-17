@@ -116,3 +116,8 @@ export const saveStudentEmail = async (studentId: string, email: string) => {
 
   if (error) throw error;
 };
+
+export const signOutUser = async () => {
+  const { error } = await supabase.auth.signOut();
+  if (error) throw error;
+};
