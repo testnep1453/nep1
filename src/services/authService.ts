@@ -1,6 +1,9 @@
 import { supabase } from '../config/supabase';
 import { Student } from '../types/student';
 
+/**
+ * Öğrenci verisini ID ile çeker (camelCase ve tırnaklı)
+ */
 export const getStudentById = async (id: string): Promise<Student | null> => {
   try {
     const { data: student, error } = await supabase.from('students')
@@ -27,6 +30,9 @@ export const getStudentById = async (id: string): Promise<Student | null> => {
   }
 };
 
+/**
+ * Öğrenci verisini günceller veya oluşturur
+ */
 export const upsertStudent = async (student: Student): Promise<boolean> => {
   try {
     const { error } = await supabase.from('students').upsert({
@@ -49,6 +55,67 @@ export const upsertStudent = async (student: Student): Promise<boolean> => {
   }
 };
 
+/**
+ * useAuth için gerekli köprü fonksiyonu
+ */
+export const signInAndMapStudent = async (studentId: string): Promise<any> => { 
+  return { uid: studentId }; 
+};
+
+/**
+ * Öğrenci e-postasını kaydeder
+ */
+export const saveStudentEmail = async (studentId: string, email: string) => {
+  const { error } = await supabase
+    .from('students')
+    .update({ "email": email })
+    .eq('"id"', studentId);
+  if (error) throw error;
+};
+
+// ==========================================
+// OTP VE GÜVENLİK (Eksik olanlar eklendi)
+// ==========================================
+
+/**
+ * Giriş için OTP kodu gönderir
+ */
+export const sendVerificationCode = async (email: string): Promise<{ success: boolean; message?: string }> => {
+  try {
+    const { data: student, error: dbError } = await supabase
+      .from('students')
+      .select('"id"')
+      .eq('"email"', email)
+      .maybeSingle();
+
+    if (dbError || !student) {
+      return { success: false, message: 'Bu e-posta adresi sisteme kayıtlı değil!' };
+    }
+
+    const { error } = await supabase.auth.signInWithOtp({ email });
+    if (error) return { success: false, message: 'Kod gönderilirken bir sorun oluştu.' };
+
+    return { success: true };
+  } catch {
+    return { success: false, message: 'Beklenmeyen bir bağlantı hatası oluştu.' };
+  }
+};
+
+/**
+ * OTP kodunu doğrular
+ */
+export const verifyEmailCode = async (email: string, code: string): Promise<boolean> => {
+  try {
+    const { data, error } = await supabase.auth.verifyOtp({ email, token: code, type: 'email' });
+    return !error && !!data.user;
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Çıkış işlemi
+ */
 export const signOutUser = async () => {
   await supabase.auth.signOut();
 };
