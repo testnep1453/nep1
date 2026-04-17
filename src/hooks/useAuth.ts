@@ -4,6 +4,7 @@ import { getStudents } from '../services/clientStorageService';
 import { getStudentById, upsertStudent, signOutUser, saveStudentEmail, signInAndMapStudent } from '../services/authService';
 import { registerDevice } from '../services/deviceService';
 import { supabase } from '../config/supabase';
+import { loginRateLimiter, sanitizeInput, securityLog } from '../utils/security';
 
 const ADMIN_ID = '1002';
 
@@ -106,9 +107,25 @@ export const useAuth = () => {
   };
 
   const login = async (studentId: string): Promise<boolean> => {
+    // Rate limiting check
+    if (!loginRateLimiter.canProceed(studentId)) {
+      securityLog('RATE_LIMIT_EXCEEDED', { studentId });
+      alert('Çok fazla giriş denemesi. Lütfen 15 dakika sonra tekrar deneyin.');
+      return false;
+    }
+
+    // Validate and sanitize input
+    const cleanId = sanitizeInput(studentId);
+    if (!/^\d{3,4}$/.test(cleanId)) {
+      securityLog('INVALID_LOGIN_ATTEMPT', { attemptedId: cleanId });
+      return false;
+    }
+
     setLoading(true);
-    setGoogleError(''); // Hataları temizle
-    if (studentId === ADMIN_ID) {
+    setGoogleError('');
+    loginRateLimiter.recordAttempt(cleanId);
+
+    if (cleanId === ADMIN_ID) {
       const jsonStudent = getStudents().find(s => s.id === ADMIN_ID);
       if (jsonStudent) {
         setPendingStudent({

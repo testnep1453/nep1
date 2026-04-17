@@ -5,6 +5,7 @@
 import { useState } from 'react';
 import { supabase } from '../../config/supabase';
 import { FIXED_LESSON_SCHEDULE } from '../../config/lessonSchedule';
+import { sanitizeInput } from '../../utils/security';
 
 interface FeedbackFormProps {
   lessonDate: string;
@@ -49,12 +50,15 @@ export const FeedbackForm = ({ lessonDate, studentId: _studentId, onClose }: Fee
     if (rating === 0) return;
     setSubmitting(true);
     try {
+      // Sanitize comment to prevent XSS
+      const cleanComment = sanitizeInput(comment);
+      
       await supabase.from('feedback').insert([{
         studentId: 'anonymous',
         lessonDate,
         lessonNo,
         rating,
-        comment: comment.trim(),
+        comment: cleanComment,
         createdAt: Date.now(),
         anonymous: true,
       }]);
