@@ -13,12 +13,12 @@ export const registerDevice = async (studentId: string): Promise<{ isNew: boolea
 
     const existingDevice = devices.find(d => d.fingerprint === device.fingerprint);
     if (existingDevice) {
-      const updatedDevices = devices.map(d => d.fingerprint === device.fingerprint ? { ...d, last_seen: Date.now() } : d);
+      const updatedDevices = devices.map(d => d.fingerprint === device.fingerprint ? { ...d, lastSeen: Date.now() } : d);
       await supabase.from('students').update({ devices: updatedDevices }).eq('id', studentId);
       return { isNew: false, needsApproval: false };
     }
 
-    const newDevice: DeviceRecord = { ...device, last_seen: Date.now(), approved: !primaryFingerprint };
+    const newDevice: DeviceRecord = { ...device, lastSeen: Date.now(), approved: !primaryFingerprint };
 
     if (!primaryFingerprint) {
       await supabase.from('students').update({ devices: [...devices, newDevice], primary_device_fingerprint: device.fingerprint }).eq('id', studentId);
