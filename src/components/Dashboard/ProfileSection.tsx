@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Student } from '../../types/student';
 import { Shield, Lock, Zap } from 'lucide-react';
-import { updateNickname } from '../../services/supabaseService';
+import { updateStudent } from '../../services/supabaseService';
 import confetti from 'canvas-confetti';
 
 interface ProfileSectionProps {
@@ -90,7 +90,7 @@ export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps
     }
     setSaving(true);
     try {
-      await updateNickname(student.id, nicknameValue.trim());
+      await updateStudent(student.id, { nickname: nicknameValue.trim() });
       student.nickname = nicknameValue.trim();
       setIsEditingNickname(false);
     } catch {

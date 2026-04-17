@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Student } from '../../types/student';
 import { Dices } from 'lucide-react';
-import { updateStudentInFirebase } from '../../services/supabaseService';
+import { updateStudent } from '../../services/supabaseService';
 
 interface ProfileModalProps {
   student: Student;
@@ -42,7 +42,7 @@ export const ProfileModal = ({ student, isOpen, onClose, theme, onThemeChange }:
     setSaving(true);
     try {
       const newAvatar = `${selectedStyle}:${selectedSeed}`;
-      await updateStudentInFirebase(student.id, {
+      await updateStudent(student.id, {
         avatar: newAvatar,
         nickname: nickname.trim()
       });
