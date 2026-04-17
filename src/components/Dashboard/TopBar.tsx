@@ -86,16 +86,6 @@ export const TopBar = ({ student, unreadCount, theme = 'dark', onThemeChange, on
               <span className="hidden sm:inline tracking-wider">YÜKLE</span>
             </button>
 
-            {isAdmin && onOpenSettings && (
-              <button
-                onClick={onOpenSettings}
-                className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-[#39FF14] border border-white/10 transition-all group ml-1 sm:ml-2"
-                title="Sistem Ayarları"
-              >
-                <Settings size={18} className="group-hover:rotate-90 transition-transform duration-500" />
-              </button>
-            )}
-
             {showManualPrompt && (
               <div className="absolute top-12 right-0 w-80 bg-[#0A1128] border border-[#00F0FF]/40 p-4 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] z-50">
                 <p className="text-[#00F0FF] font-bold text-sm mb-2 border-b border-[#00F0FF]/20 pb-1">
@@ -132,6 +122,16 @@ export const TopBar = ({ student, unreadCount, theme = 'dark', onThemeChange, on
               </div>
             )}
           </div>
+        )}
+
+        {isAdmin && onOpenSettings && (
+          <button
+            onClick={onOpenSettings}
+            className="flex items-center justify-center w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-[#39FF14] border border-white/10 transition-all group ml-1 sm:ml-2"
+            title="Sistem Ayarları"
+          >
+            <Settings size={18} className="group-hover:rotate-90 transition-transform duration-500" />
+          </button>
         )}
 
         {['1001', '1003'].includes(student.id) && (
