@@ -175,7 +175,7 @@ export const recordAttendance = async (studentId: string, targetDate?: string, a
 };
 
 export const getAttendanceForLesson = async (lessonDate: string) => {
-  const { data } = await supabase.from('attendance').select('"studentId", "joinedAt", "autoJoined"').eq('lessonDate', lessonDate);
+  const { data } = await supabase.from('attendance').select('"studentId", "lessonDate", "joinedAt", "autoJoined", "xpEarned"').eq('lessonDate', lessonDate);
   return data || [];
 };
 

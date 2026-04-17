@@ -86,7 +86,7 @@ export const AttendancePage = ({ students }: { students: Student[] }) => {
         event: '*',
         schema: 'public',
         table: 'attendance',
-        filter: `lessonDate=eq.${selectedDate}`
+        filter: `"lessonDate"=eq.${selectedDate}`
       }, () => {
         getAttendanceForLesson(selectedDate).then(data => {
           const mapped: AttendanceEntry[] = (data || []).map((r: any) => ({
