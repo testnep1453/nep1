@@ -4,11 +4,11 @@ import { supabase } from '../config/supabase';
 const NOTIFICATIONS_ENABLED = true;
 
 export interface AppNotification {
-  user_id: string;
+  userId: string;
   title: string;
   body: string;
-  is_read: boolean;
-  created_at: number | string; // Numeric timestamp in state, but string in DB
+  isRead: boolean;
+  createdAt: number | string; // Numeric timestamp in state, but string in DB
 }
 
 export const useNotifications = (studentId: string | null) => {
@@ -21,23 +21,23 @@ export const useNotifications = (studentId: string | null) => {
       // Fetch from notifications table (User-specific OR 'all')
       const { data, error } = await supabase
         .from('notifications')
-        .select('user_id, title, body, is_read, created_at')
-        .or(`user_id.eq.${studentId},user_id.eq.all`)
-        .order('created_at', { ascending: false })
+        .select('"userId", "title", "body", "isRead", "createdAt"')
+        .or(`"userId".eq.${studentId},"userId".eq.all`)
+        .order('"createdAt"', { ascending: false })
         .limit(50);
 
       if (error) throw error;
 
-      const appNotifs: AppNotification[] = (data || []).map(n => ({
-        user_id: n.user_id,
+      const appNotifs: AppNotification[] = (data || []).map((n: any) => ({
+        userId: n.userId,
         title: n.title || 'Bildirim',
         body: n.body || '',
-        is_read: n.is_read || false,
-        created_at: n.created_at // Keeping as raw for comparison, UI will format
+        isRead: n.isRead || false,
+        createdAt: n.createdAt // Keeping as raw for comparison, UI will format
       }));
 
       setNotifications(appNotifs);
-      setUnreadCount(appNotifs.filter(n => !n.is_read).length);
+      setUnreadCount(appNotifs.filter(n => !n.isRead).length);
     } catch (err) {
       console.error('Error fetching notifications:', err);
     }
@@ -76,16 +76,16 @@ export const useNotifications = (studentId: string | null) => {
     try {
       // Since 'id' is removed, we match by content and timestamp
       await supabase.from('notifications')
-        .update({ is_read: true })
+        .update({ "isRead": true })
         .match({ 
-          user_id: notif.user_id, 
-          created_at: notif.created_at,
-          title: notif.title
+          "userId": notif.userId, 
+          "createdAt": notif.createdAt,
+          "title": notif.title
         });
         
       // Local update for speed
       setNotifications(prev => prev.map(n => 
-        (n.created_at === notif.created_at && n.user_id === notif.user_id) ? { ...n, is_read: true } : n
+        (n.createdAt === notif.createdAt && n.userId === notif.userId) ? { ...n, isRead: true } : n
       ));
       setUnreadCount(prev => Math.max(0, prev - 1));
     } catch (err) {
@@ -97,9 +97,9 @@ export const useNotifications = (studentId: string | null) => {
     if (!studentId) return;
     try {
       await supabase.from('notifications')
-        .update({ is_read: true })
-        .or(`user_id.eq.${studentId},user_id.eq.all`)
-        .eq('is_read', false);
+        .update({ "isRead": true })
+        .or(`"userId".eq.${studentId},"userId".eq.all`)
+        .eq('"isRead"', false);
       fetchStats();
     } catch (err) {
       console.error('Error marking all as read:', err);

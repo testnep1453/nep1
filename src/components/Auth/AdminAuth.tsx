@@ -29,14 +29,14 @@ export const AdminAuth: React.FC<Props> = ({ onSuccess, onCancel }) => {
       // 1. Veritabanından admin_auth kaydını çek
       const { data: authRecord, error: fetchError } = await supabase
         .from('settings')
-        .select('data')
-        .eq('id', 'admin_auth')
+        .select('"data"')
+        .eq('"id"', 'admin_auth')
         .maybeSingle();
 
       if (fetchError) throw fetchError;
 
-      const authData = authRecord?.data as any;
-      const currentHash = authData?.admin_hash;
+      const authData = (authRecord as any)?.data;
+      const currentHash = authData?.adminHash;
 
       // 2. İlk Kurulum (Auto-Setup): Hash yoksa şifreyi kaydet ve içeri al
       if (!currentHash || currentHash.trim() === '') {
@@ -46,11 +46,11 @@ export const AdminAuth: React.FC<Props> = ({ onSuccess, onCancel }) => {
         const { error: upsertError } = await supabase
           .from('settings')
           .upsert({ 
-            id: 'admin_auth', 
-            data: { 
-              admin_hash: hashedPassword, 
-              updatedAt: Date.now(),
-              setupDate: new Date().toISOString()
+            "id": 'admin_auth', 
+            "data": { 
+              "adminHash": hashedPassword, 
+              "updatedAt": Date.now(),
+              "setupDate": new Date().toISOString()
             } 
           });
 

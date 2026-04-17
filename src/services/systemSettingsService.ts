@@ -41,12 +41,12 @@ export const getSystemConfig = async (): Promise<SystemConfig> => {
   try {
     const { data, error } = await supabase
       .from('settings')
-      .select('data')
-      .eq('id', SYSTEM_CONFIG_ID)
+      .select('"data"')
+      .eq('"id"', SYSTEM_CONFIG_ID)
       .maybeSingle();
 
     if (error || !data) return FALLBACK_CONFIG;
-    return { ...FALLBACK_CONFIG, ...(data.data as Partial<SystemConfig>) };
+    return { ...FALLBACK_CONFIG, ...((data as any).data as Partial<SystemConfig>) };
   } catch {
     return FALLBACK_CONFIG;
   }
@@ -64,7 +64,7 @@ export const saveSystemConfig = async (config: Partial<SystemConfig>): Promise<v
     
     await supabase
       .from('settings')
-      .upsert({ id: SYSTEM_CONFIG_ID, data: merged }, { onConflict: 'id' });
+      .upsert({ "id": SYSTEM_CONFIG_ID, "data": merged }, { onConflict: '"id"' });
   } catch (error) {
     console.error("Sistem konfigürasyonu kaydedilirken hata:", error);
     throw error;

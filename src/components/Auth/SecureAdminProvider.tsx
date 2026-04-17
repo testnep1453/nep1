@@ -49,8 +49,8 @@ export const SecureAdminProvider: React.FC<SecureAdminProviderProps> = ({ childr
       // Server-side verification via admin_users table
       const { data: adminRecord, error: adminError } = await supabase
         .from('admin_users')
-        .select('is_super_admin')
-        .eq('user_id', session.user.id)
+        .select('"isSuperAdmin"')
+        .eq('"userId"', session.user.id)
         .maybeSingle();
 
       if (adminError) {

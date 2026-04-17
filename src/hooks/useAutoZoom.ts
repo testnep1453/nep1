@@ -137,39 +137,35 @@ export const useAutoZoom = (
 
 const recordAutoAttendance = async (studentId: string, lessonDate: string) => {
   try {
-    const id = `${lessonDate}_${studentId}`;
-
-    // Zaten kayıtlıysa tekrar yazma
     const { data: existing } = await supabase
       .from('attendance')
-      .select('id')
-      .eq('id', id)
+      .select('"studentId"')
+      .eq('"studentId"', studentId)
+      .eq('"lessonDate"', lessonDate)
       .maybeSingle();
     if (existing) return;
 
     await supabase.from('attendance').insert([{
-      id,
-      student_id: studentId,
-      lesson_date: lessonDate,
-      joined_at: new Date().toISOString(),
-      auto_joined: true,
-      xp_earned: 100,
+      "studentId": studentId,
+      "lessonDate": lessonDate,
+      "joinedAt": new Date().toISOString(),
+      "autoJoined": true,
+      "xpEarned": 100,
     }]);
 
-    // Öğrencinin XP'sini güncelle
     const { data: studentData } = await supabase
       .from('students')
-      .select('xp')
-      .eq('id', studentId)
+      .select('"xp"')
+      .eq('"id"', studentId)
       .maybeSingle();
 
     if (studentData) {
       const newXp = (studentData.xp || 0) + 100;
       await supabase.from('students').update({
-        xp: newXp,
-        level: Math.floor(newXp / 200) + 1,
-        last_seen: new Date().toISOString(),
-      }).eq('id', studentId);
+        "xp": newXp,
+        "level": Math.floor(newXp / 200) + 1,
+        "lastSeen": new Date().toISOString(),
+      }).eq('"id"', studentId);
     }
   } catch (error) {
     console.error('Yoklama kaydı hatası:', error);
