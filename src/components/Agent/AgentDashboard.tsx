@@ -178,7 +178,7 @@ export const AgentDashboard = ({
         <button onClick={() => setDrawerOpen(true)} className="text-[#00F0FF] p-2 flex items-center justify-center">
           <Icons.Target />
         </button>
-        <img src={`${(typeof import.meta.env !== 'undefined' && import.meta.env.BASE_URL) || '/'}nep-logo.png`} alt="NEP" className="h-6 brightness-0 invert opacity-70" />
+        <img src={`${import.meta.env.BASE_URL || '/'}nep-logo.png`} alt="NEP" className="h-6 brightness-0 invert opacity-70" />
         <button onClick={() => setMobileNavOpen(!mobileNavOpen)} className="text-white p-2 flex items-center justify-center relative">
           <Icons.Menu />
           {unreadCount > 0 && <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#FF4500] rounded-full" />}
@@ -205,7 +205,7 @@ export const AgentDashboard = ({
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex w-64 bg-[#0A1128] border-r border-[#00F0FF]/20 z-10 flex-col h-full flex-none">
         <div className="p-6 border-b border-[#00F0FF]/20 flex items-center justify-center">
-          <img src={`${(typeof import.meta.env !== 'undefined' && import.meta.env.BASE_URL) || '/'}nep-logo.png`} alt="NEP" className="h-10 brightness-0 invert opacity-80" />
+          <img src={`${import.meta.env.BASE_URL || '/'}nep-logo.png`} alt="NEP" className="h-10 brightness-0 invert opacity-80" />
         </div>
         <div className="p-4 border-b border-[#6358cc]/20">
           <button onClick={() => setDrawerOpen(true)}

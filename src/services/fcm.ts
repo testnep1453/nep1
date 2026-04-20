@@ -13,10 +13,10 @@ export const requestNotificationPermission = async (studentId?: string): Promise
   if (permission !== 'granted') return null;
 
   try {
-    const baseUrl = (typeof import.meta.env !== 'undefined' && import.meta.env.BASE_URL) || '/nep1/';
+    const baseUrl = import.meta.env.BASE_URL || '/nep1/';
     const registration = await navigator.serviceWorker.register(baseUrl + 'firebase-messaging-sw.js');
     const token = await getToken(messaging, {
-      vapidKey: (typeof import.meta.env !== 'undefined' && import.meta.env.VITE_FIREBASE_VAPID_KEY) || '',
+      vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY || '',
       serviceWorkerRegistration: registration
     });
 

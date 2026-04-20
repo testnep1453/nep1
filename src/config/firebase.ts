@@ -6,13 +6,13 @@ import { getAuth } from 'firebase/auth';
 
 // Güvenli env erişimi - Vite build ile uyumlu statik property'ler
 const firebaseConfig = {
-  apiKey: (typeof import.meta.env !== 'undefined' && import.meta.env.VITE_FIREBASE_API_KEY) || '',
-  authDomain: (typeof import.meta.env !== 'undefined' && import.meta.env.VITE_FIREBASE_AUTH_DOMAIN) || '',
-  projectId: (typeof import.meta.env !== 'undefined' && import.meta.env.VITE_FIREBASE_PROJECT_ID) || '',
-  storageBucket: (typeof import.meta.env !== 'undefined' && import.meta.env.VITE_FIREBASE_STORAGE_BUCKET) || '',
-  messagingSenderId: (typeof import.meta.env !== 'undefined' && import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID) || '',
-  appId: (typeof import.meta.env !== 'undefined' && import.meta.env.VITE_FIREBASE_APP_ID) || '',
-  databaseURL: (typeof import.meta.env !== 'undefined' && import.meta.env.VITE_FIREBASE_DATABASE_URL) || ''
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || '',
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || '',
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || '',
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || '',
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || '',
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL || ''
 };
 
 export const app = initializeApp(firebaseConfig);

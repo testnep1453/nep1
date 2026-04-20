@@ -361,7 +361,7 @@ export const UnifiedDashboard = ({
         <button onClick={() => setDrawerOpen(true)} className="text-[#00F0FF] p-2 min-w-[44px] min-h-[44px] flex items-center justify-center">
           <Icons.Target />
         </button>
-        <img src={`${(typeof import.meta.env !== 'undefined' && import.meta.env.BASE_URL) || '/'}nep-logo.png`} alt="NEP" className="h-7 brightness-0 invert opacity-70" />
+        <img src={`${import.meta.env.BASE_URL || '/'}nep-logo.png`} alt="NEP" className="h-7 brightness-0 invert opacity-70" />
         <button onClick={() => setMobileNavOpen(!mobileNavOpen)} className="text-white p-2 min-w-[44px] min-h-[44px] flex items-center justify-center">
           <Icons.Menu />
         </button>
@@ -387,7 +387,7 @@ export const UnifiedDashboard = ({
 
       <aside className="hidden md:flex w-64 bg-[#0A1128] border-r border-[#39FF14]/20 z-10 flex-col h-screen sticky top-0">
         <div className="p-6 border-b border-[#39FF14]/20 flex items-center justify-center">
-          <img src={`${(typeof import.meta.env !== 'undefined' && import.meta.env.BASE_URL) || '/'}nep-logo.png`} alt="NEP Logo" className="h-10 brightness-0 invert opacity-80" />
+          <img src={`${import.meta.env.BASE_URL || '/'}nep-logo.png`} alt="NEP Logo" className="h-10 brightness-0 invert opacity-80" />
         </div>
         <div className="p-4 border-b border-[#6358cc]/20">
           <button onClick={() => setDrawerOpen(true)} className={`flex items-center gap-3 w-full p-3 rounded-md transition-all ${isAdmin ? 'bg-[#39FF14]/10 text-[#39FF14] border border-[#39FF14]/30' : 'bg-[#6358cc]/20 text-[#00F0FF] border border-[#00F0FF]/50 shadow-[0_0_20px_rgba(0,240,255,0.3)] animate-pulse-glow'}`}>
