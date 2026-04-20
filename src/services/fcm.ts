@@ -13,10 +13,9 @@ export const requestNotificationPermission = async (studentId?: string): Promise
   if (permission !== 'granted') return null;
 
   try {
-    const baseUrl = import.meta.env.BASE_URL || '/nep1/';
-    const registration = await navigator.serviceWorker.register(baseUrl + 'firebase-messaging-sw.js');
+    const registration = await navigator.serviceWorker.register('/nep1/firebase-messaging-sw.js');
     const token = await getToken(messaging, {
-      vapidKey: import.meta.env.VITE_FIREBASE_VAPID_KEY || '',
+      vapidKey: "BPemRYEHe6c4Uj7E_oZeIpBHygovvUAVj033y54l64C9txHC5eVyfO-I3_XEhYKmEApVMZ-yLjXH1H-Xx6KNuWY",
       serviceWorkerRegistration: registration
     });
 

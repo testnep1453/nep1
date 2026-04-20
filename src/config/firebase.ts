@@ -4,15 +4,15 @@ import { getDatabase } from 'firebase/database';
 import { getMessaging, isSupported } from 'firebase/messaging';
 import { getAuth } from 'firebase/auth';
 
-// Güvenli env erişimi - Vite build ile uyumlu statik property'ler
+// KESİN ÇÖZÜM: Vite build/environment variable sorunlarını baypas etmek için Firebase konfigürasyonu sabitlendi.
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || '',
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || '',
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || '',
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || '',
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '',
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || '',
-  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL || ''
+  apiKey: "AIzaSyAr3M6KK_5ydX4iZRhfbuDfrcU0Y99n2Mg",
+  authDomain: "neptest-41372.firebaseapp.com",
+  projectId: "neptest-41372",
+  storageBucket: "neptest-41372.firebasestorage.app",
+  messagingSenderId: "271454077661",
+  appId: "1:271454077661:web:7413795fc8e5b765df5134",
+  databaseURL: "https://neptest-41372-default-rtdb.firebaseio.com/"
 };
 
 export const app = initializeApp(firebaseConfig);
