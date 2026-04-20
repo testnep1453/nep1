@@ -24,8 +24,8 @@ export const requestNotificationPermission = async (studentId?: string): Promise
 
     if (token && studentId) {
       await supabase.from('students').update({
-        "fcm_token": token,
-        "last_seen": new Date().toISOString()
+        "fcmToken": token,
+        "lastSeen": new Date().toISOString()
       }).eq('id', studentId);
     }
     return token;

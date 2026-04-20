@@ -37,12 +37,11 @@ export const AttendancePage = ({ students }: { students: Student[] }) => {
 
   useEffect(() => {
     if (!selectedDate) return;
-    setLoading(true);
-    getAttendanceForLesson(selectedDate).then(data => {
+    getAttendanceForLesson(selectedDate).then((data: any) => {
       setRecords((data || []).map((r: any) => ({
-        studentId: r.student_id,
-        joinedAt: new Date(r.joined_at || Date.now()).getTime(),
-        autoJoined: r.auto_joined
+        studentId: r.studentId,
+        joinedAt: new Date(r.joinedAt || Date.now()).getTime(),
+        autoJoined: r.autoJoined
       })));
       setLoading(false);
     }).catch(() => setLoading(false));
@@ -50,13 +49,13 @@ export const AttendancePage = ({ students }: { students: Student[] }) => {
     const channel = supabase.channel(`public:attendance:${selectedDate}`)
       .on('postgres_changes', {
         event: '*', schema: 'public', table: 'attendance',
-        filter: `lesson_date=eq.${selectedDate}`
+        filter: `"lessonDate"=eq.${selectedDate}`
       }, () => {
-        getAttendanceForLesson(selectedDate).then(data => {
+        getAttendanceForLesson(selectedDate).then((data: any) => {
           setRecords((data || []).map((r: any) => ({
-            studentId: r.student_id,
-            joinedAt: new Date(r.joined_at || Date.now()).getTime(),
-            autoJoined: r.auto_joined
+            studentId: r.studentId,
+            joinedAt: new Date(r.joinedAt || Date.now()).getTime(),
+            autoJoined: r.autoJoined
           })));
         });
       }).subscribe();
@@ -72,14 +71,14 @@ export const AttendancePage = ({ students }: { students: Student[] }) => {
         await recordAttendance(studentId, selectedDate, false);
       } else {
         await supabase.from('attendance').delete()
-          .eq('student_id', studentId)
-          .eq('lesson_date', selectedDate);
+          .eq('"studentId"', studentId)
+          .eq('"lessonDate"', selectedDate);
       }
-      const data = await getAttendanceForLesson(selectedDate);
+      const data: any = await getAttendanceForLesson(selectedDate);
       setRecords((data || []).map((r: any) => ({
-        studentId: r.student_id,
-        joinedAt: new Date(r.joined_at || Date.now()).getTime(),
-        autoJoined: r.auto_joined
+        studentId: r.studentId,
+        joinedAt: new Date(r.joinedAt || Date.now()).getTime(),
+        autoJoined: r.autoJoined
       })));
     } catch (e) {
       alert('Hata: ' + (e as Error).message);

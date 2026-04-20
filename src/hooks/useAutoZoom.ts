@@ -139,18 +139,18 @@ const recordAutoAttendance = async (studentId: string, lessonDate: string) => {
   try {
     const { data: existing } = await supabase
       .from('attendance')
-      .select('student_id')
-      .eq('student_id', studentId)
-      .eq('lesson_date', lessonDate)
+      .select('"studentId"')
+      .eq('"studentId"', studentId)
+      .eq('"lessonDate"', lessonDate)
       .maybeSingle();
     if (existing) return;
 
     await supabase.from('attendance').insert([{
-      student_id: studentId,
-      lesson_date: lessonDate,
-      joined_at: new Date().toISOString(),
-      auto_joined: true,
-      xp_earned: 100,
+      "studentId": studentId,
+      "lessonDate": lessonDate,
+      "joinedAt": new Date().toISOString(),
+      "autoJoined": true,
+      "xpEarned": 100,
     }]);
 
     const { data: studentData } = await supabase
@@ -164,7 +164,7 @@ const recordAutoAttendance = async (studentId: string, lessonDate: string) => {
       await supabase.from('students').update({
         "xp": newXp,
         "level": Math.floor(newXp / 200) + 1,
-        "last_seen": new Date().toISOString(),
+        "lastSeen": new Date().toISOString(),
       }).eq('id', studentId);
     }
   } catch (error) {

@@ -5,7 +5,7 @@ import { getDeviceInfo } from './crypto';
 export const registerDevice = async (studentId: string): Promise<{ isNew: boolean; needsApproval: boolean }> => {
   const device = getDeviceInfo();
   try {
-    const { data: student } = await supabase.from('students').select('devices, primaryDeviceFingerprint').eq('id', studentId).single();
+    const { data: student } = await supabase.from('students').select('devices, "primaryDeviceFingerprint"').eq('id', studentId).single();
     if (!student) return { isNew: false, needsApproval: false };
 
     const devices: DeviceRecord[] = (student as any).devices || [];
@@ -35,7 +35,7 @@ export const registerDevice = async (studentId: string): Promise<{ isNew: boolea
 export const isCurrentDeviceApproved = async (studentId: string): Promise<boolean> => {
   const device = getDeviceInfo();
   try {
-    const { data: student } = await supabase.from('students').select('devices, primaryDeviceFingerprint').eq('id', studentId).single();
+    const { data: student } = await supabase.from('students').select('devices, "primaryDeviceFingerprint"').eq('id', studentId).single();
     if (!student) return false;
     
     if ((student as any).primaryDeviceFingerprint === device.fingerprint) return true;
