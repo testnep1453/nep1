@@ -2,10 +2,7 @@ import { getMessagingInstance } from '../config/firebase';
 import { getToken, onMessage, MessagePayload } from 'firebase/messaging';
 import { supabase } from '../config/supabase';
 
-const getEnvVar = (key: string): string => {
-  const value = import.meta.env[key];
-  return typeof value === 'string' ? value : '';
-};
+// Deleted getEnvVar usages for Vite compatibility
 
 export const requestNotificationPermission = async (studentId?: string): Promise<string | null> => {
   if (!('Notification' in window) || !('serviceWorker' in navigator)) return null;
@@ -16,9 +13,10 @@ export const requestNotificationPermission = async (studentId?: string): Promise
   if (permission !== 'granted') return null;
 
   try {
-    const registration = await navigator.serviceWorker.register(getEnvVar('BASE_URL') + 'firebase-messaging-sw.js');
+    const baseUrl = (typeof import.meta.env !== 'undefined' && import.meta.env.BASE_URL) || '/nep1/';
+    const registration = await navigator.serviceWorker.register(baseUrl + 'firebase-messaging-sw.js');
     const token = await getToken(messaging, {
-      vapidKey: getEnvVar('VITE_FIREBASE_VAPID_KEY'),
+      vapidKey: (typeof import.meta.env !== 'undefined' && import.meta.env.VITE_FIREBASE_VAPID_KEY) || '',
       serviceWorkerRegistration: registration
     });
 
