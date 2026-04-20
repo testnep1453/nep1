@@ -21,19 +21,19 @@ export const useNotifications = (studentId: string | null) => {
       // Fetch from notifications table (User-specific OR 'all')
       const { data, error } = await supabase
         .from('notifications')
-        .select('"userId", "title", "body", "isRead", "createdAt"')
-        .or(`"userId".eq.${studentId},"userId".eq.all`)
-        .order('"createdAt"', { ascending: false })
+        .select('user_id, title, body, is_read, created_at')
+        .or(`user_id.eq.${studentId},user_id.eq.all`)
+        .order('created_at', { ascending: false })
         .limit(50);
 
       if (error) throw error;
 
       const appNotifs: AppNotification[] = (data || []).map((n: any) => ({
-        userId: n.userId,
+        userId: n.user_id,
         title: n.title || 'Bildirim',
         body: n.body || '',
-        isRead: n.isRead || false,
-        createdAt: n.createdAt // Keeping as raw for comparison, UI will format
+        isRead: n.is_read || false,
+        createdAt: n.created_at // Keeping as raw for comparison, UI will format
       }));
 
       setNotifications(appNotifs);
@@ -76,11 +76,11 @@ export const useNotifications = (studentId: string | null) => {
     try {
       // Since 'id' is removed, we match by content and timestamp
       await supabase.from('notifications')
-        .update({ "isRead": true })
+        .update({ is_read: true })
         .match({ 
-          "userId": notif.userId, 
-          "createdAt": notif.createdAt,
-          "title": notif.title
+          user_id: notif.userId, 
+          created_at: notif.createdAt,
+          title: notif.title
         });
         
       // Local update for speed
@@ -97,9 +97,9 @@ export const useNotifications = (studentId: string | null) => {
     if (!studentId) return;
     try {
       await supabase.from('notifications')
-        .update({ "isRead": true })
-        .or(`"userId".eq.${studentId},"userId".eq.all`)
-        .eq('"isRead"', false);
+        .update({ is_read: true })
+        .or(`user_id.eq.${studentId},user_id.eq.all`)
+        .eq('is_read', false);
       fetchStats();
     } catch (err) {
       console.error('Error marking all as read:', err);

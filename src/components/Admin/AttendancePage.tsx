@@ -72,8 +72,8 @@ export const AttendancePage = ({ students }: { students: Student[] }) => {
         await recordAttendance(studentId, selectedDate, false);
       } else {
         await supabase.from('attendance').delete()
-          .eq('"studentId"', studentId)
-          .eq('"lessonDate"', selectedDate);
+          .eq('studentId', studentId)
+          .eq('lessonDate', selectedDate);
       }
       const data = await getAttendanceForLesson(selectedDate);
       setRecords((data || []).map((r: any) => ({

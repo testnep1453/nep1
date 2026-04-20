@@ -29,8 +29,8 @@ export const AdminAuth: React.FC<Props> = ({ onSuccess, onCancel }) => {
       // 1. Veritabanından admin_auth kaydını çek
       const { data: authRecord, error: fetchError } = await supabase
         .from('settings')
-        .select('"data"')
-        .eq('"id"', 'admin_auth')
+        .select('data')
+        .eq('id', 'admin_auth')
         .maybeSingle();
 
       if (fetchError) throw fetchError;

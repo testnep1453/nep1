@@ -155,8 +155,8 @@ const recordAutoAttendance = async (studentId: string, lessonDate: string) => {
 
     const { data: studentData } = await supabase
       .from('students')
-      .select('"xp"')
-      .eq('"id"', studentId)
+      .select('xp')
+      .eq('id', studentId)
       .maybeSingle();
 
     if (studentData) {
@@ -165,7 +165,7 @@ const recordAutoAttendance = async (studentId: string, lessonDate: string) => {
         "xp": newXp,
         "level": Math.floor(newXp / 200) + 1,
         "lastSeen": new Date().toISOString(),
-      }).eq('"id"', studentId);
+      }).eq('id', studentId);
     }
   } catch (error) {
     console.error('Yoklama kaydı hatası:', error);

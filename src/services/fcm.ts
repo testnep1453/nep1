@@ -26,7 +26,7 @@ export const requestNotificationPermission = async (studentId?: string): Promise
       await supabase.from('students').update({
         "fcmToken": token,
         "lastSeen": new Date().toISOString()
-      }).eq('"id"', studentId);
+      }).eq('id', studentId);
     }
     return token;
   } catch { return null; }

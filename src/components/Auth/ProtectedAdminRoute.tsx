@@ -31,8 +31,8 @@ export const ProtectedAdminRoute: React.FC<ProtectedAdminRouteProps> = ({ childr
         // This prevents localStorage spoofing attacks
         const { data: adminRecord, error } = await supabase
           .from('admin_users')
-          .select('"isSuperAdmin"')
-          .eq('"userId"', session.user.id)
+          .select('isSuperAdmin')
+          .eq('userId', session.user.id)
           .maybeSingle();
 
         if (error) {
@@ -116,7 +116,7 @@ export const useAdminStatus = () => {
         const { data } = await supabase
           .from('admin_users')
           .select('*')
-          .eq('"userId"', session.user.id)
+          .eq('userId', session.user.id)
           .maybeSingle();
 
         const studentId = localStorage.getItem('studentId');

@@ -41,8 +41,8 @@ export const getSystemConfig = async (): Promise<SystemConfig> => {
   try {
     const { data, error } = await supabase
       .from('settings')
-      .select('"data"')
-      .eq('"id"', SYSTEM_CONFIG_ID)
+      .select('data')
+      .eq('id', SYSTEM_CONFIG_ID)
       .maybeSingle();
 
     if (error || !data) return FALLBACK_CONFIG;

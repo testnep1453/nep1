@@ -3,7 +3,7 @@ import { Student } from '../types/student';
 
 export const getStudentById = async (id: string): Promise<Student | null> => {
   try {
-    const { data: student, error } = await supabase.from('students').select('*').eq('"id"', id).single();
+    const { data: student, error } = await supabase.from('students').select('*').eq('id', id).single();
     if (error || !student) return null;
     return {
       id: student.id, name: student.name, nickname: student.displayName || student.nickname || 'AJAN',
@@ -29,13 +29,13 @@ export const upsertStudent = async (student: Student): Promise<boolean> => {
 export const signInAndMapStudent = async (studentId: string): Promise<any> => { return { uid: studentId }; };
 
 export const saveStudentEmail = async (studentId: string, email: string) => {
-  const { error } = await supabase.from('students').update({ "email": email }).eq('"id"', studentId);
+  const { error } = await supabase.from('students').update({ "email": email }).eq('id', studentId);
   if (error) throw error;
 };
 
 export const sendVerificationCode = async (email: string): Promise<{ success: boolean; message?: string }> => {
   try {
-    const { data: student } = await supabase.from('students').select('"id"').eq('"email"', email).maybeSingle();
+    const { data: student } = await supabase.from('students').select('id').eq('email', email).maybeSingle();
     if (!student) return { success: false, message: 'Bu e-posta adresi sisteme kayıtlı değil!' };
     const { error } = await supabase.auth.signInWithOtp({ email });
     if (error) return { success: false, message: 'Kod gönderilirken bir sorun oluştu.' };
