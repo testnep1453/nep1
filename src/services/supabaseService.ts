@@ -7,26 +7,26 @@ export const fetchStudents = async (): Promise<Student[]> => {
   if (!data || data.length === 0) return seedData as Student[];
   return data.map(s => ({
     ...s,
-    nickname: s.displayName || s.nickname || 'AJAN',
-    lastSeen: s.lastSeen ? new Date(s.lastSeen).getTime() : Date.now(),
-    attendanceHistory: s.attendanceHistory || []
+    nickname: s.display_name || s.displayName || s.nickname || 'AJAN',
+    lastSeen: s.last_seen ? new Date(s.last_seen).getTime() : (s.lastSeen ? new Date(s.lastSeen).getTime() : Date.now()),
+    attendanceHistory: s.attendance_history || s.attendanceHistory || []
   })) as Student[];
 };
 
 export const upsertStudent = async (student: Student) => {
   await supabase.from('students').upsert({
-    "id": student.id, "name": student.name, "nickname": student.nickname, "displayName": student.nickname,
+    "id": student.id, "name": student.name, "nickname": student.nickname, "display_name": student.nickname,
     "email": student.email, "xp": student.xp, "level": student.level, "avatar": student.avatar,
-    "lastSeen": new Date(student.lastSeen || Date.now()).toISOString(),
-    "attendanceHistory": student.attendanceHistory || [], "streak": student.streak || 0, "badges": student.badges || []
+    "last_seen": new Date(student.lastSeen || Date.now()).toISOString(),
+    "attendance_history": student.attendanceHistory || [], "streak": student.streak || 0, "badges": student.badges || []
   });
 };
 
 export const updateStudent = async (id: string, updates: Partial<Student>) => {
   const mappedUpdates: Record<string, unknown> = { ...updates };
-  if (updates.lastSeen) mappedUpdates.lastSeen = new Date(updates.lastSeen).toISOString();
-  if (updates.attendanceHistory) mappedUpdates.attendanceHistory = updates.attendanceHistory;
-  if (updates.nickname) mappedUpdates.displayName = updates.nickname;
+  if (updates.lastSeen) { mappedUpdates.last_seen = new Date(updates.lastSeen).toISOString(); delete mappedUpdates.lastSeen; }
+  if (updates.attendanceHistory) { mappedUpdates.attendance_history = updates.attendanceHistory; delete mappedUpdates.attendanceHistory; }
+  if (updates.nickname) { mappedUpdates.display_name = updates.nickname; delete mappedUpdates.displayName; }
   await supabase.from('students').update(mappedUpdates).eq('id', id);
 };
 
@@ -64,28 +64,28 @@ export const recordAttendance = async (studentId: string, targetDate?: string, a
   const now = new Date();
   const today = targetDate || now.toISOString().slice(0, 10);
   try {
-    const { data: attData } = await supabase.from('attendance').select('studentId').eq('studentId', String(studentId)).eq('lessonDate', today).maybeSingle();
+    const { data: attData } = await supabase.from('attendance').select('student_id').eq('student_id', String(studentId)).eq('lesson_date', today).maybeSingle();
     if (attData) return null;
-    await supabase.from('attendance').insert({ "studentId": String(studentId), "lessonDate": today, "joinedAt": new Date().toISOString(), "autoJoined": autoJoined, "xpEarned": 100 });
-    const { data: student } = await supabase.from('students').select('xp, level, streak, attendanceHistory').eq('id', String(studentId)).maybeSingle();
+    await supabase.from('attendance').insert({ "student_id": String(studentId), "lesson_date": today, "joined_at": new Date().toISOString(), "auto_joined": autoJoined, "xp_earned": 100 });
+    const { data: student } = await supabase.from('students').select('xp, level, streak, attendance_history').eq('id', String(studentId)).maybeSingle();
     if (!student) {
-      await supabase.from('students').insert({ "id": String(studentId), "xp": 100, "level": 1, "streak": 1, "attendanceHistory": [today] });
+      await supabase.from('students').insert({ "id": String(studentId), "xp": 100, "level": 1, "streak": 1, "attendance_history": [today] });
       return { xpEarned: 100, streak: 1, streakBonus: false };
     }
     const currentXP = student.xp || 0;
-    const history = student.attendanceHistory || [];
+    const history = student.attendance_history || student.attendanceHistory || [];
     const yesterday = new Date(now); yesterday.setDate(yesterday.getDate() - 1);
     const yesterdayStr = yesterday.toISOString().slice(0, 10);
     let newStreak = 1; let streakBonus = 0;
     if (history.includes(yesterdayStr)) { newStreak = (student.streak || 0) + 1; if (newStreak >= 2) streakBonus = 50; }
     const earnedXP = 100 + streakBonus; const nextXP = currentXP + earnedXP; const nextLevel = Math.floor(nextXP / 200) + 1;
-    await supabase.from('students').update({ "xp": nextXP, "level": nextLevel, "streak": newStreak, "attendanceHistory": [...history, today] }).eq('id', String(studentId));
+    await supabase.from('students').update({ "xp": nextXP, "level": nextLevel, "streak": newStreak, "attendance_history": [...history, today] }).eq('id', String(studentId));
     return { xpEarned: earnedXP, streak: newStreak, streakBonus: streakBonus > 0 };
   } catch (error) { return null; }
 };
 
 export const getAttendanceForLesson = async (lessonDate: string) => {
-  const { data } = await supabase.from('attendance').select('studentId, lessonDate, joinedAt, autoJoined, xpEarned').eq('lessonDate', lessonDate);
+  const { data } = await supabase.from('attendance').select('student_id, lesson_date, joined_at, auto_joined, xp_earned').eq('lesson_date', lessonDate);
   return data || [];
 };
 
@@ -95,7 +95,7 @@ export const getAllFeedback = async (): Promise<FeedbackEntry[]> => {
 };
 
 export const updateDisplayName = async (id: string, displayName: string) => {
-  await supabase.from('students').update({ "displayName": displayName, "nickname": displayName }).eq('id', id);
+  await supabase.from('students').update({ "display_name": displayName, "nickname": displayName }).eq('id', id);
 };
 
 export const getAgentData = async (id: string) => {
@@ -109,9 +109,9 @@ export const updateAgentXP = async (id: string, xp: number, level: number) => {
 
 export const addStudentsBatch = async (students: Student[]) => {
   const mapped = students.map(s => ({
-    "id": s.id, "name": s.name, "nickname": s.nickname, "displayName": s.nickname, "email": s.email,
-    "xp": s.xp, "level": s.level, "avatar": s.avatar, "lastSeen": new Date(s.lastSeen || Date.now()).toISOString(),
-    "attendanceHistory": s.attendanceHistory || [], "streak": s.streak || 0, "badges": s.badges || []
+    "id": s.id, "name": s.name, "nickname": s.nickname, "display_name": s.nickname, "email": s.email,
+    "xp": s.xp, "level": s.level, "avatar": s.avatar, "last_seen": new Date(s.lastSeen || Date.now()).toISOString(),
+    "attendance_history": s.attendanceHistory || [], "streak": s.streak || 0, "badges": s.badges || []
   }));
   await supabase.from('students').upsert(mapped);
 };

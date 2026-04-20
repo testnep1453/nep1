@@ -40,9 +40,9 @@ export const AttendancePage = ({ students }: { students: Student[] }) => {
     setLoading(true);
     getAttendanceForLesson(selectedDate).then(data => {
       setRecords((data || []).map((r: any) => ({
-        studentId: r.studentId,
-        joinedAt: new Date(r.joinedAt || Date.now()).getTime(),
-        autoJoined: r.autoJoined
+        studentId: r.student_id,
+        joinedAt: new Date(r.joined_at || Date.now()).getTime(),
+        autoJoined: r.auto_joined
       })));
       setLoading(false);
     }).catch(() => setLoading(false));
@@ -50,13 +50,13 @@ export const AttendancePage = ({ students }: { students: Student[] }) => {
     const channel = supabase.channel(`public:attendance:${selectedDate}`)
       .on('postgres_changes', {
         event: '*', schema: 'public', table: 'attendance',
-        filter: `"lessonDate"=eq.${selectedDate}`
+        filter: `lesson_date=eq.${selectedDate}`
       }, () => {
         getAttendanceForLesson(selectedDate).then(data => {
           setRecords((data || []).map((r: any) => ({
-            studentId: r.studentId,
-            joinedAt: new Date(r.joinedAt || Date.now()).getTime(),
-            autoJoined: r.autoJoined
+            studentId: r.student_id,
+            joinedAt: new Date(r.joined_at || Date.now()).getTime(),
+            autoJoined: r.auto_joined
           })));
         });
       }).subscribe();
@@ -72,14 +72,14 @@ export const AttendancePage = ({ students }: { students: Student[] }) => {
         await recordAttendance(studentId, selectedDate, false);
       } else {
         await supabase.from('attendance').delete()
-          .eq('studentId', studentId)
-          .eq('lessonDate', selectedDate);
+          .eq('student_id', studentId)
+          .eq('lesson_date', selectedDate);
       }
       const data = await getAttendanceForLesson(selectedDate);
       setRecords((data || []).map((r: any) => ({
-        studentId: r.studentId,
-        joinedAt: new Date(r.joinedAt || Date.now()).getTime(),
-        autoJoined: r.autoJoined
+        studentId: r.student_id,
+        joinedAt: new Date(r.joined_at || Date.now()).getTime(),
+        autoJoined: r.auto_joined
       })));
     } catch (e) {
       alert('Hata: ' + (e as Error).message);
