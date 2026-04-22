@@ -1,187 +1,92 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from './hooks/useAuth';
-import { usePresence } from './hooks/usePresence';
-import { useSessionTimeout, SESSION_TIMEOUT } from './hooks/useSessionTimeout';
-import { StudentLogin } from './components/Auth/StudentLogin';
-import { AdminAuth } from './components/Auth/AdminAuth';
-import { EmailVerificationModal } from './components/Auth/EmailVerificationModal';
-import { UnifiedDashboard } from './components/Dashboard/UnifiedDashboard';
-import { AgentDashboard } from './components/Agent/AgentDashboard';
-import { ErrorBoundary } from './components/ErrorBoundary';
-import { getNextLesson } from './config/lessonSchedule';
-import { requestNotificationPermission, setupNotificationListener } from './services/fcm';
-import { recordLoginAndCheckSuspicious } from './services/loginAlertService';
-import { useCommandListener } from './hooks/useCommandListener';
-import { TrailerOverlay } from './components/CommandOverlay';
-import { extractYoutubeId } from './services/supabaseService';
-import { resetSystemCommands } from './services/commandService';
+import StudentLogin from './components/Auth/StudentLogin';
+import AdminLogin from './components/Admin/AdminLogin';
+import AdminResetPassword from './components/Admin/AdminResetPassword';
+import UnifiedDashboard from './components/Dashboard/UnifiedDashboard';
+import AdminDashboard from './components/Admin/AdminDashboard';
+import LoginTransitionOverlay from './components/Transitions/LoginTransitionOverlay';
+import ErrorBoundary from './components/ErrorBoundary';
 
-type AppStatus = 'loggingIn' | 'adminAuth' | 'dashboard';
-
-function App() {
-  const {
-    student,
-    loading,
-    login,
-    loginWithGoogle,
-    logout,
-    pendingStudent,
-    needsAdminAuth,
-    confirmAdminAuth,
-    cancelAdminAuth,
-    needsEmailVerification,
-    confirmEmailVerification,
-    cancelEmailVerification,
+export default function App() {
+  const { 
+    student, 
+    loading, 
+    needsAdminAuth, 
+    logout 
   } = useAuth();
 
-  const { lastCommand, setLastCommand } = useCommandListener();
-  const onlineCount = usePresence(student?.id || null);
-  const [appStatus, setAppStatus] = useState<AppStatus>('loggingIn');
+  const [showTransition, setShowTransition] = useState(false);
+  const [isAppReady, setIsAppReady] = useState(false);
 
-  const lesson = getNextLesson();
-  const isAdmin = student?.id === '1002';
-
-  useSessionTimeout({
-    timeoutMs: isAdmin ? SESSION_TIMEOUT.ADMIN : SESSION_TIMEOUT.AGENT,
-    onTimeout: () => {
-      logout();
-      window.location.reload();
-    },
-    enabled: !!student,
-  });
+  // 1. ŞİFRE SIFIRLAMA KONTROLÜ (Catch-all)
+  // URL'de ?admin_reset=1 varsa diğer her şeyi pas geçip sıfırlama ekranını açar
+  const isAdminReset = new URLSearchParams(window.location.search).get('admin_reset') === '1';
 
   useEffect(() => {
-    if (student) {
-      requestNotificationPermission(student.id);
-      setupNotificationListener((payload) => {
-        void payload;
-      });
-      recordLoginAndCheckSuspicious(student.id);
+    // Giriş başarılı olduğunda 5 saniyelik roket geçişini tetikle
+    if (student && !isAppReady) {
+      setShowTransition(true);
+      const timer = setTimeout(() => {
+        setShowTransition(false);
+        setIsAppReady(true);
+      }, 5000); // AGENTS.md kuralı: 5 saniye geçiş süresi
+      return () => clearTimeout(timer);
     }
-
-    if (student && appStatus === 'loggingIn') {
-      setAppStatus('dashboard');
-    } else if (!student && !needsAdminAuth && appStatus === 'dashboard') {
-      setAppStatus('loggingIn');
+    
+    // Çıkış yapıldığında hazır durumunu sıfırla
+    if (!student) {
+      setIsAppReady(false);
     }
-  }, [student]);
+  }, [student, isAppReady]);
 
-  useEffect(() => {
-    if (lastCommand?.command === 'START_LESSON') {
-      // Dispatch a custom event for redirection to 'yoklama' (attendance)
-      // This is a robust way to change tab without react-router or lifting state up
-      window.dispatchEvent(new CustomEvent('system-navigation', { detail: { target: 'yoklama' } }));
-    }
-  }, [lastCommand]);
+  // Şifre sıfırlama modundaysak sadece o bileşeni döndür
+  if (isAdminReset) {
+    return (
+      <ErrorBoundary>
+        <AdminResetPassword />
+      </ErrorBoundary>
+    );
+  }
 
-  useEffect(() => {
-    if (needsAdminAuth) {
-      setAppStatus('adminAuth');
-    }
-  }, [needsAdminAuth]);
-
-  // 1. Ekran: Yükleniyor
+  // Yükleme ekranı
   if (loading) {
     return (
-      <div className="min-h-[100dvh] bg-[#050505] flex items-center justify-center">
-        <div className="text-white text-2xl font-bold animate-pulse tracking-widest">YÜKLENİYOR...</div>
+      <div className="min-h-screen bg-[#050505] flex items-center justify-center font-mono">
+        <div className="text-[#00F0FF] animate-pulse tracking-[0.3em] uppercase">
+          Veri_Yükleniyor...
+        </div>
       </div>
     );
   }
 
-  // 2. Ekran: E-posta Doğrulama
-  if (needsEmailVerification && pendingStudent) {
-    return (
-      <EmailVerificationModal
-        studentId={pendingStudent.id}
-        onVerified={(email) => {
-          confirmEmailVerification(email);
-        }}
-        onCancel={cancelEmailVerification}
-      />
-    );
+  // Giriş sonrası geçiş animasyonu (Roket Fırlatma)
+  if (showTransition) {
+    return <LoginTransitionOverlay studentName={student?.name || 'Ajan'} />;
   }
 
-  // 3. Ekran: Admin Giriş ve Onay
-  if (appStatus === 'adminAuth' && pendingStudent) {
-    return (
-      <AdminAuth
-        adminName={pendingStudent.name}
-        onSuccess={() => {
-          confirmAdminAuth();
-          setAppStatus('dashboard');
-        }}
-        onCancel={() => {
-          cancelAdminAuth();
-          setAppStatus('loggingIn');
-        }}
-      />
-    );
-  }
-
-  // 4. Ekran: Normal Öğrenci Giriş
-  if (appStatus === 'loggingIn' && !student) {
-    return (
-      <StudentLogin
-        onLogin={login}
-        onLoginWithGoogle={loginWithGoogle}
-      />
-    );
-  }
-
-  // 5. Ekran: Ana Paneller (Admin veya Ajan)
-  let content = null;
-  if (appStatus === 'dashboard' && student) {
-    const handleLogout = () => {
-      logout();
-      window.location.reload();
-    };
-
-    if (isAdmin) {
-      content = (
-        <UnifiedDashboard
-          student={student}
-          onLogout={handleLogout}
-          lesson={lesson}
-          onlineCount={onlineCount}
-        />
-      );
-    } else {
-      content = (
-        <AgentDashboard
-          student={student}
-          onLogout={handleLogout}
-          lesson={lesson}
-        />
-      );
-    }
-  }
-
+  // ANA AKIŞ
   return (
-    <>
-      {content}
-      {lastCommand?.command === 'START_TRAILER' && lastCommand.payload?.video_url && (
-        <TrailerOverlay 
-          videoId={extractYoutubeId(lastCommand.payload.video_url)} 
-          onClose={async () => {
-             await resetSystemCommands();
-             setLastCommand({ ...lastCommand, command: 'RESET' });
-          }}
-          isResettable={isAdmin}
-        />
-      )}
-    </>
-  );
-}
-
-// Hata Yakalayıcı (ErrorBoundary) ile Sarmalama
-function AppWithBoundary() {
-  return (
-    <ErrorBoundary fallbackMessage="Bir hata oluştu. Lütfen sayfayı yeniden yükleyin.">
-      <App />
+    <ErrorBoundary>
+      <div className="min-h-screen bg-[#050505] text-white">
+        {!student ? (
+          // OTURUM AÇIK DEĞİLSE
+          needsAdminAuth ? (
+            <AdminLogin />
+          ) : (
+            <StudentLogin />
+          )
+        ) : (
+          // OTURUM AÇIKSA
+          isAppReady && (
+            student.id === '1002' ? (
+              <AdminDashboard admin={student} onLogout={logout} />
+            ) : (
+              <UnifiedDashboard student={student} onLogout={logout} />
+            )
+          )
+        )}
+      </div>
     </ErrorBoundary>
   );
 }
-
-export default AppWithBoundary;
-
