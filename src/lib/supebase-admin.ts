@@ -1,37 +1,63 @@
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '../config/supabase';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseServiceKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
-
-if (!supabaseUrl || !supabaseServiceKey) {
-  throw new Error('Missing Supabase environment variables');
+export interface AuthResult {
+  error?: string;
+  user?: any;
 }
 
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false
-  }
-});
-
-export async function forcePasswordChange(userId: string): Promise<void> {
-  const { error } = await supabaseAdmin
-    .from('admin_users')
-    .update({ must_change_password: true })
-    .eq('id', userId);
-
+export async function signInAdmin(email: string, password: string): Promise<AuthResult> {
+  const { data, error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) {
-    throw new Error(`Failed to force password change: ${error.message}`);
+    return { error: error.message.includes('Invalid') ? 'Hatalı e-posta veya şifre.' : error.message };
   }
+  return { user: data.user };
 }
 
-export async function clearPasswordChangeFlag(userId: string): Promise<void> {
-  const { error } = await supabaseAdmin
-    .from('admin_users')
-    .update({ must_change_password: false })
-    .eq('id', userId);
+export async function requestOtp() {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Oturum bulunamadı." };
+  
+  const otp = String(Math.floor(100000 + Math.random() * 900000));
+  const { error } = await supabase.functions.invoke('send-otp', { 
+    body: { email: user.email, otp } 
+  });
+  
+  if (error) return { error: 'Doğrulama kodu gönderilemedi.' };
+  return { success: true };
+}
+
+export async function verifyOtp(code: string): Promise<boolean> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+
+  const { data, error } = await supabase.rpc('verify_admin_otp', { 
+    p_user_id: user.id, 
+    p_code: code 
+  });
 
   if (error) {
-    throw new Error(`Failed to clear password change flag: ${error.message}`);
+    console.error("OTP Doğrulama Hatası:", error);
+    return false;
   }
+  
+  return !!data;
+}
+
+export async function isTotpEnabled(): Promise<boolean> {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return false;
+
+  const { data, error } = await supabase
+    .from('admin_users')
+    .select('totp_enabled')
+    .eq('user_id', user.id)
+    .single();
+
+  if (error) return false;
+  return !!data?.totp_enabled;
+}
+
+export async function signOutAdmin() {
+  await supabase.auth.signOut();
+  window.location.href = '/';
 }
