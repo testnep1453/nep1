@@ -1,6 +1,7 @@
-import { useState, useEffect } from 'react';
-import { ShieldAlert, Radio, Trash2, Plus, Users, Globe, Settings2 } from 'lucide-react';
-import { getSystemConfig, saveSystemConfig, SystemConfig } from '../../services/systemSettingsService';
+import React, { useState, useEffect } from 'react';
+import { ShieldAlert, Radio, Trash2, Plus, Users, Globe, Settings2, Shield, RefreshCw, Gamepad2 } from 'lucide-react';
+import { getSystemConfig, saveSystemConfig, launchKahoot, SystemConfig } from '../../services/systemSettingsService';
+import { resetTotp } from '../../services/adminSessionService';
 
 export const SystemConfigManager = () => {
   const [config, setConfig] = useState<SystemConfig | null>(null);
@@ -8,6 +9,8 @@ export const SystemConfigManager = () => {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [kahootLaunching, setKahootLaunching] = useState(false);
+  const [totpResetting, setTotpResetting] = useState(false);
 
   useEffect(() => {
     getSystemConfig().then(cfg => {
@@ -26,13 +29,45 @@ export const SystemConfigManager = () => {
     setTimeout(() => setSaved(false), 3000);
   };
 
+  const handleKahootLaunch = async () => {
+    if (!config?.kahoot_link?.trim()) {
+      alert('Önce bir Kahoot linki girin.');
+      return;
+    }
+    const confirmed = window.confirm(
+      'Bu, sistemde o anda açık olan TÜM ajanların tarayıcısında yeni sekmede Kahoot\'u açacak. Onaylıyor musun?'
+    );
+    if (!confirmed) return;
+    setKahootLaunching(true);
+    try {
+      await launchKahoot(config.kahoot_link);
+      alert('Kahoot başlatıldı! Tüm online ajanların ekranında açılıyor.');
+    } catch (err) {
+      alert(`Hata: ${err instanceof Error ? err.message : String(err)}`);
+    } finally {
+      setKahootLaunching(false);
+    }
+  };
+
+  const handleResetTotp = async () => {
+    const confirmed = window.confirm(
+      'Cihazını kaybettin mi?\n\nTOTP sıfırlanacak. Bir sonraki girişte yeniden QR kodu ile kurulum yapman gerekecek.'
+    );
+    if (!confirmed) return;
+    setTotpResetting(true);
+    const ok = await resetTotp();
+    setTotpResetting(false);
+    if (ok) {
+      alert('TOTP başarıyla sıfırlandı. Bir sonraki girişte yeni cihazla kurulum yapabilirsin.');
+    } else {
+      alert('TOTP sıfırlama başarısız. Lütfen tekrar dene.');
+    }
+  };
+
   const addTargetedUser = () => {
     if (!targetedUserId || !config) return;
-    
-    // Defensive check for maintenance_mode and targeted_users
     const currentMaintenance = config.maintenance_mode || { global: false, targeted_users: [] };
     const currentUsers = currentMaintenance.targeted_users || [];
-
     if (!currentUsers.includes(targetedUserId)) {
       setConfig({
         ...config,
@@ -47,10 +82,8 @@ export const SystemConfigManager = () => {
 
   const removeTargetedUser = (id: string) => {
     if (!config) return;
-    
     const currentMaintenance = config.maintenance_mode || { global: false, targeted_users: [] };
     const currentUsers = currentMaintenance.targeted_users || [];
-
     setConfig({
       ...config,
       maintenance_mode: {
@@ -71,16 +104,16 @@ export const SystemConfigManager = () => {
 
   if (!config) return null;
 
-  // Defensive data extraction with fallbacks
   const maintenanceMode = config.maintenance_mode || { global: false, targeted_users: [] };
   const targetedUsers = maintenanceMode.targeted_users || [];
   const broadcastMessage = config.broadcast_message || '';
   const zoomLink = config.zoom_link || '';
   const lessonTitle = config.lesson_title || '';
+  const kahootLink = config.kahoot_link || '';
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-10">
-      
+
       {/* 1. OPERASYONEL AYARLAR */}
       <section className="bg-black/40 border border-white/5 rounded-2xl overflow-hidden shadow-2xl">
         <div className="px-6 py-4 bg-white/5 border-b border-white/5 flex items-center justify-between">
@@ -89,9 +122,10 @@ export const SystemConfigManager = () => {
           </h3>
           <span className="text-[10px] bg-[#39FF14]/10 text-[#39FF14] px-2 py-0.5 rounded border border-[#39FF14]/20 uppercase font-bold">Aktif Değerler</span>
         </div>
-        
+
         <div className="p-6 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Zoom + Kahoot + Ders Başlığı */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div>
               <label htmlFor="config-zoom-link" className="text-[10px] uppercase tracking-widest text-slate-500 mb-2 block font-bold">Zoom Linki</label>
               <input
@@ -102,6 +136,18 @@ export const SystemConfigManager = () => {
                 onChange={e => setConfig({ ...config, zoom_link: e.target.value })}
                 className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-[#00F0FF] outline-none transition-all font-mono text-[#00F0FF]"
                 placeholder="https://zoom.us/j/..."
+              />
+            </div>
+            <div>
+              <label htmlFor="config-kahoot-link" className="text-[10px] uppercase tracking-widest text-slate-500 mb-2 block font-bold">Kahoot Linki</label>
+              <input
+                id="config-kahoot-link"
+                name="config-kahoot-link"
+                type="url"
+                value={kahootLink}
+                onChange={e => setConfig({ ...config, kahoot_link: e.target.value })}
+                className="w-full bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-[#F5D32E] outline-none transition-all font-mono text-[#F5D32E]"
+                placeholder="https://kahoot.it/..."
               />
             </div>
             <div>
@@ -118,12 +164,26 @@ export const SystemConfigManager = () => {
             </div>
           </div>
 
+          {/* Kahoot Başlat Butonu */}
+          <div className="flex flex-col sm:flex-row gap-3 border-t border-white/5 pt-4">
+            <button
+              type="button"
+              onClick={handleKahootLaunch}
+              disabled={kahootLaunching || !kahootLink.trim()}
+              className="flex items-center gap-3 px-6 py-3 rounded-xl font-black text-xs uppercase tracking-wider transition-all border-2 bg-[#F5D32E]/10 border-[#F5D32E]/40 text-[#F5D32E] hover:bg-[#F5D32E]/20 hover:shadow-[0_0_20px_rgba(245,211,46,0.3)] disabled:opacity-40"
+            >
+              <Gamepad2 className="w-4 h-4" />
+              {kahootLaunching ? 'Yayınlanıyor...' : 'KAHOOT\'U ŞİMDİ BAŞLAT'}
+            </button>
+            <p className="text-[10px] text-slate-600 self-center">Tüm online ajanlarda yeni sekme açar</p>
+          </div>
+
           <div className="flex border-t border-white/5 pt-6">
-            <button 
+            <button
               onClick={() => setConfig({ ...config, login_alerts_enabled: !config.login_alerts_enabled })}
               className={`flex items-center gap-4 px-6 py-3 rounded-xl border-2 transition-all ${
-                config.login_alerts_enabled 
-                  ? 'bg-[#39FF14]/10 border-[#39FF14]/30 text-[#39FF14]' 
+                config.login_alerts_enabled
+                  ? 'bg-[#39FF14]/10 border-[#39FF14]/30 text-[#39FF14]'
                   : 'bg-white/5 border-white/10 text-slate-400'
               }`}
             >
@@ -142,16 +202,16 @@ export const SystemConfigManager = () => {
             <span className="text-[8px] font-bold text-slate-400 uppercase">Erişim Serbest</span>
           </div>
         )}
-        
+
         <div className="px-6 py-4 bg-red-500/5 border-b border-red-500/10 flex items-center justify-between">
           <h3 className="text-sm font-bold uppercase tracking-widest text-red-400 flex items-center gap-2">
             <ShieldAlert className="w-4 h-4" /> Gelişmiş Bakım Modu
           </h3>
           <div className="flex items-center gap-2">
-             <span className="text-[10px] text-slate-500 font-medium">ADMIN (1002) DAİMA BYPASS EDER</span>
+            <span className="text-[10px] text-slate-500 font-medium">ADMIN (1002) DAİMA BYPASS EDER</span>
           </div>
         </div>
-        
+
         <div className="p-6 space-y-8">
           {/* Global Bakım */}
           <div className="flex items-center justify-between p-4 bg-red-500/5 border border-red-500/10 rounded-2xl">
@@ -164,11 +224,11 @@ export const SystemConfigManager = () => {
                 <p className="text-xs text-slate-500">Tüm öğrencilerin sisteme erişimi engellenir.</p>
               </div>
             </div>
-            <button 
+            <button
               onClick={() => setConfig({ ...config, maintenance_mode: { ...maintenanceMode, global: !maintenanceMode.global } })}
               className={`px-6 py-3 rounded-xl font-black text-xs uppercase transition-all border-2 ${
-                maintenanceMode.global 
-                  ? 'bg-red-500 border-red-400 text-white shadow-[0_0_20px_rgba(239,68,68,0.3)]' 
+                maintenanceMode.global
+                  ? 'bg-red-500 border-red-400 text-white shadow-[0_0_20px_rgba(239,68,68,0.3)]'
                   : 'bg-white/5 border-white/10 text-slate-400 hover:border-red-500/30'
               }`}
             >
@@ -195,14 +255,14 @@ export const SystemConfigManager = () => {
                 autoComplete="off"
                 className="flex-1 bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-orange-500 outline-none transition-all font-mono"
               />
-              <button 
+              <button
                 onClick={addTargetedUser}
                 className="px-4 bg-orange-500 hover:bg-orange-600 text-white rounded-xl transition-all"
               >
                 <Plus className="w-5 h-5" />
               </button>
             </div>
-            
+
             <div className="flex flex-wrap gap-2">
               {targetedUsers.map(id => (
                 <div key={id} className="flex items-center gap-2 bg-orange-500/10 border border-orange-500/20 px-3 py-1.5 rounded-lg text-orange-400 font-mono text-xs group">
@@ -228,7 +288,7 @@ export const SystemConfigManager = () => {
           </h3>
           <span className="text-[10px] text-red-500/80 font-bold animate-pulse">CANLI SİNYAL</span>
         </div>
-        
+
         <div className="p-6">
           <textarea
             id="config-announcement"
@@ -238,14 +298,14 @@ export const SystemConfigManager = () => {
             onChange={e => setConfig({ ...config, broadcast_message: e.target.value })}
             placeholder="Tüm ajanların ekranında görünecek acil durum mesajını buraya yazın..."
             className="w-full bg-black/40 border border-red-900/30 rounded-xl px-4 py-4 text-sm focus:border-red-500 outline-none transition-all min-h-[100px] text-red-200 placeholder:text-red-900/60 font-medium leading-relaxed"
-          ></textarea>
-          
+          />
+
           <div className="mt-4 flex items-center justify-between">
             <div className="text-[10px] text-red-900/60 font-bold uppercase flex items-center gap-2">
-               <div className="w-1.5 h-1.5 bg-red-500 rounded-full" />
-               Tüm istemcilere eş zamanlı iletilir
+              <div className="w-1.5 h-1.5 bg-red-500 rounded-full" />
+              Tüm istemcilere eş zamanlı iletilir
             </div>
-            <button 
+            <button
               onClick={() => handleSave()}
               disabled={saving}
               className="bg-red-600 hover:bg-red-700 text-white px-8 py-3 rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-[0_0_15px_rgba(220,38,38,0.4)] hover:shadow-[0_0_30px_rgba(220,38,38,0.6)] disabled:opacity-50"
@@ -256,24 +316,52 @@ export const SystemConfigManager = () => {
         </div>
       </section>
 
+      {/* 4. GÜVENLİK */}
+      <section className="bg-black/40 border border-purple-500/20 rounded-2xl overflow-hidden shadow-2xl">
+        <div className="px-6 py-4 bg-purple-500/5 border-b border-purple-500/10 flex items-center justify-between">
+          <h3 className="text-sm font-bold uppercase tracking-widest text-purple-400 flex items-center gap-2">
+            <Shield className="w-4 h-4" /> Güvenlik
+          </h3>
+          <span className="text-[10px] text-purple-400/60 font-bold uppercase">2FA / TOTP</span>
+        </div>
+
+        <div className="p-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 p-4 bg-purple-500/5 border border-purple-500/10 rounded-xl">
+            <div className="flex-1">
+              <p className="text-sm font-bold text-white">TOTP Sıfırla</p>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Cihazını kaybettiysen veya yeni bir kimlik doğrulayıcı uygulaması kuruyorsan,
+                mevcut TOTP secret'ını sıfırla. Bir sonraki girişte yeniden QR kodu taratman gerekecek.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleResetTotp}
+              disabled={totpResetting}
+              className="flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-xs uppercase tracking-wider border-2 bg-purple-500/10 border-purple-500/30 text-purple-400 hover:bg-purple-500/20 transition-all disabled:opacity-50 flex-none"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${totpResetting ? 'animate-spin' : ''}`} />
+              {totpResetting ? 'Sıfırlanıyor...' : 'TOTP Sıfırla'}
+            </button>
+          </div>
+        </div>
+      </section>
+
       {/* GLOBAL KAYDET BUTONU */}
       <div className="sticky bottom-6 flex justify-center pt-4 z-50">
-         <button
-            onClick={() => handleSave()}
-            disabled={saving}
-            className={`px-12 py-4 font-black transition-all uppercase tracking-[0.3em] rounded-2xl border-2 text-sm shadow-2xl ${
-              saved 
-                ? 'bg-[#39FF14] text-black border-white scale-105' 
-                : 'bg-[#00F0FF] text-black border-white hover:bg-white hover:text-black hover:scale-105'
-            } disabled:opacity-50`}
-          >
-            {saving ? 'İŞLENİYOR...' : saved ? '✓ SİSTEM GÜNCELLENDİ' : 'TÜM AYARLARI MERKEZE GÖNDER'}
-          </button>
+        <button
+          onClick={() => handleSave()}
+          disabled={saving}
+          className={`px-12 py-4 font-black transition-all uppercase tracking-[0.3em] rounded-2xl border-2 text-sm shadow-2xl ${
+            saved
+              ? 'bg-[#39FF14] text-black border-white scale-105'
+              : 'bg-[#00F0FF] text-black border-white hover:bg-white hover:text-black hover:scale-105'
+          } disabled:opacity-50`}
+        >
+          {saving ? 'İŞLENİYOR...' : saved ? '✓ SİSTEM GÜNCELLENDİ' : 'TÜM AYARLARI MERKEZE GÖNDER'}
+        </button>
       </div>
 
     </div>
   );
 };
-
-
-

@@ -45,6 +45,13 @@ export const SurveysClient = () => {
 
   const handleSubmit = async () => {
     if (!activeSurvey) return;
+
+    // Hız sınırı: 10 saniyede bir gönderim
+    const lastSubmit = Number(sessionStorage.getItem('rateLimit_surveySubmit') || '0');
+    if (Date.now() - lastSubmit < 10_000) {
+      return;
+    }
+
     setSubmitting(true);
 
     // Anonim kaydet
@@ -55,6 +62,7 @@ export const SurveysClient = () => {
         created_at: new Date().toISOString(),
       }]);
 
+      sessionStorage.setItem('rateLimit_surveySubmit', String(Date.now()));
       const newCompleted = new Set(completed).add(activeSurvey.id);
       setCompleted(newCompleted);
 

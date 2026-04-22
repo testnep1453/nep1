@@ -8,14 +8,15 @@ import { ArchivePage } from '../Archive/ArchivePage';
 import { LevelProgress } from './LevelProgress';
 import { ActivityPage } from './ActivityPage';
 import { SurveysClient } from './SurveysClient';
-import { 
-  subscribeToTrailer, 
-  recordAttendance, 
-  subscribeToSettingStore, 
-  getSettingStore, 
-  saveSettingStore 
+import {
+  subscribeToTrailer,
+  recordAttendance,
+  subscribeToSettingStore,
+  getSettingStore,
+  saveSettingStore
 } from '../../services/supabaseService';
 import { useAutoZoom } from '../../hooks/useAutoZoom';
+import { useKahootLauncher } from '../../hooks/useKahootLauncher';
 import { useNotifications } from '../../hooks/useNotifications';
 import type { SurveyEntry } from '../Admin/SurveyManager';
 import { LESSON_CONFIG } from '../../config/lessonSchedule';
@@ -46,17 +47,30 @@ export const AgentDashboard = ({
   const [trailer, setTrailerState] = useState<Trailer | null>(null);
   const [hasPendingSurvey, setHasPendingSurvey] = useState(false);
   const [zoomLink, setZoomLink] = useState(lesson?.zoomLink || LESSON_CONFIG.zoomLink);
-  // Tema: sadece dark mod
+  const [kahootFallback, setKahootFallback] = useState<string | null>(null);
 
-  // Zoom linkini Supabase'den yüKle
+  // Zoom linkini Supabase'den yükle
   useEffect(() => {
     getZoomLink().then(link => {
       if (link) setZoomLink(link);
     });
   }, []);
 
+  // Kahoot popup engellendiyse fallback banner dinle
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const link = (e as CustomEvent<{ link: string }>).detail?.link;
+      if (link) setKahootFallback(link);
+    };
+    window.addEventListener('kahoot-popup-blocked', handler);
+    return () => window.removeEventListener('kahoot-popup-blocked', handler);
+  }, []);
+
   const { unreadCount } = useNotifications(student.id);
   const autoZoomState = useAutoZoom(student.id, student.name, zoomLink);
+
+  // Kahoot realtime yayınını dinle — sadece giriş yapmış ajan için
+  useKahootLauncher(!!student);
 
   useEffect(() => {
     if (autoZoomState.status !== 'feedback') return;
@@ -166,11 +180,28 @@ export const AgentDashboard = ({
       {showFeedback && (
         <FeedbackForm lessonDate={autoZoomState.lessonDate} studentId={student.id}
           onClose={async () => {
-            // Gösterim durumunu Supabase'e kaydet
             const feedbackKey = `feedback_shown_${autoZoomState.lessonDate}_${student.id}`;
             await saveSettingStore(feedbackKey, true);
             setShowFeedback(false);
           }} />
+      )}
+
+      {/* Kahoot popup engellendiyse manuel açma banner'ı */}
+      {kahootFallback && (
+        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 bg-[#F5D32E] text-black rounded-2xl px-6 py-4 shadow-2xl flex items-center gap-4 max-w-sm w-full mx-4">
+          <span className="text-2xl">🎮</span>
+          <div className="flex-1">
+            <p className="font-black text-sm uppercase tracking-wide">Kahoot başladı!</p>
+            <p className="text-xs opacity-70">Tarayıcı otomatik açmayı engelledi.</p>
+          </div>
+          <button
+            onClick={() => { window.open(kahootFallback, '_blank', 'noopener,noreferrer'); setKahootFallback(null); }}
+            className="bg-black text-[#F5D32E] font-black px-4 py-2 rounded-xl text-sm uppercase tracking-wider hover:bg-gray-900 transition-colors"
+          >
+            Aç
+          </button>
+          <button onClick={() => setKahootFallback(null)} className="text-black/50 hover:text-black ml-1 text-lg">×</button>
+        </div>
       )}
 
       {/* Mobil Üst Bar */}

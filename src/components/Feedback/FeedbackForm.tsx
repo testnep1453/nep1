@@ -48,6 +48,14 @@ export const FeedbackForm = ({ lessonDate, studentId: _studentId, onClose }: Fee
 
   const handleSubmit = async () => {
     if (rating === 0) return;
+
+    // Hız sınırı: 60 saniyede bir gönderi
+    const lastFeedback = Number(localStorage.getItem('rateLimit_feedbackSubmit') || '0');
+    if (Date.now() - lastFeedback < 60_000) {
+      alert('Lütfen 60 saniye bekleyip tekrar deneyin.');
+      return;
+    }
+
     setSubmitting(true);
     try {
       // Sanitize comment to prevent XSS
@@ -62,7 +70,7 @@ export const FeedbackForm = ({ lessonDate, studentId: _studentId, onClose }: Fee
         createdAt: Date.now(),
         anonymous: true,
       }]);
-      // Gösterildi işareti artık AgentDashboard'da Supabase'e yazılır
+      localStorage.setItem('rateLimit_feedbackSubmit', String(Date.now()));
       setSubmitted(true);
     } catch (error) {
       console.error('Geri bildirim hatası:', error);

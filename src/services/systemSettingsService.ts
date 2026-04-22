@@ -17,6 +17,8 @@ export interface SystemConfig {
     targeted_users: string[];
   };
   broadcast_message: string;
+  kahoot_link: string;
+  kahoot_launched_at?: number; // epoch ms — değişince tüm ajanlar sekme açar
 }
 
 const FALLBACK_CONFIG: SystemConfig = {
@@ -29,6 +31,7 @@ const FALLBACK_CONFIG: SystemConfig = {
     targeted_users: [],
   },
   broadcast_message: '',
+  kahoot_link: '',
 };
 
 const SYSTEM_CONFIG_ID = 'system_config';
@@ -64,7 +67,7 @@ export const saveSystemConfig = async (config: Partial<SystemConfig>): Promise<v
     
     await supabase
       .from('settings')
-      .upsert({ "id": SYSTEM_CONFIG_ID, "data": merged }, { onConflict: '"id"' });
+      .upsert({ id: SYSTEM_CONFIG_ID, data: merged }, { onConflict: 'id' });
   } catch (error) {
     console.error("Sistem konfigürasyonu kaydedilirken hata:", error);
     throw error;
@@ -78,5 +81,16 @@ export const getManualLessonActive = async (): Promise<boolean> => {
 
 export const setManualLessonActive = async (active: boolean): Promise<void> => {
   await saveSystemConfig({ manual_lesson_active: active });
+};
+
+/** Kahoot linkini kaydeder VE kahoot_launched_at damgasını günceller.
+ *  Bu, tüm online ajanların tarayıcısında otomatik sekme açılmasını tetikler. */
+export const launchKahoot = async (link: string): Promise<void> => {
+  const cleanLink = (link || '').trim();
+  if (!cleanLink) throw new Error('Kahoot linki boş olamaz.');
+  await saveSystemConfig({
+    kahoot_link: cleanLink,
+    kahoot_launched_at: Date.now(),
+  });
 };
 
