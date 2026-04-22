@@ -1,31 +1,37 @@
-const PASSWORD_EXPIRY_DAYS = 90;
+import { createClient } from '@supabase/supabase-js';
 
-export async function checkPasswordExpiry(userId: string): Promise<boolean> {
-  const { data, error } = await supabase
-    .from("admin_users") // <-- BURASI DÜZELTİLDİ
-    .select("password_changed_at")
-    .eq("user_id", userId) // Eğer auth id kullanıyorsanız burası "auth_user_id" olabilir
-    .single();
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseServiceKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
 
-  if (error || !data.password_changed_at) return false;
-
-  const lastChange = new Date(data.password_changed_at);
-  const diffInDays = (new Date().getTime() - lastChange.getTime()) / (1000 * 3600 * 24);
-  
-  return diffInDays > PASSWORD_EXPIRY_DAYS;
+if (!supabaseUrl || !supabaseServiceKey) {
+  throw new Error('Missing Supabase environment variables');
 }
 
-export async function updateAdminPasswordWithTracking(newPassword: string): Promise<any> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { data: null, error: "Oturum bulunamadı." };
+export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+  auth: {
+    autoRefreshToken: false,
+    persistSession: false
+  }
+});
 
-  const { error: authError } = await supabase.auth.updateUser({ password: newPassword });
-  if (authError) return { data: null, error: authError.message };
+export async function forcePasswordChange(userId: string): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from('admin_users')
+    .update({ must_change_password: true })
+    .eq('id', userId);
 
-  await supabase
-    .from("admin_users") // <-- BURASI DÜZELTİLDİ
-    .update({ password_changed_at: new Date().toISOString() })
-    .eq("user_id", "1002"); // veya user.id
+  if (error) {
+    throw new Error(`Failed to force password change: ${error.message}`);
+  }
+}
 
-  return { data: null, error: null };
+export async function clearPasswordChangeFlag(userId: string): Promise<void> {
+  const { error } = await supabaseAdmin
+    .from('admin_users')
+    .update({ must_change_password: false })
+    .eq('id', userId);
+
+  if (error) {
+    throw new Error(`Failed to clear password change flag: ${error.message}`);
+  }
 }
