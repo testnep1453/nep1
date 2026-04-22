@@ -54,7 +54,14 @@ export const notifyAdminSuspiciousActivity = async (email: string, reason: strin
   try {
     let ip = 'Bilinmiyor';
     try { const res = await fetch('https://api.ipify.org?format=json'); ip = (await res.json()).ip; } catch { }
-    await supabase.from('security_alerts').insert({ "email": email, "ipAddress": ip, "reason": reason, "userAgent": navigator.userAgent });
+    
+    // YENİ: Supabase 400 hatasını önlemek için snake_case kullanıldı
+    await supabase.from('security_alerts').insert({ 
+      "email": email, 
+      "ip_address": ip, 
+      "reason": reason, 
+      "user_agent": navigator.userAgent 
+    });
   } catch { }
 };
 
