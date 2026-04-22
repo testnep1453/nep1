@@ -6,8 +6,7 @@ import AdminResetPassword from './components/Admin/AdminResetPassword';
 import UnifiedDashboard from './components/Dashboard/UnifiedDashboard';
 import AdminDashboard from './components/Admin/AdminDashboard';
 import LoginTransitionOverlay from './components/Transitions/LoginTransitionOverlay';
-import ErrorBoundary from './components/ErrorBoundary';
-export default function App() {
+import { ErrorBoundary } from './components/ErrorBoundary';export default function App() {
   const { 
     student, 
     loading, 
