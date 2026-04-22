@@ -49,7 +49,7 @@ export const AttendancePage = ({ students }: { students: Student[] }) => {
     const channel = supabase.channel(`public:attendance:${selectedDate}`)
       .on('postgres_changes', {
         event: '*', schema: 'public', table: 'attendance',
-        filter: `"lessonDate"=eq.${selectedDate}`
+        filter: `lessonDate=eq.${selectedDate}`
       }, () => {
         getAttendanceForLesson(selectedDate).then((data: any) => {
           setRecords((data || []).map((r: any) => ({
@@ -71,8 +71,8 @@ export const AttendancePage = ({ students }: { students: Student[] }) => {
         await recordAttendance(studentId, selectedDate, false);
       } else {
         await supabase.from('attendance').delete()
-          .eq('"studentId"', studentId)
-          .eq('"lessonDate"', selectedDate);
+          .eq('studentId', studentId)
+          .eq('lessonDate', selectedDate);
       }
       const data: any = await getAttendanceForLesson(selectedDate);
       setRecords((data || []).map((r: any) => ({

@@ -36,12 +36,12 @@ export const removeStudent = async (id: string) => {
 
 export const subscribeToTrailer = (callback: (trailer: Trailer | null) => void) => {
   const fetchTrailer = async () => {
-    const { data } = await supabase.from('settings').select('"data"').eq('id', 'trailer').maybeSingle();
+    const { data } = await supabase.from('settings').select('data').eq('id', 'trailer').maybeSingle();
     callback(data ? (data.data as Trailer) : null);
   };
   fetchTrailer();
   const channel = supabase.channel(`trailer_${Math.random()}`)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'settings', filter: `"id"=eq.trailer` }, fetchTrailer)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'settings', filter: `id=eq.trailer` }, fetchTrailer)
     .subscribe();
   return () => { supabase.removeChannel(channel); };
 };
@@ -64,10 +64,10 @@ export const recordAttendance = async (studentId: string, targetDate?: string, a
   const now = new Date();
   const today = targetDate || now.toISOString().slice(0, 10);
   try {
-    const { data: attData } = await supabase.from('attendance').select('"studentId"').eq('"studentId"', String(studentId)).eq('"lessonDate"', today).maybeSingle();
+    const { data: attData } = await supabase.from('attendance').select('studentId').eq('studentId', String(studentId)).eq('lessonDate', today).maybeSingle();
     if (attData) return null;
     await supabase.from('attendance').insert({ "studentId": String(studentId), "lessonDate": today, "joinedAt": new Date().toISOString(), "autoJoined": autoJoined, "xpEarned": 100 });
-    const { data: student } = await supabase.from('students').select('xp, level, streak, "attendanceHistory"').eq('id', String(studentId)).maybeSingle();
+    const { data: student } = await supabase.from('students').select('xp, level, streak, attendanceHistory').eq('id', String(studentId)).maybeSingle();
     if (!student) {
       await supabase.from('students').insert({ "id": String(studentId), "xp": 100, "level": 1, "streak": 1, "attendanceHistory": [today] });
       return { xpEarned: 100, streak: 1, streakBonus: false };
@@ -85,7 +85,7 @@ export const recordAttendance = async (studentId: string, targetDate?: string, a
 };
 
 export const getAttendanceForLesson = async (lessonDate: string) => {
-  const { data } = await supabase.from('attendance').select('"studentId", "lessonDate", "joinedAt", "autoJoined", "xpEarned"').eq('"lessonDate"', lessonDate);
+  const { data } = await supabase.from('attendance').select('studentId, lessonDate, joinedAt, autoJoined, xpEarned').eq('lessonDate', lessonDate);
   return data || [];
 };
 
@@ -121,12 +121,12 @@ export const saveAdminPassword = async (hashedPassword: string) => {
 };
 
 export const getAdminAuth = async () => {
-  const { data } = await supabase.from('settings').select('"data"').eq('id', 'admin_auth').maybeSingle();
+  const { data } = await supabase.from('settings').select('data').eq('id', 'admin_auth').maybeSingle();
   return data ? data.data : null;
 };
 
 export const getSettingStore = async <T>(id: string, defaultData: T): Promise<T> => {
-  const { data } = await supabase.from('settings').select('"data"').eq('id', id).maybeSingle();
+  const { data } = await supabase.from('settings').select('data').eq('id', id).maybeSingle();
   return data ? (data.data as T) : defaultData;
 };
 
@@ -136,12 +136,12 @@ export const saveSettingStore = async <T>(id: string, dataObj: T) => {
 
 export const subscribeToSettingStore = <T>(id: string, defaultData: T, callback: (data: T) => void) => {
   const fetchSettings = async () => {
-    const { data } = await supabase.from('settings').select('"data"').eq('id', id).maybeSingle();
+    const { data } = await supabase.from('settings').select('data').eq('id', id).maybeSingle();
     callback((data ? data.data : defaultData) as T);
   };
   fetchSettings();
   const channel = supabase.channel(`settings_${id}_${Math.random()}`)
-    .on('postgres_changes', { event: '*', schema: 'public', table: 'settings', filter: `"id"=eq.${id}` }, fetchSettings)
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'settings', filter: `id=eq.${id}` }, fetchSettings)
     .subscribe();
   return () => { supabase.removeChannel(channel); };
 };

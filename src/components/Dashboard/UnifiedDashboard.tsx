@@ -108,7 +108,8 @@ export const UnifiedDashboard = ({
   // Otomatik XP
   const attendanceRecorded = useRef(false);
   useEffect(() => {
-    if (student && !attendanceRecorded.current) {
+    // Admin (1002) yoklamaya katılmaz — sadece ajanlar
+    if (student && student.id !== '1002' && !attendanceRecorded.current) {
       attendanceRecorded.current = true;
       const result = recordAttendance(student.id);
       void result;

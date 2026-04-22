@@ -139,9 +139,9 @@ const recordAutoAttendance = async (studentId: string, lessonDate: string) => {
   try {
     const { data: existing } = await supabase
       .from('attendance')
-      .select('"studentId"')
-      .eq('"studentId"', studentId)
-      .eq('"lessonDate"', lessonDate)
+      .select('studentId')
+      .eq('studentId', studentId)
+      .eq('lessonDate', lessonDate)
       .maybeSingle();
     if (existing) return;
 
