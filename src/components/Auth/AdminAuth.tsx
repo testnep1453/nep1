@@ -53,7 +53,7 @@ export const AdminAuth: React.FC<Props> = ({ onSuccess, onCancel, adminEmail }) 
       return;
     }
 
-    const res = await sendVerificationCode(email);
+    const res = await sendVerificationCode(email, !!adminEmail);
     if (res.success) {
       setStep('otp');
       setCooldown(60);
@@ -160,7 +160,7 @@ export const AdminAuth: React.FC<Props> = ({ onSuccess, onCancel, adminEmail }) 
     if (!email) { setError('E-posta gerekli.'); return; }
     setError(''); setLoading(true);
 
-    const res = await sendVerificationCode(email);
+    const res = await sendVerificationCode(email, !!adminEmail);
     if (!res.success) {
       setError(res.message || 'Kod gönderilemedi.');
       setLoading(false);

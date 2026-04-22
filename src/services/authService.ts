@@ -33,10 +33,12 @@ export const saveStudentEmail = async (studentId: string, email: string) => {
   if (error) throw error;
 };
 
-export const sendVerificationCode = async (email: string): Promise<{ success: boolean; message?: string }> => {
+export const sendVerificationCode = async (email: string, isAdmin = false): Promise<{ success: boolean; message?: string }> => {
   try {
-    const { data: student } = await supabase.from('students').select('id').eq('email', email).maybeSingle();
-    if (!student) return { success: false, message: 'Bu e-posta adresi sisteme kayıtlı değil!' };
+    if (!isAdmin) {
+      const { data: student } = await supabase.from('students').select('id').eq('email', email).maybeSingle();
+      if (!student) return { success: false, message: 'Bu e-posta adresi sisteme kayıtlı değil!' };
+    }
     const { error } = await supabase.auth.signInWithOtp({ email });
     if (error) return { success: false, message: 'Kod gönderilirken bir sorun oluştu.' };
     return { success: true };
