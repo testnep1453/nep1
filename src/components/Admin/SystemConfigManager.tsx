@@ -55,12 +55,15 @@ export const SystemConfigManager = () => {
     );
     if (!confirmed) return;
     setTotpResetting(true);
-    const ok = await resetTotp();
-    setTotpResetting(false);
-    if (ok) {
-      alert('TOTP başarıyla sıfırlandı. Bir sonraki girişte yeni cihazla kurulum yapabilirsin.');
-    } else {
-      alert('TOTP sıfırlama başarısız. Lütfen tekrar dene.');
+    try {
+      const ok = await resetTotp();
+      if (ok) {
+        alert('TOTP başarıyla sıfırlandı. Bir sonraki girişte yeni cihazla kurulum yapabilirsin.');
+      } else {
+        alert('TOTP sıfırlama başarısız. Lütfen tekrar dene.');
+      }
+    } finally {
+      setTotpResetting(false);
     }
   };
 

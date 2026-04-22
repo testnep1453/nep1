@@ -6,6 +6,7 @@ import { useState } from 'react';
 import { supabase } from '../../config/supabase';
 import { FIXED_LESSON_SCHEDULE } from '../../config/lessonSchedule';
 import { sanitizeInput } from '../../utils/security';
+import { checkRateLimit, recordAction } from '../../services/rateLimitService';
 
 interface FeedbackFormProps {
   lessonDate: string;
@@ -49,12 +50,8 @@ export const FeedbackForm = ({ lessonDate, studentId: _studentId, onClose }: Fee
   const handleSubmit = async () => {
     if (rating === 0) return;
 
-    // Hız sınırı: 60 saniyede bir gönderi
-    const lastFeedback = Number(localStorage.getItem('rateLimit_feedbackSubmit') || '0');
-    if (Date.now() - lastFeedback < 60_000) {
-      alert('Lütfen 60 saniye bekleyip tekrar deneyin.');
-      return;
-    }
+    const { allowed } = await checkRateLimit('feedbackSubmit');
+    if (!allowed) { alert('Lütfen 60 saniye bekleyip tekrar deneyin.'); return; }
 
     setSubmitting(true);
     try {
@@ -70,7 +67,7 @@ export const FeedbackForm = ({ lessonDate, studentId: _studentId, onClose }: Fee
         createdAt: Date.now(),
         anonymous: true,
       }]);
-      localStorage.setItem('rateLimit_feedbackSubmit', String(Date.now()));
+      await recordAction('feedbackSubmit');
       setSubmitted(true);
     } catch (error) {
       console.error('Geri bildirim hatası:', error);

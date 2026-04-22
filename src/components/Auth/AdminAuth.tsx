@@ -35,8 +35,7 @@ export const AdminAuth: React.FC<Props> = ({ onSuccess, onCancel, adminEmail }) 
   const [newPassword, setNewPassword] = useState('');
   const [newPasswordConfirm, setNewPasswordConfirm] = useState('');
   const [totpCode, setTotpCode] = useState('');
-  const [pendingTotpSecret, setPendingTotpSecret] = useState('');
-  const [pendingTotpUrl, setPendingTotpUrl] = useState('');
+  const [pendingTotp, setPendingTotp] = useState<{ secret: string; url: string } | null>(null);
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
@@ -53,13 +52,11 @@ export const AdminAuth: React.FC<Props> = ({ onSuccess, onCancel, adminEmail }) 
     return () => clearInterval(t);
   }, [cooldown]);
 
-  // Parola başarılı → TOTP kurulum/doğrulama adımına yönlendir
   const proceedAfterPassword = async () => {
     const setup = await isTotpSetup();
     if (!setup) {
       const { secret, otpauthUrl } = generateTotpSecret();
-      setPendingTotpSecret(secret);
-      setPendingTotpUrl(otpauthUrl);
+      setPendingTotp({ secret, url: otpauthUrl });
       setStep('totpSetup');
     } else {
       setStep('totpVerify');
@@ -67,6 +64,19 @@ export const AdminAuth: React.FC<Props> = ({ onSuccess, onCancel, adminEmail }) 
     setTotpCode('');
     setError('');
     setInfo('');
+  };
+
+  // TOTP hatalı kod ortak yol — setup ve verify adımları aynı kilit/uyarı mantığını paylaşır
+  const handleTotpFailure = (next: number, hint = '') => {
+    setTotpAttempts(next);
+    setTotpCode('');
+    if (next >= 5) {
+      setError('5 kez hatalı kod. Güvenlik kilidi devrede.');
+      setCooldown(900);
+      notifyAdminSuspiciousActivity(email || 'admin', 'Admin TOTP doğrulama 5 kez hatalı girildi.');
+    } else {
+      setError(`Hatalı kod.${hint} Kalan hak: ${5 - next}`);
+    }
   };
 
   // --- Adım 1: Email'e kod gönder ---
@@ -184,26 +194,16 @@ export const AdminAuth: React.FC<Props> = ({ onSuccess, onCancel, adminEmail }) 
   const handleTotpSetup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (totpCode.length !== 6) { setError('6 haneli kodu girin.'); return; }
-    if (cooldown > 0) return;
+    if (cooldown > 0 || !pendingTotp) return;
     setError(''); setLoading(true);
 
-    const valid = verifyTotpCodeFromSecret(totpCode, pendingTotpSecret);
-    if (!valid) {
-      const next = totpAttempts + 1;
-      setTotpAttempts(next);
-      setTotpCode('');
-      if (next >= 5) {
-        setError('5 kez hatalı kod. Güvenlik kilidi devrede.');
-        setCooldown(900);
-        notifyAdminSuspiciousActivity(email || 'admin', 'Admin TOTP kurulum 5 kez hatalı girildi.');
-      } else {
-        setError(`Hatalı kod. Uygulamayı kontrol et. Kalan hak: ${5 - next}`);
-      }
+    if (!verifyTotpCodeFromSecret(totpCode, pendingTotp.secret)) {
+      handleTotpFailure(totpAttempts + 1, ' Uygulamayı kontrol et.');
       setLoading(false);
       return;
     }
 
-    await saveTotpSecret(pendingTotpSecret);
+    await saveTotpSecret(pendingTotp.secret);
     await startAdminSession();
     setLoading(false);
     onSuccess();
@@ -216,18 +216,8 @@ export const AdminAuth: React.FC<Props> = ({ onSuccess, onCancel, adminEmail }) 
     if (cooldown > 0) return;
     setError(''); setLoading(true);
 
-    const ok = await verifyTotpCode(totpCode);
-    if (!ok) {
-      const next = totpAttempts + 1;
-      setTotpAttempts(next);
-      setTotpCode('');
-      if (next >= 5) {
-        setError('5 kez hatalı kod. Güvenlik kilidi devrede.');
-        setCooldown(900);
-        notifyAdminSuspiciousActivity(email || 'admin', 'Admin TOTP doğrulama 5 kez hatalı girildi.');
-      } else {
-        setError(`Hatalı kod. Kalan hak: ${5 - next}`);
-      }
+    if (!await verifyTotpCode(totpCode)) {
+      handleTotpFailure(totpAttempts + 1);
       setLoading(false);
       return;
     }
@@ -257,12 +247,13 @@ export const AdminAuth: React.FC<Props> = ({ onSuccess, onCancel, adminEmail }) 
   };
 
   const handleCopySecret = async () => {
+    if (!pendingTotp) return;
     try {
-      await navigator.clipboard.writeText(pendingTotpSecret);
+      await navigator.clipboard.writeText(pendingTotp.secret);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      // sessiz
+      // Clipboard API kullanıcı izni gerektiriyor; sessiz devam et
     }
   };
 
@@ -421,10 +412,10 @@ export const AdminAuth: React.FC<Props> = ({ onSuccess, onCancel, adminEmail }) 
           </form>
         )}
 
-        {step === 'totpSetup' && (
+        {step === 'totpSetup' && pendingTotp && (
           <form onSubmit={handleTotpSetup} className="space-y-5">
             <div className="bg-white p-4 rounded-2xl flex items-center justify-center mx-auto w-fit">
-              <QRCodeSVG value={pendingTotpUrl} size={180} level="M" />
+              <QRCodeSVG value={pendingTotp.url} size={180} level="M" />
             </div>
             <div className="text-center space-y-1">
               <p className="text-xs text-slate-400">

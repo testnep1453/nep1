@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { subscribeToSettingStore, getSettingStore, saveSettingStore } from '../../services/supabaseService';
 import type { SurveyEntry, SurveyQuestion } from '../Admin/SurveyManager';
 import { supabase } from '../../config/supabase';
+import { checkRateLimit, recordAction } from '../../services/rateLimitService';
 
 /**
  * Tamamlanan anket ID'leri Supabase'deki settings tablosunda tutulur.
@@ -46,11 +47,8 @@ export const SurveysClient = () => {
   const handleSubmit = async () => {
     if (!activeSurvey) return;
 
-    // Hız sınırı: 10 saniyede bir gönderim
-    const lastSubmit = Number(sessionStorage.getItem('rateLimit_surveySubmit') || '0');
-    if (Date.now() - lastSubmit < 10_000) {
-      return;
-    }
+    const { allowed } = await checkRateLimit('surveySubmit');
+    if (!allowed) return;
 
     setSubmitting(true);
 
@@ -62,7 +60,7 @@ export const SurveysClient = () => {
         created_at: new Date().toISOString(),
       }]);
 
-      sessionStorage.setItem('rateLimit_surveySubmit', String(Date.now()));
+      await recordAction('surveySubmit');
       const newCompleted = new Set(completed).add(activeSurvey.id);
       setCompleted(newCompleted);
 

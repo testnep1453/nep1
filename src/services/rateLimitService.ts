@@ -12,6 +12,8 @@ export const RATE_LIMITS: Record<string, RateLimitConfig> = {
   emailVerification: { cooldownMs: 60_000, field: 'lastEmailVerification' },
   emailChange: { cooldownMs: 24 * 60 * 60 * 1000, field: 'lastEmailChange' },
   feedback: { cooldownMs: 5 * 60 * 1000, field: 'lastFeedback' },
+  feedbackSubmit: { cooldownMs: 60_000, field: 'lastFeedbackSubmit' },
+  surveySubmit: { cooldownMs: 10_000, field: 'lastSurveySubmit' },
   nicknameChange: { cooldownMs: 60 * 60 * 1000, field: 'lastNicknameChange' },
 };
 

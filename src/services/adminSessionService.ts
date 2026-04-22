@@ -5,6 +5,7 @@
 import bcrypt from 'bcryptjs';
 import * as OTPAuth from 'otpauth';
 import { supabase } from '../config/supabase';
+import { encryptText, decryptText } from './crypto';
 
 const ADMIN_AUTH_KEY = 'admin_auth';
 const ADMIN_SESSION_KEY = 'admin_session_token';
@@ -284,82 +285,45 @@ export const TEMP_PASSWORD_DISPLAY = DEFAULT_TEMP_PASSWORD;
 // TOTP (3. faktör) — Ente Auth / Google Authenticator uyumlu
 // ---------------------------------------------------------------
 
-/** Yeni bir TOTP secret üretir. Secret henüz DB'ye kaydedilmez — kullanıcı
- *  doğru kodu girene kadar bileşen state'inde tutulur.  */
+const createTotpInstance = (secret: OTPAuth.Secret): OTPAuth.TOTP =>
+  new OTPAuth.TOTP({ issuer: TOTP_ISSUER, label: TOTP_LABEL, algorithm: 'SHA1', digits: 6, period: 30, secret });
+
 export const generateTotpSecret = (): { secret: string; otpauthUrl: string } => {
   const secret = new OTPAuth.Secret({ size: 20 });
-  const totp = new OTPAuth.TOTP({
-    issuer: TOTP_ISSUER,
-    label: TOTP_LABEL,
-    algorithm: 'SHA1',
-    digits: 6,
-    period: 30,
-    secret,
-  });
-  return { secret: secret.base32, otpauthUrl: totp.toString() };
+  return { secret: secret.base32, otpauthUrl: createTotpInstance(secret).toString() };
 };
 
-/** Geçici bellekteki (henüz kaydedilmemiş) bir secret karşısında kodu doğrular. */
+/** Pending (unsaved) secret'a karşı kodu doğrular — DB'ye yazmadan önce kullanıcının geçerli kod ürettiğini kanıtlar. */
 export const verifyTotpCodeFromSecret = (code: string, base32Secret: string): boolean => {
   try {
-    const totp = new OTPAuth.TOTP({
-      issuer: TOTP_ISSUER,
-      label: TOTP_LABEL,
-      algorithm: 'SHA1',
-      digits: 6,
-      period: 30,
-      secret: OTPAuth.Secret.fromBase32(base32Secret),
-    });
-    return totp.validate({ token: code.trim(), window: 1 }) !== null;
+    return createTotpInstance(OTPAuth.Secret.fromBase32(base32Secret)).validate({ token: code.trim(), window: 1 }) !== null;
   } catch {
     return false;
   }
 };
 
-/** Secret'ı AES-GCM ile şifreler ve admin_auth kaydına yazar. */
 export const saveTotpSecret = async (base32Secret: string): Promise<boolean> => {
-  const { encryptText } = await import('./crypto');
   const encrypted = await encryptText(base32Secret);
-  return saveAdminAuthData({
-    totpSecret: encrypted,
-    totpEnabled: true,
-    totpSetupCompleted: true,
-  });
+  return saveAdminAuthData({ totpSecret: encrypted, totpEnabled: true, totpSetupCompleted: true });
 };
 
-/** DB'deki şifrelenmiş secret'a karşı 6 haneli kodu doğrular (±1 window). */
 export const verifyTotpCode = async (code: string): Promise<boolean> => {
   const data = await getAdminAuthData();
   if (!data?.totpSecret) return false;
-  const { decryptText } = await import('./crypto');
   const base32 = await decryptText(data.totpSecret);
   if (!base32) return false;
   try {
-    const totp = new OTPAuth.TOTP({
-      issuer: TOTP_ISSUER,
-      label: TOTP_LABEL,
-      algorithm: 'SHA1',
-      digits: 6,
-      period: 30,
-      secret: OTPAuth.Secret.fromBase32(base32),
-    });
-    return totp.validate({ token: code.trim(), window: 1 }) !== null;
+    return createTotpInstance(OTPAuth.Secret.fromBase32(base32)).validate({ token: code.trim(), window: 1 }) !== null;
   } catch {
     return false;
   }
 };
 
-/** TOTP kurulu ve aktif mi? */
 export const isTotpSetup = async (): Promise<boolean> => {
   const data = await getAdminAuthData();
   return !!(data?.totpEnabled && data?.totpSecret);
 };
 
-/** TOTP'yi sıfırlar. Sonraki girişte tekrar kurulum zorunlu olur. */
 export const resetTotp = async (): Promise<boolean> => {
-  return saveAdminAuthData({
-    totpSecret: '',
-    totpEnabled: false,
-    totpSetupCompleted: false,
-  });
+  return saveAdminAuthData({ totpSecret: '', totpEnabled: false, totpSetupCompleted: false });
 };
