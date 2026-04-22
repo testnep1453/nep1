@@ -146,16 +146,17 @@ export const subscribeToSettingStore = <T>(id: string, defaultData: T, callback:
   return () => { supabase.removeChannel(channel); };
 };
 
+// CLEAN VERSION: snake_case kullanılıyor, tırnak işareti yok
 export const checkAndAwardBadge = async (studentId: string, badgeKey: string) => {
-  const { data } = await supabase.from('student_badges').select('*').eq('"studentId"', studentId).eq('"badgeKey"', badgeKey).maybeSingle();
+  const { data } = await supabase.from('student_badges').select('*').eq('student_id', studentId).eq('badge_key', badgeKey).maybeSingle();
   if (!data) {
-    await supabase.from('student_badges').insert([{ "studentId": studentId, "badgeKey": badgeKey, "earnedAt": new Date().toISOString() }]);
+    await supabase.from('student_badges').insert([{ student_id: studentId, badge_key: badgeKey, earned_at: new Date().toISOString() }]);
     return true;
   }
   return false;
 };
 
 export const getStudentBadges = async (studentId: string) => {
-  const { data } = await supabase.from('student_badges').select('*').eq('"studentId"', studentId);
+  const { data } = await supabase.from('student_badges').select('*').eq('student_id', studentId);
   return data || [];
 };
