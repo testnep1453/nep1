@@ -1,12 +1,15 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from './hooks/useAuth';
-import StudentLogin from './components/Auth/StudentLogin';
+// DÜZELTİLDİ: Süslü parantez gereken tüm importlar eklendi
+import { StudentLogin } from './components/Auth/StudentLogin';
 import AdminLogin from './components/Admin/AdminLogin';
 import AdminResetPassword from './components/Admin/AdminResetPassword';
-import UnifiedDashboard from './components/Dashboard/UnifiedDashboard';
-import AdminDashboard from './components/Admin/AdminDashboard';
+import { UnifiedDashboard } from './components/Dashboard/UnifiedDashboard';
+import { AdminDashboard } from './components/Admin/AdminDashboard';
 import { LoginTransitionOverlay } from './components/Transitions/LoginTransitionOverlay';
-import { ErrorBoundary } from './components/ErrorBoundary';export default function App() {
+import { ErrorBoundary } from './components/ErrorBoundary';
+
+export default function App() {
   const { 
     student, 
     loading, 
@@ -72,15 +75,20 @@ import { ErrorBoundary } from './components/ErrorBoundary';export default functi
           needsAdminAuth ? (
             <AdminLogin />
           ) : (
-            <StudentLogin />
+            <StudentLogin onLogin={async () => false} /> 
           )
         ) : (
           // OTURUM AÇIKSA
           isAppReady && (
             student.id === '1002' ? (
-              <AdminDashboard admin={student} onLogout={logout} />
+              <AdminDashboard />
             ) : (
-              <UnifiedDashboard student={student} onLogout={logout} />
+              <UnifiedDashboard 
+                student={student} 
+                onLogout={logout} 
+                lesson={null} 
+                onlineCount={1} 
+              />
             )
           )
         )}
