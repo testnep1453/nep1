@@ -110,6 +110,9 @@ export const SurveysClient = () => {
                   ) : (
                     /* Klasik / Açık Uçlu */
                     <textarea
+                      id="survey-open-answer"
+                      name="survey-open-answer"
+                      aria-label="Anket cevabı"
                       placeholder="Cevabınızı buraya yazın..."
                       value={answers[i] || ''}
                       onChange={e => setAnswers({ ...answers, [i]: e.target.value })}

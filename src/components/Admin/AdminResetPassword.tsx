@@ -55,25 +55,27 @@ export default function AdminResetPassword() {
         )}
 
         <div className="space-y-2">
-          <label htmlFor="newPw" className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Yeni Şifre</label>
+          <label htmlFor="reset-password" className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Yeni Şifre</label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-            <input 
-              id="newPw" name="newPassword" type="password" required 
-              className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 pl-10 text-white outline-none focus:border-red-600" 
-              value={password} onChange={(e) => setPassword(e.target.value)} 
+            <input
+              id="reset-password" name="reset-password" type="password" required
+              autoComplete="new-password"
+              className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 pl-10 text-white outline-none focus:border-red-600"
+              value={password} onChange={(e) => setPassword(e.target.value)}
             />
           </div>
         </div>
 
         <div className="space-y-2">
-          <label htmlFor="confirmPw" className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Yeni Şifre (Tekrar)</label>
+          <label htmlFor="reset-password-confirm" className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Yeni Şifre (Tekrar)</label>
           <div className="relative">
             <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-            <input 
-              id="confirmPw" name="confirmPassword" type="password" required 
-              className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 pl-10 text-white outline-none focus:border-red-600" 
-              value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} 
+            <input
+              id="reset-password-confirm" name="reset-password-confirm" type="password" required
+              autoComplete="new-password"
+              className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 pl-10 text-white outline-none focus:border-red-600"
+              value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
             />
           </div>
         </div>

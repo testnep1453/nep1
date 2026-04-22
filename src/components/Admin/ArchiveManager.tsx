@@ -62,21 +62,23 @@ export const ArchiveManager = ({ isAdmin = false }: Props) => {
           <h3 className="text-[#FF9F43] font-bold text-sm uppercase tracking-wider mb-4">🎬 Arşive Video Ekle</h3>
           <div className="space-y-3 max-w-xl">
             <input
-              id="archiveTitle"
-              name="archiveTitle"
+              id="archive-title"
+              name="archive-title"
               type="text"
               value={title}
               onChange={e => setTitle(e.target.value)}
               placeholder="Video Başlığı"
+              aria-label="Video başlığı"
               className="w-full bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#FF9F43] rounded font-mono transition-colors"
             />
             <input
-              id="archiveYtUrl"
-              name="archiveYtUrl"
+              id="archive-url"
+              name="archive-url"
               type="text"
               value={youtubeUrl}
               onChange={e => setYoutubeUrl(e.target.value)}
               placeholder="YouTube URL (https://www.youtube.com/watch?v=...)"
+              aria-label="YouTube video URL"
               className="w-full bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#FF9F43] rounded font-mono transition-colors"
             />
             <button

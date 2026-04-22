@@ -126,6 +126,10 @@ export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps
         {isEditingNickname ? (
           <div className="flex items-center justify-center gap-2 mt-3 w-full max-w-[200px]">
             <input
+              id="profile-section-nickname"
+              name="profile-section-nickname"
+              aria-label="Takma ad düzenle"
+              autoComplete="nickname"
               type="text"
               value={nicknameValue}
               onChange={e => setNicknameValue(e.target.value)}

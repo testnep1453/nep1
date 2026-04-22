@@ -67,12 +67,14 @@ export function MandatoryPasswordChange() {
           )}
 
           <div>
-            <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="mandatory-new-password" className="block text-sm font-medium text-gray-700 mb-1">
               Yeni Şifre
             </label>
             <input
               type="password"
-              id="newPassword"
+              id="mandatory-new-password"
+              name="mandatory-new-password"
+              autoComplete="new-password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
@@ -83,12 +85,14 @@ export function MandatoryPasswordChange() {
           </div>
 
           <div>
-            <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+            <label htmlFor="mandatory-new-password-confirm" className="block text-sm font-medium text-gray-700 mb-1">
               Yeni Şifre (Tekrar)
             </label>
             <input
               type="password"
-              id="confirmPassword"
+              id="mandatory-new-password-confirm"
+              name="mandatory-new-password-confirm"
+              autoComplete="new-password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"

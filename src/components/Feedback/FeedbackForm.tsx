@@ -120,7 +120,11 @@ export const FeedbackForm = ({ lessonDate, studentId: _studentId, onClose }: Fee
 
         {/* Yorum */}
         <div className="mb-6">
-          <textarea value={comment} onChange={(e) => setComment(e.target.value)}
+          <textarea
+            id="feedback-comment"
+            name="feedback-comment"
+            aria-label="Geri bildirim metni"
+            value={comment} onChange={(e) => setComment(e.target.value)}
             placeholder="Eklemek istediğin bir şey? (opsiyonel)"
             rows={3}
             className="w-full bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#6358cc] rounded-lg transition-colors resize-none text-sm" />

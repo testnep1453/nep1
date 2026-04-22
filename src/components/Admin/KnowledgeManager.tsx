@@ -66,7 +66,10 @@ export const KnowledgeManager = () => {
         <form onSubmit={handleAdd} className="space-y-4 max-w-xl">
           <div className="flex gap-4">
             <input
+              id="knowledge-title"
+              name="knowledge-title"
               type="text" placeholder="Başlık" required
+              aria-label="Kılavuz başlığı"
               value={title} onChange={e => setTitle(e.target.value)}
               className="bg-[#050505] border border-gray-700 text-white p-3 flex-1 focus:outline-none focus:border-[#00F0FF] font-mono transition-colors"
             />
@@ -81,6 +84,9 @@ export const KnowledgeManager = () => {
             </select>
           </div>
           <textarea
+            id="knowledge-content"
+            name="knowledge-content"
+            aria-label="Kılavuz metni"
             placeholder="Kılavuz veya bilgi metni..." rows={6} required
             value={content} onChange={e => setContent(e.target.value)}
             className="bg-[#050505] border border-gray-700 text-white p-3 w-full focus:outline-none focus:border-[#00F0FF] font-mono transition-colors resize-y min-h-[120px]"

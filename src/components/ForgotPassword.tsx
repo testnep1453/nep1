@@ -110,7 +110,7 @@ export default function ForgotPassword({ loginHref = "/admin/login" }: Props) {
               <form onSubmit={handleSubmit} noValidate className="space-y-5">
                 <div className="space-y-1.5">
                   <label
-                    htmlFor="reset-email"
+                    htmlFor="forgot-password-email"
                     className="block text-sm font-medium text-slate-300"
                   >
                     Email address
@@ -120,7 +120,8 @@ export default function ForgotPassword({ loginHref = "/admin/login" }: Props) {
                       <Mail size={16} />
                     </span>
                     <input
-                      id="reset-email"
+                      id="forgot-password-email"
+                      name="forgot-password-email"
                       type="email"
                       autoComplete="email"
                       autoFocus

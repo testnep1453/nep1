@@ -53,6 +53,9 @@ const QuestionEditor = ({
       <div className="flex items-start gap-2">
         <span className="text-[#8a2be2] font-black text-lg mt-1 shrink-0">{index + 1}.</span>
         <input
+          id={`survey-question-${index}-text`}
+          name={`survey-question-${index}-text`}
+          aria-label={`Soru ${index + 1} metni`}
           type="text"
           placeholder={`Soru ${index + 1}`}
           value={question.text}
@@ -94,6 +97,9 @@ const QuestionEditor = ({
             <div key={i} className="flex items-center gap-2">
               <span className="text-[#8a2be2] text-xs shrink-0">{String.fromCharCode(65 + i)}.</span>
               <input
+                id={`survey-question-${index}-option-${i}`}
+                name={`survey-question-${index}-option-${i}`}
+                aria-label={`Soru ${index + 1} - ${String.fromCharCode(65 + i)} seçeneği`}
                 type="text"
                 placeholder={`Seçenek ${String.fromCharCode(65 + i)}`}
                 value={opt}
@@ -342,8 +348,10 @@ export const SurveyManager = () => {
         <form onSubmit={handleAdd} className="space-y-5 max-w-2xl">
           {/* Başlık */}
           <div>
-            <label className="text-[10px] uppercase tracking-widest text-gray-500 mb-1 block">Sorgu Başlığı *</label>
+            <label htmlFor="survey-title" className="text-[10px] uppercase tracking-widest text-gray-500 mb-1 block">Sorgu Başlığı *</label>
             <input
+              id="survey-title"
+              name="survey-title"
               type="text"
               placeholder="Örn: Ders Hakkında Görüşler"
               required
@@ -355,8 +363,10 @@ export const SurveyManager = () => {
 
           {/* Açıklama */}
           <div>
-            <label className="text-[10px] uppercase tracking-widest text-gray-500 mb-1 block">Kısa Açıklama</label>
+            <label htmlFor="survey-description" className="text-[10px] uppercase tracking-widest text-gray-500 mb-1 block">Kısa Açıklama</label>
             <textarea
+              id="survey-description"
+              name="survey-description"
               placeholder="Bu sorgunun amacı..."
               rows={2}
               value={description}

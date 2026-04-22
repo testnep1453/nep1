@@ -107,12 +107,13 @@ export const ProfileModal = ({ student, isOpen, onClose, theme, onThemeChange }:
           <div className="w-full space-y-5">
             {/* FIX: label htmlFor ile input id eşleşiyor */}
             <div>
-              <label htmlFor="profileNickname" className="text-gray-500 text-[10px] uppercase font-bold mb-1.5 block">
+              <label htmlFor="profile-nickname" className="text-gray-500 text-[10px] uppercase font-bold mb-1.5 block">
                 Ajan Takma Adı
               </label>
               <input
-                id="profileNickname"
-                name="nickname"
+                id="profile-nickname"
+                name="profile-nickname"
+                autoComplete="nickname"
                 type="text"
                 value={nickname}
                 onChange={(e) => setNickname(e.target.value)}

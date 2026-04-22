@@ -179,8 +179,8 @@ export const StudentLogin = ({
 
         <form id="loginForm" onSubmit={handleSubmit} className="w-full flex flex-col items-center">
           <input
-            id="studentIdInput"
-            name="studentId"
+            id="student-id"
+            name="student-id"
             type="text"
             inputMode="numeric"
             pattern="[0-9]*"
@@ -195,7 +195,8 @@ export const StudentLogin = ({
                 : 'border-[#39FF14]/50 text-white focus:border-[#39FF14]'
             } text-4xl sm:text-5xl font-black tracking-[0.4em] text-center placeholder:text-white/20 focus:outline-none transition-all`}
             disabled={loading || googleLoading}
-            autoComplete="off"
+            autoComplete="username"
+            aria-label="Öğrenci numarası"
           />
 
           <div className={`mt-6 transition-all duration-300 ${error ? 'opacity-100' : 'opacity-0 h-0 overflow-hidden'}`}>

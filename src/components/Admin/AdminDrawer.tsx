@@ -43,8 +43,11 @@ export const AdminDrawer = () => {
               <span className="text-lg">📡</span> Bildirim Gönder
             </h3>
             <p className="text-white/60 text-xs font-medium mb-4">Ajanlara operasyon güncellemeleri ve motive edici mesajlar yolla.</p>
-            <textarea 
-              className="w-full bg-[#25293c] border border-white/10 rounded-xl p-3 text-white text-sm focus:outline-none focus:border-[#00cfe8] resize-none mb-3" 
+            <textarea
+              id="admin-drawer-message"
+              name="admin-drawer-message"
+              aria-label="Ajanlara gönderilecek bildirim mesajı"
+              className="w-full bg-[#25293c] border border-white/10 rounded-xl p-3 text-white text-sm focus:outline-none focus:border-[#00cfe8] resize-none mb-3"
               placeholder="Mesajınızı girin..."
               rows={3}
             />

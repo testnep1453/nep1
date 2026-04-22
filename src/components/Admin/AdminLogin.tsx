@@ -140,10 +140,10 @@ export default function AdminLogin() {
 
         {step === "forgot" && (
           <form onSubmit={handleForgot} className="space-y-6">
-            <Field 
-              label="Kayıtlı E-posta" id="forgotEmail" name="email" type="email" 
-              value={email} onChange={(e) => setEmail(e.target.value)} 
-              icon={<Mail size={18} />} required 
+            <Field
+              label="Kayıtlı E-posta" id="forgotEmail" name="email" type="email"
+              value={email} onChange={(e) => setEmail(e.target.value)}
+              icon={<Mail size={18} />} required autoComplete="email"
             />
             <button disabled={loading} className="w-full bg-red-600 text-white py-3 rounded-xl font-bold flex items-center justify-center">
               {loading ? <RefreshCw className="animate-spin" size={18} /> : "SIFIRLAMA LİNKİ GÖNDER"}

@@ -93,8 +93,10 @@ export const SystemConfigManager = () => {
         <div className="p-6 space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="text-[10px] uppercase tracking-widest text-slate-500 mb-2 block font-bold">Zoom Linki</label>
+              <label htmlFor="config-zoom-link" className="text-[10px] uppercase tracking-widest text-slate-500 mb-2 block font-bold">Zoom Linki</label>
               <input
+                id="config-zoom-link"
+                name="config-zoom-link"
                 type="url"
                 value={zoomLink}
                 onChange={e => setConfig({ ...config, zoom_link: e.target.value })}
@@ -103,8 +105,10 @@ export const SystemConfigManager = () => {
               />
             </div>
             <div>
-              <label className="text-[10px] uppercase tracking-widest text-slate-500 mb-2 block font-bold">Ders Başlığı</label>
+              <label htmlFor="config-lesson-title" className="text-[10px] uppercase tracking-widest text-slate-500 mb-2 block font-bold">Ders Başlığı</label>
               <input
+                id="config-lesson-title"
+                name="config-lesson-title"
                 type="text"
                 value={lessonTitle}
                 onChange={e => setConfig({ ...config, lesson_title: e.target.value })}
@@ -179,12 +183,16 @@ export const SystemConfigManager = () => {
               <h4 className="text-xs font-black uppercase tracking-widest text-orange-400">Hedefli Engelleme (Kişisel Bakım)</h4>
             </div>
             <div className="flex gap-2">
-              <input 
+              <input
+                id="config-targeted-user"
+                name="config-targeted-user"
+                aria-label="Hedef ajan ID"
                 type="text"
                 placeholder="Hedef Ajan ID (Örn: 1054)"
                 value={targetedUserId}
                 onChange={e => setTargetedUserId(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && addTargetedUser()}
+                autoComplete="off"
                 className="flex-1 bg-black/60 border border-white/10 rounded-xl px-4 py-3 text-sm focus:border-orange-500 outline-none transition-all font-mono"
               />
               <button 
@@ -223,6 +231,9 @@ export const SystemConfigManager = () => {
         
         <div className="p-6">
           <textarea
+            id="config-announcement"
+            name="config-announcement"
+            aria-label="Acil durum yayın mesajı"
             value={broadcastMessage}
             onChange={e => setConfig({ ...config, broadcast_message: e.target.value })}
             placeholder="Tüm ajanların ekranında görünecek acil durum mesajını buraya yazın..."

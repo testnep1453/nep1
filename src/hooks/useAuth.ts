@@ -28,7 +28,12 @@ export const useAuth = () => {
     const initAuth = async () => {
       // 1. Google'dan siteye geri dönüşü yakala!
       const { data: { session } } = await supabase.auth.getSession();
-      
+
+      if (session && window.location.hash.includes('access_token')) {
+        const cleanUrl = window.location.pathname + window.location.search;
+        window.history.replaceState(null, '', cleanUrl);
+      }
+
       if (session?.user?.email) {
         const email = session.user.email;
 

@@ -213,11 +213,15 @@ export const AdminDashboard: React.FC = () => {
           <div className="flex items-center gap-4">
              <div className="relative flex items-center">
                 <Search className="absolute left-3 text-slate-500" size={18} />
-                <input 
+                <input
+                  id="admin-student-search"
+                  name="admin-student-search"
                   type="text"
                   placeholder="Öğrenci ara..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
+                  autoComplete="off"
+                  aria-label="Öğrenci ara"
                   className="bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2 text-sm focus:border-[#39FF14]/50 outline-none w-64 transition-all"
                 />
              </div>
