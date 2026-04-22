@@ -53,7 +53,8 @@ export const AdminAuth: React.FC<Props> = ({ onSuccess, onCancel, adminEmail }) 
       return;
     }
 
-    const res = await sendVerificationCode(email, !!adminEmail);
+    // Admin için students tablosu kontrolü atlanır
+    const res = await sendVerificationCode(email, true);
     if (res.success) {
       setStep('otp');
       setCooldown(60);
@@ -160,7 +161,7 @@ export const AdminAuth: React.FC<Props> = ({ onSuccess, onCancel, adminEmail }) 
     if (!email) { setError('E-posta gerekli.'); return; }
     setError(''); setLoading(true);
 
-    const res = await sendVerificationCode(email, !!adminEmail);
+    const res = await sendVerificationCode(email, true);
     if (!res.success) {
       setError(res.message || 'Kod gönderilemedi.');
       setLoading(false);
@@ -215,6 +216,7 @@ export const AdminAuth: React.FC<Props> = ({ onSuccess, onCancel, adminEmail }) 
             <div className="relative">
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
               <input
+                id="admin-email" name="admin-email" autoComplete="email"
                 type="email" value={email} onChange={e => setEmail(e.target.value)}
                 placeholder="admin@ornek.com" autoFocus required
                 className="w-full bg-black/40 border border-white/10 rounded-xl pl-12 pr-4 py-3.5 text-white focus:border-[#39FF14]/50 outline-none"
@@ -236,6 +238,7 @@ export const AdminAuth: React.FC<Props> = ({ onSuccess, onCancel, adminEmail }) 
         {step === 'otp' && (
           <form onSubmit={handleVerifyOtp} className="space-y-5">
             <input
+              id="admin-otp" name="admin-otp"
               type="text" inputMode="numeric" maxLength={8}
               value={otpCode}
               onChange={e => setOtpCode(e.target.value.replace(/\D/g, ''))}
@@ -265,6 +268,7 @@ export const AdminAuth: React.FC<Props> = ({ onSuccess, onCancel, adminEmail }) 
             <div className="relative">
               <Key className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
               <input
+                id="admin-password" name="admin-password" autoComplete="current-password"
                 type="password" value={password}
                 onChange={e => setPassword(e.target.value)}
                 placeholder="••••••••" autoFocus required
@@ -294,12 +298,14 @@ export const AdminAuth: React.FC<Props> = ({ onSuccess, onCancel, adminEmail }) 
               En az 10 karakter, 1 büyük, 1 küçük, 1 rakam.
             </p>
             <input
+              id="new-password" name="new-password" autoComplete="new-password"
               type="password" value={newPassword}
               onChange={e => setNewPassword(e.target.value)}
               placeholder="Yeni parola" autoFocus required
               className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-white focus:border-[#39FF14]/50 outline-none"
             />
             <input
+              id="new-password-confirm" name="new-password-confirm" autoComplete="new-password"
               type="password" value={newPasswordConfirm}
               onChange={e => setNewPasswordConfirm(e.target.value)}
               placeholder="Yeni parolayı tekrar yaz" required
@@ -321,6 +327,7 @@ export const AdminAuth: React.FC<Props> = ({ onSuccess, onCancel, adminEmail }) 
             <div className="relative">
               <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500" />
               <input
+                id="forgot-email" name="forgot-email" autoComplete="email"
                 type="email" value={email} onChange={e => setEmail(e.target.value)}
                 placeholder="admin@ornek.com" required
                 className="w-full bg-black/40 border border-white/10 rounded-xl pl-12 pr-4 py-3.5 text-white focus:border-[#39FF14]/50 outline-none"
