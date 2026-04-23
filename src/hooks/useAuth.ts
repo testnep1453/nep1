@@ -94,15 +94,14 @@ export const useAuth = () => {
 
   const loadStudent = async (id: string, hasVerifiedEmail: boolean = false) => {
     setLoading(true);
+
+    // Try JSON list first; fall back to Supabase for dynamically added students
     const jsonStudent = getStudents().find(s => s.id === id);
-    if (!jsonStudent) {
-      setLoading(false);
-      return;
-    }
 
     // GÜVENLİK: Admin sayfa yenilemelerinde aktif oturum token'ı kontrolü
     // Eğer başka cihaz login olduysa bu cihazın tokeni geçersiz olur → login ekranına git
     if (id === ADMIN_ID) {
+      if (!jsonStudent) { setLoading(false); return; }
       const valid = await validateAdminSession();
       if (!valid) {
         localStorage.removeItem('studentId');
@@ -116,12 +115,31 @@ export const useAuth = () => {
     let studentData = await getStudentById(id);
 
     if (!studentData) {
-      studentData = {
-        id: jsonStudent.id, name: jsonStudent.name, nickname: jsonStudent.nickname, email: jsonStudent.email,
-        xp: jsonStudent.xp || 0, level: jsonStudent.level || 1, badges: [],
-        avatar: jsonStudent.avatar || 'hero_1', lastSeen: Date.now(), attendanceHistory: [], streak: 0,
-      };
-      await upsertStudent(studentData);
+      if (jsonStudent) {
+        // Student exists in JSON — seed Supabase from JSON
+        studentData = {
+          id: jsonStudent.id, name: jsonStudent.name, nickname: jsonStudent.nickname, email: jsonStudent.email,
+          xp: jsonStudent.xp || 0, level: jsonStudent.level || 1, badges: [],
+          avatar: jsonStudent.avatar || 'hero_1', lastSeen: Date.now(), attendanceHistory: [], streak: 0,
+        };
+        await upsertStudent(studentData);
+      } else {
+        // Student not in JSON — look up directly in Supabase
+        const { data: sbStudent } = await supabase
+          .from('students')
+          .select('id, name, nickname, email')
+          .eq('id', id)
+          .maybeSingle();
+
+        if (!sbStudent) { setLoading(false); return; }
+
+        studentData = {
+          id: sbStudent.id, name: sbStudent.name, nickname: sbStudent.nickname, email: sbStudent.email || '',
+          xp: 0, level: 1, badges: [],
+          avatar: 'hero_1', lastSeen: Date.now(), attendanceHistory: [], streak: 0,
+        };
+        await upsertStudent(studentData);
+      }
     }
 
     if (id !== ADMIN_ID && !hasVerifiedEmail) {
@@ -175,15 +193,26 @@ export const useAuth = () => {
       return false;
     }
 
-    const jsonStudent = getStudents().find(s => s.id === studentId);
-    if (jsonStudent) {
-      localStorage.setItem('studentId', studentId);
-      await loadStudent(studentId);
-      return true;
-    }
+    try {
+      const { data: student, error } = await supabase
+        .from('students')
+        .select('id, name, nickname, email')
+        .eq('id', cleanId)
+        .maybeSingle();
 
-    setLoading(false);
-    return false;
+      if (error || !student) {
+        setLoading(false);
+        return false;
+      }
+
+      localStorage.setItem('studentId', cleanId);
+      await loadStudent(cleanId);
+      return true;
+    } catch (err) {
+      console.error('Login error:', err);
+      setLoading(false);
+      return false;
+    }
   };
 
   // Güvenli env erişimi
