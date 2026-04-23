@@ -87,7 +87,7 @@ export const TopBar = ({ student, unreadCount, theme = 'dark', onThemeChange, on
             </button>
 
             {showManualPrompt && (
-              <div className="absolute top-12 right-0 w-80 bg-[#0A1128] border border-[#00F0FF]/40 p-4 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] z-50">
+              <div className="absolute top-12 right-0 w-[calc(100vw-2rem)] max-w-sm md:max-w-md bg-[#0A1128] border border-[#00F0FF]/40 p-4 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] z-50">
                 <p className="text-[#00F0FF] font-bold text-sm mb-2 border-b border-[#00F0FF]/20 pb-1">
                   Kurulum Kılavuzu:
                 </p>
@@ -142,11 +142,11 @@ export const TopBar = ({ student, unreadCount, theme = 'dark', onThemeChange, on
                 setShowNotifications(!showNotifications); 
                 setShowManualPrompt(false); 
               }}
-              className="relative w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-all"
+              className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-all"
             >
               <BellIcon />
               {unreadCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] bg-[#FF4500] rounded-full flex items-center justify-center text-[10px] text-white font-bold px-1 shadow-[0_0_8px_rgba(255,69,0,0.6)]">
+                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] sm:min-w-[18px] sm:h-[18px] bg-[#FF4500] rounded-full flex items-center justify-center text-[10px] text-white font-bold px-1 shadow-[0_0_8px_rgba(255,69,0,0.6)]">
                   {unreadCount > 9 ? '9+' : unreadCount}
                 </span>
               )}

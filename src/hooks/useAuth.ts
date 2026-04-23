@@ -51,7 +51,21 @@ export const useAuth = () => {
         const { data: matchedStudent } = await supabase.from('students').select('id').eq('email', email).maybeSingle();
         
         if (matchedStudent) {
-          // Öğrenci bulunduysa direkt içeri al
+          if (matchedStudent.id === ADMIN_ID) {
+            // Admin Google login: email doğrulandı, parola+TOTP gerekli
+            const jsonStudent = getStudents().find(s => s.id === ADMIN_ID);
+            if (jsonStudent) {
+              setPendingStudent({
+                id: jsonStudent.id, name: jsonStudent.name, nickname: jsonStudent.nickname, email,
+                xp: jsonStudent.xp || 0, level: jsonStudent.level || 1, badges: [],
+                avatar: jsonStudent.avatar || 'hero_2', lastSeen: Date.now(), attendanceHistory: [], streak: 0,
+              });
+              setNeedsAdminAuth(true);
+            }
+            setLoading(false);
+            return;
+          }
+          // Normal öğrenci: direkt içeri al
           localStorage.setItem('studentId', matchedStudent.id);
           sessionStorage.setItem('emailVerified', 'true');
           await loadStudent(matchedStudent.id, true);
@@ -152,7 +166,8 @@ export const useAuth = () => {
           xp: jsonStudent.xp || 0, level: jsonStudent.level || 1, badges: [],
           avatar: jsonStudent.avatar || 'hero_2', lastSeen: Date.now(), attendanceHistory: [], streak: 0,
         });
-        setNeedsAdminAuth(true);
+        // Admin de ajanlar gibi önce e-posta doğrulama, sonra parola+TOTP
+        setNeedsEmailVerification(true);
         setLoading(false);
         return true;
       }
@@ -197,10 +212,18 @@ const loginWithGoogle = async () => {
     if (pendingStudent) {
       const updated = { ...pendingStudent, email };
       sessionStorage.setItem('emailVerified', 'true');
-      saveStudentEmail(updated.id, email); 
-      setStudent(updated);
-      setPendingStudent(null);
-      setNeedsEmailVerification(false);
+      saveStudentEmail(updated.id, email);
+
+      if (updated.id === ADMIN_ID) {
+        // Admin: e-posta doğrulandı, şimdi parola + TOTP adımına geç
+        setPendingStudent(updated);
+        setNeedsEmailVerification(false);
+        setNeedsAdminAuth(true);
+      } else {
+        setStudent(updated);
+        setPendingStudent(null);
+        setNeedsEmailVerification(false);
+      }
     }
   };
 
