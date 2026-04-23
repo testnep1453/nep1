@@ -1,44 +1,38 @@
 // AES-256-GCM ile istemci tarafı şifreleme
-// Supabase'e yazılan hassas veriler şifrelenir, sadece bu istemcide çözülür.
-// Anahtar localStorage'da saklanır — gerçek güvenlik Supabase kurallarıyle sağlanır.
-
-const CRYPTO_KEY_STORAGE = 'nep_crypto_key';
+// Anahtar, VITE_ADMIN_ID'den PBKDF2 ile türetilir — tüm oturumlarda deterministik.
 
 let cachedKey: CryptoKey | null = null;
 
-// Anahtar oluştur veya mevcut olanı kullan
-export const getCryptoKey = async (): Promise<CryptoKey> => {
+export const clearCachedKey = () => { cachedKey = null; };
+
+const deriveKeyFromAdminId = async (): Promise<CryptoKey> => {
   if (cachedKey) return cachedKey;
 
-  const stored = localStorage.getItem(CRYPTO_KEY_STORAGE);
-  if (stored) {
-    const rawKey = Uint8Array.from(JSON.parse(stored));
-    cachedKey = await crypto.subtle.importKey(
-      'raw',
-      rawKey,
-      'AES-GCM',
-      false,
-      ['encrypt', 'decrypt']
-    );
-    return cachedKey;
-  }
+  const adminId = String(import.meta.env.VITE_ADMIN_ID ?? '1002');
+  const salt = 'nep-totp-salt-v1';
 
-  // Yeni anahtar oluştur
-  const key = await crypto.subtle.generateKey(
+  const keyMaterial = await crypto.subtle.importKey(
+    'raw',
+    new TextEncoder().encode(adminId + salt),
+    'PBKDF2',
+    false,
+    ['deriveKey']
+  );
+
+  cachedKey = await crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt: new TextEncoder().encode(salt), iterations: 100_000, hash: 'SHA-256' },
+    keyMaterial,
     { name: 'AES-GCM', length: 256 },
-    true,
+    false,
     ['encrypt', 'decrypt']
   );
 
-  const rawKey = new Uint8Array(await crypto.subtle.exportKey('raw', key));
-  localStorage.setItem(CRYPTO_KEY_STORAGE, JSON.stringify(Array.from(rawKey)));
-  cachedKey = key;
-  return key;
+  return cachedKey;
 };
 
 // Metni şifrele
 export const encryptText = async (text: string): Promise<string> => {
-  const key = await getCryptoKey();
+  const key = await deriveKeyFromAdminId();
   const iv = crypto.getRandomValues(new Uint8Array(12));
   const encoded = new TextEncoder().encode(text);
 
@@ -58,7 +52,7 @@ export const encryptText = async (text: string): Promise<string> => {
 // Metnin şifresini çöz
 export const decryptText = async (encryptedBase64: string): Promise<string | null> => {
   try {
-    const key = await getCryptoKey();
+    const key = await deriveKeyFromAdminId();
     const data = Uint8Array.from(atob(encryptedBase64), c => c.charCodeAt(0));
 
     const iv = data.slice(0, 12);

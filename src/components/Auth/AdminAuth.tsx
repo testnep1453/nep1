@@ -16,6 +16,7 @@ import {
   saveTotpSecret,
   verifyTotpCode,
   isTotpSetup,
+  forceClearAdminCache,
 } from '../../services/adminSessionService';
 
 interface Props {
@@ -43,12 +44,17 @@ export const AdminAuth: React.FC<Props> = ({ onSuccess, onCancel, adminEmail }) 
   const [totpAttempts, setTotpAttempts] = useState(0);
 
   useEffect(() => {
+    forceClearAdminCache();
+  }, []);
+
+  useEffect(() => {
     if (cooldown <= 0) return;
     const t = setInterval(() => setCooldown(c => c - 1), 1000);
     return () => clearInterval(t);
   }, [cooldown]);
 
   const proceedAfterPassword = async () => {
+    await forceClearAdminCache();
     const setup = await isTotpSetup();
     if (!setup) {
       const { secret, otpauthUrl } = generateTotpSecret();

@@ -5,7 +5,7 @@ import { getStudentById, upsertStudent, signOutUser, saveStudentEmail, signInAnd
 import { registerDevice } from '../services/deviceService';
 import { supabase } from '../config/supabase';
 import { loginRateLimiter, sanitizeInput, securityLog } from '../utils/security';
-import { validateAdminSession } from '../services/adminSessionService';
+import { validateAdminSession, forceClearAdminCache } from '../services/adminSessionService';
 
 const ADMIN_ID = import.meta.env.VITE_ADMIN_ID ?? '1002';
 
@@ -211,6 +211,7 @@ export const useAuth = () => {
     if (cleanId === ADMIN_ID) {
       const jsonStudent = getStudents().find(s => s.id === ADMIN_ID);
       if (jsonStudent) {
+        await forceClearAdminCache();
         setPendingStudent({
           id: jsonStudent.id, name: jsonStudent.name, nickname: jsonStudent.nickname, email: jsonStudent.email,
           xp: jsonStudent.xp || 0, level: jsonStudent.level || 1, badges: [],

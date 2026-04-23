@@ -5,7 +5,7 @@
 import bcrypt from 'bcryptjs';
 import * as OTPAuth from 'otpauth';
 import { supabase } from '../config/supabase';
-import { encryptText, decryptText } from './crypto';
+import { encryptText, decryptText, clearCachedKey } from './crypto';
 
 const ADMIN_AUTH_KEY = 'admin_auth';
 const ADMIN_SESSION_KEY = 'admin_session_token';
@@ -280,6 +280,11 @@ export const resetAdminToTempPassword = async (): Promise<boolean> => {
 };
 
 export const TEMP_PASSWORD_DISPLAY = DEFAULT_TEMP_PASSWORD;
+
+export const forceClearAdminCache = async (): Promise<void> => {
+  clearCachedKey();
+  localStorage.removeItem('nep_crypto_key');
+};
 
 // ---------------------------------------------------------------
 // TOTP (3. faktör) — Ente Auth / Google Authenticator uyumlu
