@@ -411,8 +411,8 @@ export const UnifiedDashboard = ({
         )}
       </aside>
 
-      <main className="flex-1 p-4 md:p-8 z-10 overflow-y-auto pb-20 md:pb-8">
-        <header className="flex items-center justify-between mb-6 md:mb-8">
+      <main className="flex-1 p-3 sm:p-6 md:p-8 z-10 overflow-y-auto pb-20 md:pb-8">
+        <header className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6 md:mb-8">
           <div>
             <h2 className={`text-xs sm:text-sm tracking-[0.2em] uppercase mb-1 flex items-center gap-2 ${isAdmin ? 'text-[#39FF14]' : 'text-[#00F0FF]'}`}>
               <span className={`inline-block w-2 h-2 animate-pulse rounded-full ${isAdmin ? 'bg-[#39FF14]' : 'bg-[#00F0FF]'}`} /> {isAdmin ? 'Yönetici' : 'Ajan'}
@@ -679,8 +679,8 @@ export const UnifiedDashboard = ({
               {editStudent && (
                 <div className="fixed inset-0 z-[200] flex items-center justify-center">
                   <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setEditStudent(null)} />
-                  <div className="relative bg-[#0A1128] border border-[#00F0FF]/30 rounded-2xl p-6 w-full max-w-md z-[201] shadow-2xl">
-                    <h3 className="text-[#00F0FF] text-lg font-bold mb-6 uppercase tracking-widest flex items-center gap-2"><span>✏️</span> Ajan Düzenle</h3>
+                  <div className="relative bg-[#0A1128] border border-[#00F0FF]/30 rounded-2xl p-4 lg:p-6 w-full max-w-md mx-2 z-[201] shadow-2xl">
+                    <h3 className="text-[#00F0FF] text-base lg:text-lg font-bold mb-4 lg:mb-6 uppercase tracking-widest flex items-center gap-2"><span>✏️</span> Ajan Düzenle</h3>
                     <div className="space-y-4">
                       <div>
                         <label htmlFor="editId" className="text-gray-400 text-xs font-mono block mb-1">ID (değiştirilemez)</label>
@@ -853,14 +853,14 @@ export const UnifiedDashboard = ({
         <div className="fixed inset-0 z-[500] flex items-center justify-center animate-in fade-in zoom-in duration-300">
           <div className="absolute inset-0 bg-black/95 backdrop-blur-xl" onClick={() => setIsConfigModalOpen(false)} />
           
-          <div className="relative w-full h-full max-w-4xl max-h-[90vh] bg-[#0A1128] border border-[#39FF14]/30 rounded-3xl overflow-hidden flex flex-col shadow-[0_0_100px_rgba(57,255,20,0.2)] mx-4">
-            <div className="p-6 border-b border-white/5 flex items-center justify-between bg-black/40">
+          <div className="relative w-full h-full max-w-4xl max-h-[90vh] bg-[#0A1128] border border-[#39FF14]/30 rounded-xl lg:rounded-3xl overflow-hidden flex flex-col shadow-[0_0_100px_rgba(57,255,20,0.2)] mx-2 lg:mx-4">
+            <div className="p-4 lg:p-6 border-b border-white/5 flex items-center justify-between bg-black/40">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-[#39FF14]/10 rounded-lg flex items-center justify-center border border-[#39FF14]/30">
                   <Settings className="text-[#39FF14] w-6 h-6" />
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold tracking-tight text-white uppercase">Sistem Ayarları</h2>
+                  <h2 className="text-lg lg:text-xl font-bold tracking-tight text-white uppercase">Sistem Ayarları</h2>
                   <p className="text-slate-500 text-xs">Genel operasyonel parametreleri yapılandırın.</p>
                 </div>
               </div>
@@ -872,12 +872,12 @@ export const UnifiedDashboard = ({
               </button>
             </div>
             
-            <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-4 lg:p-8 custom-scrollbar">
               <SystemConfigManager />
               
             </div>
 
-            <div className="p-6 border-t border-white/5 bg-black/20 flex justify-end">
+            <div className="p-4 lg:p-6 border-t border-white/5 bg-black/20 flex justify-end">
               <button 
                 onClick={() => setIsConfigModalOpen(false)}
                 className="px-8 py-3 bg-white/5 hover:bg-white/10 text-white border border-white/10 rounded-xl transition-all font-bold uppercase tracking-widest text-sm"
