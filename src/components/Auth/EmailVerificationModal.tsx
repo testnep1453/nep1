@@ -39,7 +39,7 @@ export const EmailVerificationModal: React.FC<Props> = ({ studentId, onVerified,
       setStep('code');
       setErrorMessage('');
       setFailedAttempts(0);
-      setCooldown(60); 
+      setCooldown(15); 
       setShowSpamTip(false);
     } else {
       setStatus('error');
@@ -90,7 +90,7 @@ export const EmailVerificationModal: React.FC<Props> = ({ studentId, onVerified,
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#050505]/95 backdrop-blur-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#050505]/95 backdrop-blur-xl overflow-hidden">
       <div className="bg-white/[0.03] border border-white/10 p-8 rounded-3xl w-full max-w-md shadow-2xl relative z-10">
         <div className="flex flex-col items-center mb-8">
           <div className="w-16 h-16 rounded-2xl bg-[#39FF14]/10 border border-[#39FF14]/30 flex items-center justify-center mb-4 shadow-[0_0_20px_rgba(57,255,20,0.1)]">

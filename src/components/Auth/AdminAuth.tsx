@@ -94,7 +94,7 @@ export const AdminAuth: React.FC<Props> = ({ onSuccess, onCancel, adminEmail }) 
     const res = await sendVerificationCode(email, true);
     if (res.success) {
       setStep('otp');
-      setCooldown(60);
+      setCooldown(15);
       setInfo('8 haneli doğrulama kodu e-postanıza gönderildi.');
     } else {
       setError(res.message || 'Kod gönderilemedi.');
@@ -242,7 +242,7 @@ export const AdminAuth: React.FC<Props> = ({ onSuccess, onCancel, adminEmail }) 
     setIsForgotFlow(true);
     setInfo(`E-postanıza onay kodu gönderildi. Kodu doğruladığınızda parolanız "${TEMP_PASSWORD_DISPLAY}" olarak sıfırlanacak.`);
     setStep('otp');
-    setCooldown(60);
+    setCooldown(15);
     setLoading(false);
   };
 
@@ -278,7 +278,7 @@ export const AdminAuth: React.FC<Props> = ({ onSuccess, onCancel, adminEmail }) 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#050505]/95 backdrop-blur-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#050505]/95 backdrop-blur-xl overflow-hidden">
       <div className="bg-white/[0.03] border border-white/10 p-8 rounded-3xl w-full max-w-md shadow-2xl relative overflow-y-auto max-h-[90vh]">
         <div className="absolute -top-24 -right-24 w-48 h-48 bg-[#39FF14]/10 blur-[80px] rounded-full pointer-events-none" />
         <div className="absolute -bottom-24 -left-24 w-48 h-48 bg-purple-500/10 blur-[80px] rounded-full pointer-events-none" />
