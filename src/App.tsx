@@ -53,7 +53,7 @@ function App() {
 
   useEffect(() => {
     if (student) {
-      requestNotificationPermission(student.id);
+      // Removed auto-request for notification permission to fix browser error
       setupNotificationListener((payload) => {
         void payload;
       });
