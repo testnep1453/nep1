@@ -5,6 +5,7 @@ import { useSessionTimeout, SESSION_TIMEOUT } from './hooks/useSessionTimeout';
 import { StudentLogin } from './components/Auth/StudentLogin';
 import { AdminAuth } from './components/Auth/AdminAuth';
 import { EmailVerificationModal } from './components/Auth/EmailVerificationModal';
+import { PasswordVerificationModal } from './components/Auth/PasswordVerificationModal';
 import { UnifiedDashboard } from './components/Dashboard/UnifiedDashboard';
 import { AgentDashboard } from './components/Agent/AgentDashboard';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -33,6 +34,9 @@ function App() {
     needsEmailVerification,
     confirmEmailVerification,
     cancelEmailVerification,
+    needsPasswordVerification,
+    confirmPasswordVerification,
+    cancelPasswordVerification,
   } = useAuth();
 
   const { lastCommand, setLastCommand } = useCommandListener();
@@ -120,7 +124,18 @@ function App() {
     );
   }
 
-  // 3. Ekran: Admin Giriş ve Onay
+  // 3. Ekran: OTP Kimlik Doğrulama
+  if (needsPasswordVerification && pendingStudent) {
+    return (
+      <PasswordVerificationModal
+        student={pendingStudent}
+        onVerified={confirmPasswordVerification}
+        onCancel={cancelPasswordVerification}
+      />
+    );
+  }
+
+  // 4. Ekran: Admin Giriş ve Onay
   if (appStatus === 'adminAuth' && pendingStudent) {
     return (
       <AdminAuth

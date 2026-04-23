@@ -15,6 +15,7 @@ export const useAuth = () => {
   const [pendingStudent, setPendingStudent] = useState<Student | null>(null);
   const [needsAdminAuth, setNeedsAdminAuth] = useState(false);
   const [needsEmailVerification, setNeedsEmailVerification] = useState(false);
+  const [needsPasswordVerification, setNeedsPasswordVerification] = useState(false);
   const [googleError, setGoogleError] = useState<string>(() => {
     const stored = sessionStorage.getItem('oauthError');
     if (stored) {
@@ -70,12 +71,26 @@ export const useAuth = () => {
           sessionStorage.setItem('emailVerified', 'true');
           await loadStudent(matchedStudent.id, true);
           return;
-        } else {
-          // Bulunamadıysa oturumu kapat ve uyar
-          await supabase.auth.signOut();
-          sessionStorage.setItem('oauthError', 'Bu Google hesabı sisteme kayıtlı değil. Önce numaranla giriş yaparak e-postanı bağla.');
-          setGoogleError('Bu Google hesabı sisteme kayıtlı değil. Önce numaranla giriş yaparak e-postanı bağla.');
-        }
+          } else {
+            try {
+              const newId = `1${Date.now().toString().slice(-4)}`;
+              const { error: insertError } = await supabase.from('students').insert({
+                id: newId, email: email, name: session.user.user_metadata?.full_name || 'Yeni Kullanıcı',
+                nickname: session.user.user_metadata?.nickname || 'Ajan', xp: 0, level: 1, avatar: 'hero_1', badges: [], created_at: new Date().toISOString(),
+              });
+              if (!insertError) {
+                localStorage.setItem('studentId', newId);
+                sessionStorage.setItem('emailVerified', 'true');
+                await loadStudent(newId, true);
+                setLoading(false);
+                return;
+              }
+            } catch (err) { console.error('Auto-creation error:', err); }
+
+            await supabase.auth.signOut();
+            sessionStorage.setItem('oauthError', 'Sistem hatası. Lütfen tekrar deneyin.');
+            setGoogleError('Sistem hatası. Lütfen tekrar deneyin.');
+          }
       }
 
       // 2. Normal giriş kontrolü
@@ -211,14 +226,20 @@ export const useAuth = () => {
         return false;
       }
 
-      localStorage.setItem('studentId', cleanId);
-      // BUG FIX: E-posta kayıtlıysa doğrulama adımını geç → direkt içeri al
       const alreadyHasEmail = !!(student.email && student.email.trim());
       if (alreadyHasEmail) {
-        sessionStorage.setItem('emailVerified', 'true');
+        setPendingStudent({
+          id: student.id, name: student.name, nickname: student.nickname || 'AJAN',
+          email: student.email, xp: 0, level: 1, badges: [], avatar: 'hero_1', lastSeen: Date.now(), attendanceHistory: [], streak: 0,
+        });
+        setNeedsPasswordVerification(true);
+        setLoading(false);
+        return true;
+      } else {
+        localStorage.setItem('studentId', cleanId);
+        await loadStudent(cleanId, false);
+        return true;
       }
-      await loadStudent(cleanId, alreadyHasEmail);
-      return true;
     } catch (err) {
       console.error('Login error:', err);
       setLoading(false);
@@ -271,7 +292,14 @@ const loginWithGoogle = async () => {
   };
 
   const confirmAdminAuth = () => {
-    if (pendingStudent) {
+    if (pendingStudent && pendingStudent.id === ADMIN_ID) {
+      const sessionToken = localStorage.getItem('admin_session_token');
+      if (!sessionToken) {
+        console.error('Admin session token missing!');
+        cancelAdminAuth();
+        alert('Güvenlik hatası. Lütfen tekrar giriş yapın.');
+        return;
+      }
       localStorage.setItem('studentId', pendingStudent.id);
       sessionStorage.setItem('emailVerified', 'true');
       setStudent(pendingStudent);
@@ -287,6 +315,25 @@ const loginWithGoogle = async () => {
 
   // E-posta doğrulama ekranından ID giriş ekranına güvenli geri dönüş
   // logout()'un aksine window.location.reload() ÇAĞIRMAZ — sadece state'i temizler
+  const confirmPasswordVerification = async () => {
+    if (pendingStudent) {
+      localStorage.setItem('studentId', pendingStudent.id);
+      sessionStorage.setItem('emailVerified', 'true');
+      try { await registerDevice(pendingStudent.id); } catch {}
+      await signInAndMapStudent(pendingStudent.id);
+      setStudent(pendingStudent);
+      setPendingStudent(null);
+      setNeedsPasswordVerification(false);
+    }
+  };
+
+  const cancelPasswordVerification = () => {
+    setPendingStudent(null);
+    setNeedsPasswordVerification(false);
+    localStorage.removeItem('studentId');
+    sessionStorage.removeItem('emailVerified');
+  };
+
   const cancelEmailVerification = () => {
     setPendingStudent(null);
     setNeedsEmailVerification(false);
@@ -306,6 +353,6 @@ const loginWithGoogle = async () => {
     window.location.reload();
   };
 
-  return { student, loading, login, loginWithGoogle, logout, pendingStudent, needsAdminAuth, confirmAdminAuth, cancelAdminAuth, needsEmailVerification, confirmEmailVerification, cancelEmailVerification, googleError };
+  return { student, loading, login, loginWithGoogle, logout, pendingStudent, needsAdminAuth, confirmAdminAuth, cancelAdminAuth, needsEmailVerification, confirmEmailVerification, cancelEmailVerification, needsPasswordVerification, confirmPasswordVerification, cancelPasswordVerification, googleError };
 };
 
