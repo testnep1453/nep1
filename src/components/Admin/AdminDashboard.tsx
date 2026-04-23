@@ -104,23 +104,34 @@ export const AdminDashboard: React.FC = () => {
   const [students, setStudents] = useState<any[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
+  const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
+
+  // Check current notification permission on mount
+  useEffect(() => {
+    if ('Notification' in window) {
+      setNotificationPermission(Notification.permission);
+    }
+  }, []);
 
   useEffect(() => {
     const data = getStudents();
     setStudents(data);
-
-    const enableNotifications = async () => {
-      try {
-        const token = await requestNotificationPermission();
-        if (token) {
-          console.log('Bildirim izni alındı, kilit ekranı mesajları aktif.');
-        }
-      } catch (err) {
-        console.error('Bildirim izni alınamadı:', err);
-      }
-    };
-    enableNotifications();
   }, []);
+
+  const handleEnableNotifications = async () => {
+    try {
+      const token = await requestNotificationPermission();
+      if (token) {
+        console.log('Bildirim izni alındı, kilit ekranı mesajları aktif.');
+        setNotificationPermission('granted');
+      } else {
+        setNotificationPermission(Notification.permission);
+      }
+    } catch (err) {
+      console.error('Bildirim izni alınamadı:', err);
+      setNotificationPermission(Notification.permission);
+    }
+  };
 
   const handleLogout = async () => {
     await signOutUser();
@@ -226,6 +237,18 @@ export const AdminDashboard: React.FC = () => {
                 />
              </div>
              
+             {/* BİLDİRİM İZNİ BUTONU - Sadece izin verilmemişse göster */}
+             {notificationPermission !== 'granted' && (
+               <button 
+                 onClick={handleEnableNotifications}
+                 className="flex items-center gap-2 px-4 py-2 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/30 transition-all font-bold text-xs"
+                 title="Bildirim izni ver"
+               >
+                 <BellRing size={16} />
+                 <span className="tracking-wider">BİLDİRİMLERİ AKTİF ET</span>
+               </button>
+             )}
+
              {/* YÜKLE BUTONU (PWA / İndir) */}
              <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#39FF14]/10 hover:bg-[#39FF14]/20 text-[#39FF14] border border-[#39FF14]/30 transition-all font-bold text-xs">
                 <Download size={16} />
