@@ -95,7 +95,10 @@ export const useAuth = () => {
   const loadStudent = async (id: string, hasVerifiedEmail: boolean = false) => {
     setLoading(true);
 
-    // Try JSON list first; fall back to Supabase for dynamically added students
+    // Step 1: Attempt to get existing data from Supabase first
+    let studentData = await getStudentById(id);
+
+    // Step 2: Determine Source
     const jsonStudent = getStudents().find(s => s.id === id);
 
     // GÜVENLİK: Admin sayfa yenilemelerinde aktif oturum token'ı kontrolü
@@ -112,42 +115,31 @@ export const useAuth = () => {
       }
     }
 
-    let studentData = await getStudentById(id);
-
+    // Step 3: If student doesn't exist in Supabase, seed it properly
     if (!studentData) {
       if (jsonStudent) {
-        // Student exists in JSON — seed Supabase from JSON
+        // Source is JSON (1001-1003)
         studentData = {
           id: jsonStudent.id, name: jsonStudent.name, nickname: jsonStudent.nickname, email: jsonStudent.email,
           xp: jsonStudent.xp || 0, level: jsonStudent.level || 1, badges: [],
           avatar: jsonStudent.avatar || 'hero_1', lastSeen: Date.now(), attendanceHistory: [], streak: 0,
         };
-        await upsertStudent(studentData);
       } else {
-        // Student not in JSON — look up directly in Supabase (use all fields)
-        const { data: sbStudent } = await supabase
-          .from('students')
-          .select('id, name, nickname, email, xp, level, avatar, badges, streak, attendanceHistory')
-          .eq('id', id)
-          .maybeSingle();
-
-        if (!sbStudent) { setLoading(false); return; }
-
+        // Source is Supabase-only (1005+)
+        const { data: sbStudent, error } = await supabase.from('students').select('*').eq('id', id).maybeSingle();
+        if (error || !sbStudent) {
+          localStorage.removeItem('studentId');
+          setLoading(false);
+          return;
+        }
         studentData = {
-          id: sbStudent.id,
-          name: sbStudent.name,
-          nickname: sbStudent.nickname || 'AJAN',
-          email: sbStudent.email || '',
-          xp: sbStudent.xp ?? 0,
-          level: sbStudent.level ?? 1,
-          badges: sbStudent.badges || [],
-          avatar: sbStudent.avatar || 'hero_1',
-          lastSeen: Date.now(),
-          attendanceHistory: sbStudent.attendanceHistory || [],
-          streak: sbStudent.streak ?? 0,
+          id: sbStudent.id, name: sbStudent.name, nickname: sbStudent.nickname || sbStudent.displayName || 'AJAN',
+          email: sbStudent.email || '', xp: sbStudent.xp || 0, level: sbStudent.level || 1,
+          badges: sbStudent.badges || [], avatar: sbStudent.avatar || 'hero_1',
+          lastSeen: Date.now(), attendanceHistory: [], streak: 0,
         };
-        await upsertStudent(studentData);
       }
+      await upsertStudent(studentData);
     }
 
     // BUG FIX: E-postası Supabase'de kayıtlıysa doğrulama modalını atla
