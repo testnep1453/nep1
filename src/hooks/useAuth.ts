@@ -7,7 +7,7 @@ import { supabase } from '../config/supabase';
 import { loginRateLimiter, sanitizeInput, securityLog } from '../utils/security';
 import { validateAdminSession } from '../services/adminSessionService';
 
-const ADMIN_ID = '1002';
+const ADMIN_ID = import.meta.env.VITE_ADMIN_ID ?? '1002';
 
 export const useAuth = () => {
   const [student, setStudent] = useState<Student | null>(null);
@@ -48,9 +48,10 @@ export const useAuth = () => {
           return;
         }
 
-        // 2. Supabase'de bu mailde bir öğrenci var mı bak
-        const { data: matchedStudent } = await supabase.from('students').select('id').eq('email', email).maybeSingle();
-        
+        // 2. Supabase'de bu mailde bir öğrenci var mı bak (.limit(1) → duplicate row'larda 400 hatası olmaz)
+        const { data: matchedStudents } = await supabase.from('students').select('id').eq('email', email).limit(1);
+        const matchedStudent = matchedStudents?.[0] ?? null;
+
         if (matchedStudent) {
           if (matchedStudent.id === ADMIN_ID) {
             // Admin Google login: email doğrulandı, parola+TOTP gerekli
@@ -73,6 +74,16 @@ export const useAuth = () => {
           return;
           } else {
             try {
+              // Double-check: race condition veya senkronizasyon gecikmesiyle kayıt oluşmuş olabilir
+              const { data: raceCheck } = await supabase.from('students').select('id').eq('email', email).limit(1);
+              if (raceCheck && raceCheck.length > 0) {
+                const existingId = raceCheck[0].id;
+                localStorage.setItem('studentId', existingId);
+                sessionStorage.setItem('emailVerified', 'true');
+                await loadStudent(existingId, true);
+                return;
+              }
+
               const newId = `1${Date.now().toString().slice(-4)}`;
               const { error: insertError } = await supabase.from('students').insert({
                 id: newId, email: email, name: session.user.user_metadata?.full_name || 'Yeni Kullanıcı',

@@ -40,7 +40,7 @@ export const sendVerificationCode = async (email: string, isAdmin: boolean = fal
       const { data: student } = await supabase.from('students').select('id').eq('email', email).maybeSingle();
       if (!student) return { success: false, message: 'Bu e-posta adresi sisteme kayıtlı değil!' };
     }
-    const { error } = await supabase.auth.signInWithOtp({ email });
+    const { error } = await supabase.auth.signInWithOtp({ email, options: { shouldCreateUser: false } });
     if (error) return { success: false, message: 'Kod gönderilirken bir sorun oluştu.' };
     return { success: true };
   } catch { return { success: false, message: 'Bağlantı hatası!' }; }
