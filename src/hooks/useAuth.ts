@@ -124,22 +124,36 @@ export const useAuth = () => {
         };
         await upsertStudent(studentData);
       } else {
-        // Student not in JSON — look up directly in Supabase
+        // Student not in JSON — look up directly in Supabase (use all fields)
         const { data: sbStudent } = await supabase
           .from('students')
-          .select('id, name, nickname, email')
+          .select('id, name, nickname, email, xp, level, avatar, badges, streak, attendanceHistory')
           .eq('id', id)
           .maybeSingle();
 
         if (!sbStudent) { setLoading(false); return; }
 
         studentData = {
-          id: sbStudent.id, name: sbStudent.name, nickname: sbStudent.nickname, email: sbStudent.email || '',
-          xp: 0, level: 1, badges: [],
-          avatar: 'hero_1', lastSeen: Date.now(), attendanceHistory: [], streak: 0,
+          id: sbStudent.id,
+          name: sbStudent.name,
+          nickname: sbStudent.nickname || 'AJAN',
+          email: sbStudent.email || '',
+          xp: sbStudent.xp ?? 0,
+          level: sbStudent.level ?? 1,
+          badges: sbStudent.badges || [],
+          avatar: sbStudent.avatar || 'hero_1',
+          lastSeen: Date.now(),
+          attendanceHistory: sbStudent.attendanceHistory || [],
+          streak: sbStudent.streak ?? 0,
         };
         await upsertStudent(studentData);
       }
+    }
+
+    // BUG FIX: E-postası Supabase'de kayıtlıysa doğrulama modalını atla
+    if (id !== ADMIN_ID && !hasVerifiedEmail && studentData.email) {
+      hasVerifiedEmail = true;
+      sessionStorage.setItem('emailVerified', 'true');
     }
 
     if (id !== ADMIN_ID && !hasVerifiedEmail) {
@@ -206,7 +220,12 @@ export const useAuth = () => {
       }
 
       localStorage.setItem('studentId', cleanId);
-      await loadStudent(cleanId);
+      // BUG FIX: E-posta kayıtlıysa doğrulama adımını geç → direkt içeri al
+      const alreadyHasEmail = !!(student.email && student.email.trim());
+      if (alreadyHasEmail) {
+        sessionStorage.setItem('emailVerified', 'true');
+      }
+      await loadStudent(cleanId, alreadyHasEmail);
       return true;
     } catch (err) {
       console.error('Login error:', err);
@@ -237,7 +256,7 @@ const loginWithGoogle = async () => {
     return true; 
   };
 
-  const confirmEmailVerification = (email: string) => {
+  const confirmEmailVerification = async (email: string) => {
     if (pendingStudent) {
       const updated = { ...pendingStudent, email };
       sessionStorage.setItem('emailVerified', 'true');
@@ -249,6 +268,9 @@ const loginWithGoogle = async () => {
         setNeedsEmailVerification(false);
         setNeedsAdminAuth(true);
       } else {
+        // BUG FIX: Cihaz kaydı ve oturum oluşturma yapılıyordu, şimdi de yapılıyor
+        try { await registerDevice(updated.id); } catch {}
+        await signInAndMapStudent(updated.id);
         setStudent(updated);
         setPendingStudent(null);
         setNeedsEmailVerification(false);
