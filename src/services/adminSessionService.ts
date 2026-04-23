@@ -311,7 +311,13 @@ export const verifyTotpCode = async (code: string): Promise<boolean> => {
   const data = await getAdminAuthData();
   if (!data?.totpSecret) return false;
   const base32 = await decryptText(data.totpSecret);
-  if (!base32) return false;
+  if (!base32) {
+    // Kripto anahtarı kaybolmuş/değişmiş — TOTP secret çözülemez.
+    // Kullanıcıyı sonsuz "hatalı kod" döngüsüne sokmak yerine TOTP'yi sıfırla.
+    console.warn('[TOTP] Şifreli TOTP secret çözülemedi — kripto anahtarı uyumsuz. TOTP sıfırlanıyor.');
+    await resetTotp();
+    return false;
+  }
   try {
     return createTotpInstance(OTPAuth.Secret.fromBase32(base32)).validate({ token: code.trim(), window: 1 }) !== null;
   } catch {
@@ -321,7 +327,15 @@ export const verifyTotpCode = async (code: string): Promise<boolean> => {
 
 export const isTotpSetup = async (): Promise<boolean> => {
   const data = await getAdminAuthData();
-  return !!(data?.totpEnabled && data?.totpSecret);
+  if (!data?.totpEnabled || !data?.totpSecret) return false;
+  // Kripto anahtarı hâlâ geçerli mi doğrula — çözülemezse TOTP kurulmamış say
+  const base32 = await decryptText(data.totpSecret);
+  if (!base32) {
+    console.warn('[TOTP] Şifreli TOTP secret çözülemedi — yeniden kurulum gerekli.');
+    await resetTotp();
+    return false;
+  }
+  return true;
 };
 
 export const resetTotp = async (): Promise<boolean> => {
