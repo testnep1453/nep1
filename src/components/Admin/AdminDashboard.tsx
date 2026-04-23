@@ -12,7 +12,9 @@ import {
   Archive,
   Settings,
   PlusCircle,
-  Download
+  Download,
+  Menu,
+  X
 } from 'lucide-react';
 import { signOutUser } from '../../services/authService';
 import { getStudents } from '../../services/clientStorageService';
@@ -105,6 +107,7 @@ export const AdminDashboard: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isConfigModalOpen, setIsConfigModalOpen] = useState(false);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission>('default');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Check current notification permission on mount
   useEffect(() => {
@@ -144,36 +147,42 @@ export const AdminDashboard: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-[#020202] text-white flex overflow-hidden">
-      <aside className="w-64 bg-black/40 border-r border-white/5 flex flex-col backdrop-blur-xl">
+    <div className="min-h-screen bg-[#020202] text-white flex overflow-hidden relative">
+      <aside className={`w-64 bg-black/40 border-r border-white/5 flex flex-col backdrop-blur-xl fixed lg:static inset-y-0 left-0 z-[100] transform transition-transform duration-300 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
         <div className="p-6 flex items-center gap-3 border-b border-white/5">
           <div className="w-10 h-10 bg-[#39FF14]/10 rounded-lg flex items-center justify-center border border-[#39FF14]/30">
             <ShieldAlert className="text-[#39FF14] w-6 h-6" />
           </div>
-          <span className="font-bold tracking-widest text-sm">NEP ADMIN</span>
+          <span className="font-bold tracking-widest text-sm flex-1">NEP ADMIN</span>
+          <button 
+            onClick={() => setIsMobileMenuOpen(false)}
+            className="lg:hidden w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-white/70 hover:text-white transition-all"
+          >
+            <X size={18} />
+          </button>
         </div>
 
         <nav className="flex-1 p-4 space-y-2 mt-4 overflow-y-auto custom-scrollbar">
           <button 
-            onClick={() => setActiveTab('overview')}
+            onClick={() => { setActiveTab('overview'); setIsMobileMenuOpen(false); }}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'overview' ? 'bg-[#39FF14]/10 text-[#39FF14] border border-[#39FF14]/20' : 'text-slate-400 hover:bg-white/5'}`}
           >
             <LayoutDashboard size={20} /> <span className="text-sm font-medium">Genel Bakış</span>
           </button>
           <button 
-            onClick={() => setActiveTab('attendance')}
+            onClick={() => { setActiveTab('attendance'); setIsMobileMenuOpen(false); }}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'attendance' ? 'bg-[#39FF14]/10 text-[#39FF14] border border-[#39FF14]/20' : 'text-slate-400 hover:bg-white/5'}`}
           >
             <Calendar size={20} /> <span className="text-sm font-medium">Yoklama Kayıtları</span>
           </button>
           <button 
-            onClick={() => setActiveTab('surveys')}
+            onClick={() => { setActiveTab('surveys'); setIsMobileMenuOpen(false); }}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'surveys' ? 'bg-[#39FF14]/10 text-[#39FF14] border border-[#39FF14]/20' : 'text-slate-400 hover:bg-white/5'}`}
           >
             <MessageSquare size={20} /> <span className="text-sm font-medium">Anket Yönetimi</span>
           </button>
           <button 
-            onClick={() => setActiveTab('knowledge')}
+            onClick={() => { setActiveTab('knowledge'); setIsMobileMenuOpen(false); }}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'knowledge' ? 'bg-[#39FF14]/10 text-[#39FF14] border border-[#39FF14]/20' : 'text-slate-400 hover:bg-white/5'}`}
           >
             <Database size={20} /> <span className="text-sm font-medium">Bilgi Bankası</span>
@@ -181,7 +190,7 @@ export const AdminDashboard: React.FC = () => {
           
           {/* ARŞİV SEKMESİ (SADECE ARŞİV) */}
           <button 
-            onClick={() => setActiveTab('archive')}
+            onClick={() => { setActiveTab('archive'); setIsMobileMenuOpen(false); }}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'archive' ? 'bg-[#39FF14]/10 text-[#39FF14] border border-[#39FF14]/20' : 'text-slate-400 hover:bg-white/5'}`}
           >
             <Archive size={20} /> <span className="text-sm font-medium">Sistem Arşivi</span>
@@ -189,7 +198,7 @@ export const AdminDashboard: React.FC = () => {
           
           {/* YENİ: GÜVENLİK SEKMESİ */}
           <button 
-            onClick={() => setActiveTab('security')}
+            onClick={() => { setActiveTab('security'); setIsMobileMenuOpen(false); }}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all mt-4 ${activeTab === 'security' ? 'bg-red-500/10 text-red-400 border border-red-500/30' : 'text-slate-400 hover:bg-white/5 hover:text-red-400'}`}
           >
             <ShieldAlert size={20} /> <span className="text-sm font-medium">Güvenlik Merkezi</span>
@@ -197,7 +206,7 @@ export const AdminDashboard: React.FC = () => {
 
           {/* SİSTEM AYARLARI */}
           <button 
-            onClick={() => setActiveTab('config')}
+            onClick={() => { setActiveTab('config'); setIsMobileMenuOpen(false); }}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${activeTab === 'config' ? 'bg-[#00F0FF]/10 text-[#00F0FF] border border-[#00F0FF]/20' : 'text-slate-400 hover:bg-white/5'}`}
           >
             <Settings size={20} /> <span className="text-sm font-medium">Sistem Ayarları</span>
@@ -214,26 +223,39 @@ export const AdminDashboard: React.FC = () => {
         </div>
       </aside>
 
-      <main className="flex-1 overflow-y-auto p-8 relative">
-        <header className="flex items-center justify-between mb-10">
+      {isMobileMenuOpen && (
+        <div 
+          className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[90] lg:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
+      <main className="flex-1 overflow-y-auto p-4 lg:p-8 relative">
+        <button 
+          onClick={() => setIsMobileMenuOpen(true)}
+          className="lg:hidden fixed top-4 left-4 z-50 w-10 h-10 rounded-xl bg-[#39FF14]/10 border border-[#39FF14]/30 flex items-center justify-center text-[#39FF14] hover:bg-[#39FF14]/20 transition-all shadow-lg"
+        >
+          <Menu size={20} />
+        </button>
+        <header className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-6 lg:mb-10 pt-12 lg:pt-0">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">Kontrol Merkezi</h1>
-            <p className="text-slate-500 text-sm">Sistemin genel durumunu ve bildirimleri yönetin.</p>
+            <h1 className="text-xl lg:text-2xl font-bold tracking-tight">Kontrol Merkezi</h1>
+            <p className="text-slate-500 text-xs lg:text-sm hidden sm:block">Sistemin genel durumunu ve bildirimleri yönetin.</p>
           </div>
           
-          <div className="flex items-center gap-4">
-             <div className="relative flex items-center">
-                <Search className="absolute left-3 text-slate-500" size={18} />
+          <div className="flex items-center gap-2 lg:gap-4 w-full lg:w-auto overflow-x-auto pb-2 lg:pb-0">
+             <div className="relative flex items-center flex-shrink-0">
+                <Search className="absolute left-3 text-slate-500" size={16} />
                 <input
                   id="admin-student-search"
                   name="admin-student-search"
                   type="text"
-                  placeholder="Öğrenci ara..."
+                  placeholder="Ara..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   autoComplete="off"
                   aria-label="Öğrenci ara"
-                  className="bg-white/5 border border-white/10 rounded-xl pl-10 pr-4 py-2 text-sm focus:border-[#39FF14]/50 outline-none w-64 transition-all"
+                  className="bg-white/5 border border-white/10 rounded-xl pl-9 pr-3 py-2 text-xs lg:text-sm focus:border-[#39FF14]/50 outline-none w-24 lg:w-64 transition-all"
                 />
              </div>
              
@@ -245,14 +267,14 @@ export const AdminDashboard: React.FC = () => {
                  title="Bildirim izni ver"
                >
                  <BellRing size={16} />
-                 <span className="tracking-wider">BİLDİRİMLERİ AKTİF ET</span>
+                 <span className="tracking-wider hidden lg:inline">BİLDİRİMLERİ AKTİF ET</span>
                </button>
              )}
 
              {/* YÜKLE BUTONU (PWA / İndir) */}
              <button className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[#39FF14]/10 hover:bg-[#39FF14]/20 text-[#39FF14] border border-[#39FF14]/30 transition-all font-bold text-xs">
                 <Download size={16} />
-                <span className="tracking-wider">YÜKLE</span>
+                <span className="tracking-wider hidden lg:inline">YÜKLE</span>
              </button>
 
              {/* AYARLAR ÇARKI */}
@@ -296,7 +318,7 @@ export const AdminDashboard: React.FC = () => {
                   <button className="text-[#39FF14] text-xs font-bold uppercase tracking-wider hover:underline">Hepsini Gör</button>
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left text-sm">
+                  <table className="w-full text-left text-sm min-w-max">
                     <thead className="bg-white/[0.02] text-slate-500">
                       <tr>
                         <th className="px-6 py-4 font-medium">ID</th>
@@ -345,8 +367,8 @@ export const AdminDashboard: React.FC = () => {
         <div className="fixed inset-0 z-[500] flex items-center justify-center animate-in fade-in zoom-in duration-300">
           <div className="absolute inset-0 bg-black/95 backdrop-blur-xl" onClick={() => setIsConfigModalOpen(false)} />
           
-          <div className="relative w-full h-full max-w-4xl max-h-[90vh] bg-[#0A1128] border border-[#39FF14]/30 rounded-3xl overflow-hidden flex flex-col shadow-[0_0_100px_rgba(57,255,20,0.2)] mx-4">
-            <div className="p-6 border-b border-white/5 flex items-center justify-between bg-black/40">
+          <div className="relative w-full h-full max-w-4xl max-h-[90vh] bg-[#0A1128] border border-[#39FF14]/30 rounded-xl lg:rounded-3xl overflow-hidden flex flex-col shadow-[0_0_100px_rgba(57,255,20,0.2)] mx-2 lg:mx-4">
+            <div className="p-4 lg:p-6 border-b border-white/5 flex items-center justify-between bg-black/40">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 bg-[#39FF14]/10 rounded-lg flex items-center justify-center border border-[#39FF14]/30">
                   <Settings className="text-[#39FF14] w-6 h-6" />
@@ -364,7 +386,7 @@ export const AdminDashboard: React.FC = () => {
               </button>
             </div>
             
-            <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+            <div className="flex-1 overflow-y-auto p-4 lg:p-8 custom-scrollbar">
               <SystemConfigManager />
             </div>
 
