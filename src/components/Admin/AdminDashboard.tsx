@@ -66,21 +66,21 @@ const LessonToggleButton = () => {
     <button
       onClick={handleToggleOverride}
       disabled={overrideLoading}
-      className={`w-full py-6 text-center px-6 rounded-2xl mb-8 font-black text-xl md:text-2xl uppercase tracking-widest transition-all duration-300 flex flex-col md:flex-row items-center justify-center gap-4 border-2 shadow-2xl relative overflow-hidden disabled:opacity-50 ${
+      className={`w-full py-3 sm:py-6 text-center px-4 sm:px-6 rounded-2xl mb-4 sm:mb-8 font-black text-base sm:text-xl md:text-2xl uppercase tracking-widest transition-all duration-300 flex flex-col md:flex-row items-center justify-center gap-2 sm:gap-4 border-2 shadow-2xl relative overflow-hidden disabled:opacity-50 ${
         manualLessonActive
           ? 'bg-[#39FF14] border-white text-black shadow-[0_0_80px_rgba(57,255,20,0.6)] scale-[1.02]'
           : 'bg-[#FF4500] border-black text-white shadow-[0_0_40px_rgba(255,69,0,0.4)] hover:bg-[#ff5511]'
       }`}
     >
-      <div className="flex items-center gap-4 z-10 text-center flex-wrap justify-center">
-        <span className="text-3xl md:text-4xl drop-shadow-lg">🚀</span>
+      <div className="flex items-center gap-3 z-10 text-center flex-wrap justify-center">
+        <span className="text-2xl sm:text-3xl md:text-4xl drop-shadow-lg shrink-0">🚀</span>
         <span className="drop-shadow-sm flex flex-col items-center">
           DERSİ ŞİMDİ BAŞLAT
-          <span className="text-sm opacity-80 mt-1">(ZORUNLU GEÇİŞ)</span>
+          <span className="text-xs sm:text-sm opacity-80 mt-0.5 sm:mt-1">(ZORUNLU GEÇİŞ)</span>
         </span>
       </div>
       
-      <span className={`md:absolute md:right-6 text-sm font-bold px-4 py-2 rounded-full z-10 shadow-inner mt-4 md:mt-0 ${
+      <span className={`md:absolute md:right-6 text-xs sm:text-sm font-bold px-3 sm:px-4 py-1 sm:py-2 rounded-full z-10 shadow-inner mt-2 md:mt-0 ${
         manualLessonActive 
           ? 'bg-black text-[#39FF14] border border-black' 
           : 'bg-black/40 text-white border border-white'

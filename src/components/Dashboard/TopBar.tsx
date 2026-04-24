@@ -79,7 +79,7 @@ export const TopBar = ({ student, unreadCount, theme = 'dark', onThemeChange, on
           <div className="relative flex items-center">
             <button
               onClick={handleInstallClick}
-              className="flex items-center justify-center gap-1 w-9 h-9 sm:w-auto sm:h-auto sm:px-3 sm:py-1.5 sm:gap-1.5 min-h-[44px] sm:min-h-0 rounded-full bg-[#39FF14]/10 hover:bg-[#39FF14]/20 text-[#39FF14] border border-[#39FF14]/30 transition-all font-bold text-xs shadow-[0_0_10px_rgba(57,255,20,0.2)] animate-pulse touch-manipulation"
+              className="flex items-center justify-center gap-1 w-9 h-9 sm:w-auto sm:h-auto sm:px-3 sm:py-1.5 sm:gap-1.5 rounded-full bg-[#39FF14]/10 hover:bg-[#39FF14]/20 text-[#39FF14] border border-[#39FF14]/30 transition-all font-bold text-xs shadow-[0_0_10px_rgba(57,255,20,0.2)] animate-pulse touch-manipulation shrink-0"
               title="Sistemi Cihaza Yükle"
             >
               <InstallIcon />
@@ -127,7 +127,7 @@ export const TopBar = ({ student, unreadCount, theme = 'dark', onThemeChange, on
         {isAdmin && onOpenSettings && (
           <button
             onClick={onOpenSettings}
-            className="flex items-center justify-center w-11 h-11 rounded-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-[#39FF14] border border-white/10 transition-all group ml-1 sm:ml-2"
+            className="flex items-center justify-center w-11 h-11 rounded-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-[#39FF14] border border-white/10 transition-all group ml-1 sm:ml-2 shrink-0"
             title="Sistem Ayarları"
           >
             <Settings size={18} className="group-hover:rotate-90 transition-transform duration-500" />
@@ -142,7 +142,7 @@ export const TopBar = ({ student, unreadCount, theme = 'dark', onThemeChange, on
                 setShowNotifications(!showNotifications); 
                 setShowManualPrompt(false); 
               }}
-              className="relative w-11 h-11 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-all"
+              className="relative w-11 h-11 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-all shrink-0"
             >
               <BellIcon />
               {unreadCount > 0 && (

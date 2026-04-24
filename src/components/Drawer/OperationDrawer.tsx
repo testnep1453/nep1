@@ -136,18 +136,18 @@ export const OperationDrawer = ({
               <button
                 onClick={handleToggleOverride}
                 disabled={overrideLoading}
-                className={`w-full min-h-[88px] py-6 sm:py-8 text-center px-4 sm:px-6 rounded-2xl font-black text-lg sm:text-xl md:text-2xl uppercase tracking-widest transition-all duration-300 flex flex-col items-center justify-center gap-4 border-2 shadow-2xl relative overflow-hidden disabled:opacity-50 mt-2 touch-manipulation ${
+                className={`w-full py-3 sm:py-6 text-center px-4 sm:px-6 rounded-2xl font-black text-sm sm:text-xl md:text-2xl uppercase tracking-widest transition-all duration-300 flex flex-col items-center justify-center gap-2 sm:gap-4 border-2 shadow-2xl relative overflow-hidden disabled:opacity-50 mt-2 touch-manipulation ${
                   manualLessonActive
                     ? 'bg-[#39FF14] border-white text-black shadow-[0_0_80px_rgba(57,255,20,0.4)] scale-[1.02]'
                     : 'bg-[#FF4500] border-black text-white shadow-[0_0_40px_rgba(255,69,0,0.3)] hover:bg-[#ff5511]'
                 }`}
               >
-                <div className="flex items-center gap-4 z-10 text-center flex-wrap justify-center">
-                  <span className="text-2xl sm:text-3xl md:text-4xl drop-shadow-lg">🚀</span>
-                  <span className="drop-shadow-sm w-full md:w-auto">DERSİ ŞİMDİ BAŞLAT<br/><span className="text-sm md:text-base opacity-80">(ZORUNLU GEÇİŞ)</span></span>
+                <div className="flex items-center gap-2 sm:gap-4 z-10 text-center flex-wrap justify-center">
+                  <span className="text-xl sm:text-2xl md:text-4xl drop-shadow-lg shrink-0">🚀</span>
+                  <span className="drop-shadow-sm w-full md:w-auto">DERSİ ŞİMDİ BAŞLAT<br/><span className="text-xs sm:text-sm md:text-base opacity-80">(ZORUNLU GEÇİŞ)</span></span>
                 </div>
                 
-                <span className={`text-xs md:text-sm font-bold px-6 py-2 rounded-full z-10 shadow-inner mt-2 ${
+                <span className={`text-[10px] sm:text-xs md:text-sm font-bold px-3 sm:px-6 py-1 sm:py-2 rounded-full z-10 shadow-inner mt-1 sm:mt-2 ${
                   manualLessonActive 
                     ? 'bg-black text-[#39FF14] border-2 border-black' 
                     : 'bg-black/40 text-white border-2 border-white'
