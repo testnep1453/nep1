@@ -73,13 +73,13 @@ export const TopBar = ({ student, unreadCount, theme = 'dark', onThemeChange, on
 
   return (
     <>
-      <div className="flex items-center gap-2 sm:gap-3 relative touch-manipulation">
+      <div className="flex items-center gap-1 sm:gap-3 relative touch-manipulation">
         
         {!isStandalone && (deferredPrompt || !guideDismissed) && (
           <div className="relative flex items-center">
             <button
               onClick={handleInstallClick}
-              className="flex items-center gap-1.5 px-3 py-1.5 min-h-[44px] rounded-full bg-[#39FF14]/10 hover:bg-[#39FF14]/20 text-[#39FF14] border border-[#39FF14]/30 transition-all font-bold text-xs shadow-[0_0_10px_rgba(57,255,20,0.2)] animate-pulse touch-manipulation"
+              className="flex items-center justify-center gap-1 w-9 h-9 sm:w-auto sm:h-auto sm:px-3 sm:py-1.5 sm:gap-1.5 min-h-[44px] sm:min-h-0 rounded-full bg-[#39FF14]/10 hover:bg-[#39FF14]/20 text-[#39FF14] border border-[#39FF14]/30 transition-all font-bold text-xs shadow-[0_0_10px_rgba(57,255,20,0.2)] animate-pulse touch-manipulation"
               title="Sistemi Cihaza Yükle"
             >
               <InstallIcon />

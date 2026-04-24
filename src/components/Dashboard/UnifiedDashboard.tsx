@@ -440,23 +440,23 @@ export const UnifiedDashboard = ({
           {activeTab === 'genel' && (
             <div className="space-y-6 sm:space-y-8 animate-fade-in">
               {isAdmin && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
-                  <div className="clip-path-diagonal bg-[#0A1128]/80 border border-[#39FF14]/30 p-4 sm:p-6 relative group overflow-hidden">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 sm:gap-6 mb-4 sm:mb-8">
+                  <div className="clip-path-diagonal bg-[#0A1128]/80 border border-[#39FF14]/30 p-3 sm:p-6 relative group overflow-hidden">
                     <div className="absolute top-0 right-0 w-16 h-16 bg-[#39FF14]/5 rounded-bl-full transform origin-top-right group-hover:scale-150 transition-transform duration-500" />
                     <h3 className="text-gray-400 text-xs sm:text-sm tracking-widest mb-2 font-mono">TOPLAM AKTİF AJAN</h3>
-                    <p className="text-4xl sm:text-5xl font-bold text-[#39FF14] drop-shadow-[0_0_15px_rgba(57,255,20,0.5)]">
+                    <p className="text-3xl sm:text-5xl font-bold text-[#39FF14] drop-shadow-[0_0_15px_rgba(57,255,20,0.5)]">
                       {students.filter(s => !EXCLUDE_FROM_COUNT.includes(s.id)).length}
                     </p>
                   </div>
-                  <div className="clip-path-diagonal bg-[#0A1128]/80 border border-[#FFB000]/30 p-4 sm:p-6 relative group overflow-hidden">
+                  <div className="clip-path-diagonal bg-[#0A1128]/80 border border-[#FFB000]/30 p-3 sm:p-6 relative group overflow-hidden">
                     <div className="absolute top-0 right-0 w-16 h-16 bg-[#FFB000]/5 rounded-bl-full transform origin-top-right group-hover:scale-150 transition-transform duration-500" />
                     <h3 className="text-gray-400 text-xs sm:text-sm tracking-widest mb-2 font-mono">SİSTEM DURUMU</h3>
                     <p className="text-2xl sm:text-3xl font-bold text-[#FFB000] mt-2 tracking-widest">STABİL</p>
                   </div>
-                  <div className="clip-path-diagonal bg-[#0A1128]/80 border border-[#00F0FF]/30 p-4 sm:p-6 relative group overflow-hidden sm:col-span-2 md:col-span-1">
+                  <div className="clip-path-diagonal bg-[#0A1128]/80 border border-[#00F0FF]/30 p-3 sm:p-6 relative group overflow-hidden sm:col-span-2 md:col-span-1">
                     <div className="absolute top-0 right-0 w-16 h-16 bg-[#00F0FF]/5 rounded-bl-full transform origin-top-right group-hover:scale-150 transition-transform duration-500" />
                     <h3 className="text-gray-400 text-xs sm:text-sm tracking-widest mb-2 font-mono">CANLI KULLANICI</h3>
-                    <p className="text-4xl sm:text-5xl font-bold text-[#00F0FF] drop-shadow-[0_0_15px_rgba(0,240,255,0.5)]">{onlineCount}</p>
+                    <p className="text-3xl sm:text-5xl font-bold text-[#00F0FF] drop-shadow-[0_0_15px_rgba(0,240,255,0.5)]">{onlineCount}</p>
                   </div>
                 </div>
               )}
@@ -496,7 +496,7 @@ export const UnifiedDashboard = ({
 
               {/* MISSION: ABSOLUTE ADMIN OVERRIDE BUTTONS */}
               {isAdmin && (
-                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 mb-8">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-6 mb-6">
                   <button
                     onClick={async () => {
                       const videoUrl = prompt('Fragman YouTube Linki:', trailer?.youtubeId ? `https://www.youtube.com/watch?v=${trailer.youtubeId}` : '');
@@ -504,14 +504,14 @@ export const UnifiedDashboard = ({
                         await sendSystemCommand('START_TRAILER', { video_url: videoUrl });
                       }
                     }}
-                    className="relative group overflow-hidden bg-gradient-to-r from-[#F5D32E]/20 to-[#FFB000]/20 border border-[#F5D32E]/40 p-4 sm:p-6 rounded-2xl transition-all hover:scale-[1.02] active:scale-95 shadow-[0_0_30px_rgba(245,211,46,0.1)]"
+                    className="relative group overflow-hidden bg-gradient-to-r from-[#F5D32E]/20 to-[#FFB000]/20 border border-[#F5D32E]/40 p-3 sm:p-6 rounded-2xl transition-all hover:scale-[1.02] active:scale-95 shadow-[0_0_30px_rgba(245,211,46,0.1)]"
                   >
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 sm:w-14 sm:h-14 bg-[#F5D32E]/10 rounded-xl flex items-center justify-center border border-[#F5D32E]/30 group-hover:bg-[#F5D32E] group-hover:text-black transition-colors">
+                      <div className="w-9 h-9 sm:w-14 sm:h-14 bg-[#F5D32E]/10 rounded-xl flex items-center justify-center border border-[#F5D32E]/30 group-hover:bg-[#F5D32E] group-hover:text-black transition-colors shrink-0">
                         <Play fill="currentColor" />
                       </div>
                       <div className="text-left">
-                        <span className="block text-[#F5D32E] font-black text-base sm:text-lg tracking-widest uppercase mb-1">FRAGMANI BAŞLAT</span>
+                        <span className="block text-[#F5D32E] font-black text-sm sm:text-lg tracking-widest uppercase mb-1">FRAGMANI BAŞLAT</span>
                         <span className="block text-gray-500 text-xs font-mono uppercase">Tüm ekranları kilitle ve videoyu oynat</span>
                       </div>
                     </div>
@@ -523,10 +523,10 @@ export const UnifiedDashboard = ({
                         await sendSystemCommand('START_LESSON');
                       }
                     }}
-                    className="relative group overflow-hidden bg-gradient-to-r from-[#39FF14]/20 to-[#00F0FF]/20 border border-[#39FF14]/40 p-4 sm:p-6 rounded-2xl transition-all hover:scale-[1.02] active:scale-95 shadow-[0_0_30px_rgba(57,255,20,0.1)]"
+                    className="relative group overflow-hidden bg-gradient-to-r from-[#39FF14]/20 to-[#00F0FF]/20 border border-[#39FF14]/40 p-3 sm:p-6 rounded-2xl transition-all hover:scale-[1.02] active:scale-95 shadow-[0_0_30px_rgba(57,255,20,0.1)]"
                   >
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 sm:w-14 sm:h-14 bg-[#39FF14]/10 rounded-xl flex items-center justify-center border border-[#39FF14]/30 group-hover:bg-[#39FF14] group-hover:text-black transition-colors text-[#39FF14]">
+                      <div className="w-9 h-9 sm:w-14 sm:h-14 bg-[#39FF14]/10 rounded-xl flex items-center justify-center border border-[#39FF14]/30 group-hover:bg-[#39FF14] group-hover:text-black transition-colors text-[#39FF14] shrink-0">
                         <Rocket />
                       </div>
                       <div className="text-left">
@@ -542,10 +542,10 @@ export const UnifiedDashboard = ({
                         await resetSystemCommands();
                       }
                     }}
-                    className="relative group overflow-hidden bg-white/5 border border-red-500/20 p-4 sm:p-6 rounded-2xl transition-all hover:scale-[1.02] active:scale-95 hover:border-red-500/50 hover:bg-red-500/5"
+                    className="relative group overflow-hidden bg-white/5 border border-red-500/20 p-3 sm:p-6 rounded-2xl transition-all hover:scale-[1.02] active:scale-95 hover:border-red-500/50 hover:bg-red-500/5"
                   >
                     <div className="flex items-center gap-4 text-red-900 group-hover:text-red-500 transition-colors">
-                      <div className="w-12 h-12 sm:w-14 sm:h-14 bg-red-950/20 rounded-xl flex items-center justify-center border border-red-900/30 group-hover:border-red-500/50">
+                      <div className="w-9 h-9 sm:w-14 sm:h-14 bg-red-950/20 rounded-xl flex items-center justify-center border border-red-900/30 group-hover:border-red-500/50 shrink-0">
                         <Icons.Logout />
                       </div>
                       <div className="text-left">
