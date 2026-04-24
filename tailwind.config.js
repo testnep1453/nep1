@@ -2,7 +2,11 @@
 export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
-    extend: {},
+    extend: {
+      spacing: {
+        'safe-bottom': 'env(safe-area-inset-bottom, 0px)',
+      },
+    },
   },
   plugins: [],
 };

@@ -346,7 +346,7 @@ export const UnifiedDashboard = ({
   }, {});
 
   return (
-    <div className="h-[100dvh] bg-[#050505] text-white flex flex-col md:flex-row font-['Rajdhani',sans-serif] selection:bg-[#39FF14]/30 overflow-hidden">
+    <div className="h-[100dvh] bg-[#050505] text-white flex flex-col md:flex-row font-['Rajdhani',sans-serif] selection:bg-[#39FF14]/30 overflow-hidden overscroll-none">
       <div className="fixed inset-0 pointer-events-none z-0 opacity-20">
         <div className="absolute inset-0 bg-[linear-gradient(rgba(57,255,20,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(57,255,20,0.03)_1px,transparent_1px)] bg-[length:40px_40px]" />
         <div className="scanlines absolute inset-0" />
@@ -412,12 +412,12 @@ export const UnifiedDashboard = ({
       </aside>
 
       <main className="flex-1 p-3 sm:p-6 md:p-8 z-10 overflow-y-auto pb-20 md:pb-8">
-        <header className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6 md:mb-8">
+        <header className="flex flex-row items-center justify-between gap-2 mb-4 sm:mb-6 md:mb-8">
           <div>
             <h2 className={`text-xs sm:text-sm tracking-[0.2em] uppercase mb-1 flex items-center gap-2 ${isAdmin ? 'text-[#39FF14]' : 'text-[#00F0FF]'}`}>
               <span className={`inline-block w-2 h-2 animate-pulse rounded-full ${isAdmin ? 'bg-[#39FF14]' : 'bg-[#00F0FF]'}`} /> {isAdmin ? 'Yönetici' : 'Ajan'}
             </h2>
-            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold uppercase tracking-wider text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">
+            <h1 className="text-xl sm:text-3xl md:text-4xl font-bold uppercase tracking-wider text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.2)]">
               {activeTab === 'genel' && 'ANA SAYFA'}
               {activeTab === 'fragman' && 'FRAGMAN YÖNETİMİ'}
               {activeTab === 'ajanlar' && 'AJAN YÖNETİMİ'}
@@ -469,13 +469,13 @@ export const UnifiedDashboard = ({
                     </h4>
                     <span className="text-[10px] text-red-900/60 font-mono tracking-tighter">PROTO_ALPHA_LIVE</span>
                   </div>
-                  <div className="h-64 overflow-y-auto p-4 font-mono text-[11px] custom-scrollbar bg-black/60 shadow-inner">
+                  <div className="h-64 overflow-y-auto overflow-x-auto p-4 font-mono text-[11px] custom-scrollbar bg-black/60 shadow-inner">
                     {loginAlerts.length === 0 ? (
                       <div className="text-red-900/40 animate-pulse py-10 text-center">LOG_STREAM::Analiz ediliyor...</div>
                     ) : (
                       <div className="space-y-1.5">
                         {loginAlerts.map((log, idx) => (
-                          <div key={log.id || idx} className="flex items-start gap-3 border-l-2 border-red-900/20 pl-3 py-1 hover:bg-red-500/5 transition-colors group">
+                          <div key={log.id || idx} className="flex flex-wrap items-start gap-2 min-w-0 border-l-2 border-red-900/20 pl-3 py-1 hover:bg-red-500/5 transition-colors group">
                             <span className="text-red-900/40 whitespace-nowrap">[{new Date(log.created_at).toLocaleTimeString()}]</span>
                             <span className="text-red-500 font-bold opacity-70 uppercase">ENTRY:</span>
                             <div className="flex-1">
@@ -496,60 +496,60 @@ export const UnifiedDashboard = ({
 
               {/* MISSION: ABSOLUTE ADMIN OVERRIDE BUTTONS */}
               {isAdmin && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
-                  <button 
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-6 mb-8">
+                  <button
                     onClick={async () => {
                       const videoUrl = prompt('Fragman YouTube Linki:', trailer?.youtubeId ? `https://www.youtube.com/watch?v=${trailer.youtubeId}` : '');
                       if (videoUrl) {
                         await sendSystemCommand('START_TRAILER', { video_url: videoUrl });
                       }
                     }}
-                    className="relative group overflow-hidden bg-gradient-to-r from-[#F5D32E]/20 to-[#FFB000]/20 border border-[#F5D32E]/40 p-6 rounded-2xl transition-all hover:scale-[1.02] active:scale-95 shadow-[0_0_30px_rgba(245,211,46,0.1)]"
+                    className="relative group overflow-hidden bg-gradient-to-r from-[#F5D32E]/20 to-[#FFB000]/20 border border-[#F5D32E]/40 p-4 sm:p-6 rounded-2xl transition-all hover:scale-[1.02] active:scale-95 shadow-[0_0_30px_rgba(245,211,46,0.1)]"
                   >
                     <div className="flex items-center gap-4">
-                      <div className="w-14 h-14 bg-[#F5D32E]/10 rounded-xl flex items-center justify-center border border-[#F5D32E]/30 group-hover:bg-[#F5D32E] group-hover:text-black transition-colors">
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 bg-[#F5D32E]/10 rounded-xl flex items-center justify-center border border-[#F5D32E]/30 group-hover:bg-[#F5D32E] group-hover:text-black transition-colors">
                         <Play fill="currentColor" />
                       </div>
                       <div className="text-left">
-                        <span className="block text-[#F5D32E] font-black text-lg tracking-widest uppercase mb-1">FRAGMANI BAŞLAT</span>
+                        <span className="block text-[#F5D32E] font-black text-base sm:text-lg tracking-widest uppercase mb-1">FRAGMANI BAŞLAT</span>
                         <span className="block text-gray-500 text-xs font-mono uppercase">Tüm ekranları kilitle ve videoyu oynat</span>
                       </div>
                     </div>
                   </button>
 
-                  <button 
+                  <button
                     onClick={async () => {
                       if (confirm('Herkesi derse (yoklama ekranına) yönlendirmek istiyor musunuz?')) {
                         await sendSystemCommand('START_LESSON');
                       }
                     }}
-                    className="relative group overflow-hidden bg-gradient-to-r from-[#39FF14]/20 to-[#00F0FF]/20 border border-[#39FF14]/40 p-6 rounded-2xl transition-all hover:scale-[1.02] active:scale-95 shadow-[0_0_30px_rgba(57,255,20,0.1)]"
+                    className="relative group overflow-hidden bg-gradient-to-r from-[#39FF14]/20 to-[#00F0FF]/20 border border-[#39FF14]/40 p-4 sm:p-6 rounded-2xl transition-all hover:scale-[1.02] active:scale-95 shadow-[0_0_30px_rgba(57,255,20,0.1)]"
                   >
                     <div className="flex items-center gap-4">
-                      <div className="w-14 h-14 bg-[#39FF14]/10 rounded-xl flex items-center justify-center border border-[#39FF14]/30 group-hover:bg-[#39FF14] group-hover:text-black transition-colors text-[#39FF14]">
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 bg-[#39FF14]/10 rounded-xl flex items-center justify-center border border-[#39FF14]/30 group-hover:bg-[#39FF14] group-hover:text-black transition-colors text-[#39FF14]">
                         <Rocket />
                       </div>
                       <div className="text-left">
-                        <span className="block text-[#39FF14] font-black text-lg tracking-widest uppercase mb-1">HERKESİ DERSE AL</span>
+                        <span className="block text-[#39FF14] font-black text-base sm:text-lg tracking-widest uppercase mb-1">HERKESİ DERSE AL</span>
                         <span className="block text-gray-500 text-xs font-mono uppercase">Anlık yönlendirme: Operasyon Odası</span>
                       </div>
                     </div>
                   </button>
 
-                  <button 
+                  <button
                     onClick={async () => {
                       if (confirm('Tüm aktif sistem komutlarını (fragman kilidi vb.) sıfırlamak istiyor musunuz?')) {
                         await resetSystemCommands();
                       }
                     }}
-                    className="relative group overflow-hidden bg-white/5 border border-red-500/20 p-6 rounded-2xl transition-all hover:scale-[1.02] active:scale-95 hover:border-red-500/50 hover:bg-red-500/5"
+                    className="relative group overflow-hidden bg-white/5 border border-red-500/20 p-4 sm:p-6 rounded-2xl transition-all hover:scale-[1.02] active:scale-95 hover:border-red-500/50 hover:bg-red-500/5"
                   >
                     <div className="flex items-center gap-4 text-red-900 group-hover:text-red-500 transition-colors">
-                      <div className="w-14 h-14 bg-red-950/20 rounded-xl flex items-center justify-center border border-red-900/30 group-hover:border-red-500/50">
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 bg-red-950/20 rounded-xl flex items-center justify-center border border-red-900/30 group-hover:border-red-500/50">
                         <Icons.Logout />
                       </div>
                       <div className="text-left">
-                        <span className="block font-black text-lg tracking-widest uppercase mb-1">KOMUTLARI SIFIRLA</span>
+                        <span className="block font-black text-base sm:text-lg tracking-widest uppercase mb-1">KOMUTLARI SIFIRLA</span>
                         <span className="block text-gray-500 text-xs font-mono uppercase">Tüm kilitleri kaldır ve normale dön</span>
                       </div>
                     </div>
@@ -637,16 +637,64 @@ export const UnifiedDashboard = ({
                 <h3 className="text-[#39FF14] text-base sm:text-lg font-bold mb-4 uppercase tracking-widest flex items-center gap-2">
                   <span className="text-xl">+</span> Tekil Ajan Kayıt
                 </h3>
-                <form onSubmit={handleAddStudent} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+                <form onSubmit={handleAddStudent} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <input id="newStudentId" name="studentId" type="text" aria-label="ID" placeholder="ID (örn: 1005)" required value={newStudent.id} onChange={(e) => setNewStudent({ ...newStudent, id: e.target.value })} className="bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#39FF14] font-mono transition-colors rounded" />
                   <input id="newStudentName" name="studentName" type="text" aria-label="İsim" placeholder="Gerçek İsim" required value={newStudent.name} onChange={(e) => setNewStudent({ ...newStudent, name: e.target.value })} className="bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#39FF14] transition-colors rounded" />
                   <input id="newStudentNick" name="studentNick" type="text" aria-label="Takma Ad" placeholder="Kod Adı (opsiyonel)" value={newStudent.nickname} onChange={(e) => setNewStudent({ ...newStudent, nickname: e.target.value })} className="bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#39FF14] transition-colors rounded" />
                   <input id="newStudentEmail" name="studentEmail" type="email" aria-label="E-posta" placeholder="E-posta (opsiyonel)" value={newStudent.email} onChange={(e) => setNewStudent({ ...newStudent, email: e.target.value })} className="bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#39FF14] transition-colors rounded" />
-                  <button type="submit" className="bg-[#39FF14]/20 hover:bg-[#39FF14] text-[#39FF14] hover:text-black border border-[#39FF14] px-6 py-3 font-bold transition-all uppercase tracking-widest whitespace-nowrap rounded min-h-[48px]">Ekle</button>
+                  <button type="submit" className="col-span-1 sm:col-span-2 bg-[#39FF14]/20 hover:bg-[#39FF14] text-[#39FF14] hover:text-black border border-[#39FF14] px-6 py-3 font-bold transition-all uppercase tracking-widest whitespace-nowrap rounded min-h-[48px]">Ekle</button>
                 </form>
               </div>
 
-              <div className="bg-[#0A1128]/60 border border-gray-800 overflow-x-auto rounded">
+              {/* AJAN LİSTESİ — MOBİL KART GÖRÜNÜMÜ (sadece < sm breakpoint) */}
+              <div className="sm:hidden space-y-3">
+                {students.filter(s => !PROTECTED_IDS.includes(s.id)).map((stu) => (
+                  <div
+                    key={stu.id}
+                    className="bg-[#0A1128]/60 border border-gray-800 rounded-xl p-4 space-y-2"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-bold text-white text-base">{stu.name}</p>
+                        {stu.nickname && (
+                          <p className="text-xs text-gray-400 font-mono">&raquo; {stu.nickname}</p>
+                        )}
+                      </div>
+                      <span className="text-[#39FF14] font-mono text-sm font-bold">#{stu.id}</span>
+                    </div>
+                    <div className="flex items-center gap-4 text-xs">
+                      <span className="text-[#00F0FF] font-bold">LVL {stu.level || 1}</span>
+                      <span className="text-gray-500 font-mono">XP: {stu.xp || 0}</span>
+                      {stu.email && (
+                        <span className="text-gray-600 truncate max-w-[120px] font-mono">{stu.email}</span>
+                      )}
+                    </div>
+                    <div className="flex gap-2 pt-1">
+                      <button
+                        onClick={() => setEditStudent({
+                          id: stu.id, name: stu.name,
+                          nickname: stu.nickname || '',
+                          email: stu.email || ''
+                        })}
+                        className="flex-1 py-2 bg-[#00F0FF]/10 text-[#00F0FF] text-xs font-bold border border-[#00F0FF]/30 hover:bg-[#00F0FF] hover:text-black transition-colors rounded-lg min-h-[44px]"
+                      >
+                        DÜZENLE
+                      </button>
+                      {!PROTECTED_IDS.includes(stu.id) && (
+                        <button
+                          onClick={() => handleRemove(stu.id, stu.name)}
+                          className="flex-1 py-2 bg-[#FF4500]/10 text-[#FF4500] text-xs font-bold border border-[#FF4500]/30 hover:bg-[#FF4500] hover:text-black transition-colors rounded-lg min-h-[44px]"
+                        >
+                          SİL
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* AJAN LİSTESİ — MASAÜSTÜ TABLO GÖRÜNÜMÜ (sm ve üstü) */}
+              <div className="hidden sm:block bg-[#0A1128]/60 border border-gray-800 overflow-x-auto rounded">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-gray-900 border-b border-gray-700 font-mono text-gray-400 text-xs sm:text-sm">
@@ -677,9 +725,9 @@ export const UnifiedDashboard = ({
               </div>
 
               {editStudent && (
-                <div className="fixed inset-0 z-[200] flex items-center justify-center">
+                <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center">
                   <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setEditStudent(null)} />
-                  <div className="relative bg-[#0A1128] border border-[#00F0FF]/30 rounded-2xl p-4 lg:p-6 w-full max-w-md mx-2 z-[201] shadow-2xl">
+                  <div className="relative bg-[#0A1128] border border-[#00F0FF]/30 rounded-t-2xl sm:rounded-2xl p-4 lg:p-6 w-full max-w-md mx-0 sm:mx-2 z-[201] shadow-2xl pb-[env(safe-area-inset-bottom,1rem)] sm:pb-6">
                     <h3 className="text-[#00F0FF] text-base lg:text-lg font-bold mb-4 lg:mb-6 uppercase tracking-widest flex items-center gap-2"><span>✏️</span> Ajan Düzenle</h3>
                     <div className="space-y-4">
                       <div>

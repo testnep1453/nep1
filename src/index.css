@@ -247,6 +247,28 @@ body {
   padding-bottom: env(safe-area-inset-bottom, 8px);
 }
 
+/* Safe area bottom utility */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom, 1rem);
+}
+
+/* Özel ince scrollbar — yatay */
+.overflow-x-auto::-webkit-scrollbar {
+  height: 4px;
+}
+.overflow-x-auto::-webkit-scrollbar-track {
+  background: transparent;
+}
+.overflow-x-auto::-webkit-scrollbar-thumb {
+  background: rgba(57, 255, 20, 0.2);
+  border-radius: 2px;
+}
+
+/* Overscroll kilidi — drawer ve modal için */
+.overscroll-contain {
+  overscroll-behavior: contain;
+}
+
 /* Dokunmatik hedefler — minimum 44x44px */
 @media (max-width: 768px) {
   button, a, input[type="submit"], [role="button"] {

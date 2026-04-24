@@ -105,7 +105,7 @@ function App() {
   // 1. Ekran: Yükleniyor
   if (loading) {
     return (
-      <div className="min-h-[100dvh] bg-[#050505] flex items-center justify-center">
+      <div className="min-h-[100dvh] bg-[#050505] flex items-center justify-center px-4">
         <div className="text-white text-2xl font-bold animate-pulse tracking-widest">YÜKLENİYOR...</div>
       </div>
     );
