@@ -50,7 +50,7 @@ export function MandatoryPasswordChange() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-100 flex items-center justify-center px-4">
+    <div className="min-h-[100dvh] bg-gray-100 flex items-center justify-center px-4">
       <div className="max-w-md w-full bg-white rounded-lg shadow-md p-8">
         <div className="mb-6">
           <h2 className="text-2xl font-bold text-gray-900">Şifre Değiştirme Zorunlu</h2>

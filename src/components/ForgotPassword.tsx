@@ -73,7 +73,7 @@ export default function ForgotPassword({ loginHref = "/admin/login" }: Props) {
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-[#0f0f1a] flex items-center justify-center p-4">
+    <div className="min-h-[100dvh] bg-[#0f0f1a] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
 
         {/* Header */}

@@ -105,15 +105,16 @@ export const OperationDrawer = ({
   const nextInfo = getLessonInfo(nextLesson);
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center overscroll-none">
       {/* Overlay */}
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
 
       {/* Panel */}
-      <div className="relative w-full h-full max-h-[100dvh] bg-gradient-to-b from-[#0A1128] via-[#080d1e] to-[#050505] flex flex-col z-[101] animate-fade-in">
+      <div className="relative w-full flex flex-col z-[101] animate-fade-in bg-gradient-to-b from-[#0A1128] via-[#080d1e] to-[#050505]"
+           style={{ height: '100dvh', maxHeight: '-webkit-fill-available' }}>
 
         {/* Header */}
-        <div className="px-5 py-4 border-b border-white/5 flex justify-between items-center shrink-0">
+        <div className="px-5 py-4 pt-[max(1rem,env(safe-area-inset-top))] border-b border-white/5 flex justify-between items-center shrink-0">
           <h2 className="text-lg font-black text-white uppercase tracking-widest flex items-center gap-2">
             <span className="text-yellow-400">⚡</span>
             {isAdmin ? 'DERS YÖNETİMİ' : 'DERSE KATIL'}
@@ -127,7 +128,7 @@ export const OperationDrawer = ({
         </div>
 
         {/* İçerik */}
-        <div className="flex-1 flex items-center justify-center p-4 sm:p-6 overflow-y-auto overflow-x-hidden custom-scrollbar overscroll-contain">
+        <div className="flex-1 flex items-center justify-center p-4 sm:p-6 overflow-y-auto overflow-x-hidden custom-scrollbar overscroll-contain touch-manipulation">
           <div className="w-full max-w-2xl mx-auto flex flex-col items-center gap-8 py-4">
 
             {/* ADMIN MANUAL OVERRIDE BUTTON */}
@@ -135,7 +136,7 @@ export const OperationDrawer = ({
               <button
                 onClick={handleToggleOverride}
                 disabled={overrideLoading}
-                className={`w-full py-6 sm:py-8 text-center px-4 sm:px-6 rounded-2xl font-black text-lg sm:text-xl md:text-2xl uppercase tracking-widest transition-all duration-300 flex flex-col items-center justify-center gap-4 border-2 shadow-2xl relative overflow-hidden disabled:opacity-50 mt-2 ${
+                className={`w-full min-h-[88px] py-6 sm:py-8 text-center px-4 sm:px-6 rounded-2xl font-black text-lg sm:text-xl md:text-2xl uppercase tracking-widest transition-all duration-300 flex flex-col items-center justify-center gap-4 border-2 shadow-2xl relative overflow-hidden disabled:opacity-50 mt-2 touch-manipulation ${
                   manualLessonActive
                     ? 'bg-[#39FF14] border-white text-black shadow-[0_0_80px_rgba(57,255,20,0.4)] scale-[1.02]'
                     : 'bg-[#FF4500] border-black text-white shadow-[0_0_40px_rgba(255,69,0,0.3)] hover:bg-[#ff5511]'

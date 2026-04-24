@@ -346,7 +346,7 @@ export const UnifiedDashboard = ({
   }, {});
 
   return (
-    <div className="h-[100dvh] bg-[#050505] text-white flex flex-col md:flex-row font-['Rajdhani',sans-serif] selection:bg-[#39FF14]/30 overflow-hidden overscroll-none">
+    <div className="h-[100dvh] bg-[#050505] text-white flex flex-col md:flex-row font-['Rajdhani',sans-serif] selection:bg-[#39FF14]/30 overflow-hidden overflow-x-hidden overscroll-none">
       <div className="fixed inset-0 pointer-events-none z-0 opacity-20">
         <div className="absolute inset-0 bg-[linear-gradient(rgba(57,255,20,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(57,255,20,0.03)_1px,transparent_1px)] bg-[length:40px_40px]" />
         <div className="scanlines absolute inset-0" />
@@ -358,7 +358,7 @@ export const UnifiedDashboard = ({
         <FeedbackForm lessonDate={autoZoomState.lessonDate} studentId={student.id} onClose={() => { setShowFeedback(false); sessionStorage.setItem(`feedback_${autoZoomState.lessonDate}`, 'true'); }} />
       )}
 
-      <div className="md:hidden sticky top-0 z-30 bg-[#0A1128] border-b border-[#39FF14]/20 flex items-center justify-between px-4 py-3">
+      <div className="md:hidden sticky top-0 z-30 bg-[#0A1128] border-b border-[#39FF14]/20 flex items-center justify-between px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
         <button onClick={() => setDrawerOpen(true)} className="text-[#00F0FF] p-2 min-w-[44px] min-h-[44px] flex items-center justify-center">
           <Icons.Target />
         </button>
@@ -386,7 +386,7 @@ export const UnifiedDashboard = ({
         </div>
       )}
 
-      <aside className="hidden md:flex w-64 bg-[#0A1128] border-r border-[#39FF14]/20 z-10 flex-col h-screen sticky top-0">
+      <aside className="hidden md:flex w-64 bg-[#0A1128] border-r border-[#39FF14]/20 z-10 flex-col h-[100dvh] sticky top-0">
         <div className="p-6 border-b border-[#39FF14]/20 flex items-center justify-center">
           <img src={`${import.meta.env.BASE_URL || '/'}nep-logo.png`} alt="NEP Logo" className="h-10 brightness-0 invert opacity-80" />
         </div>
@@ -469,7 +469,7 @@ export const UnifiedDashboard = ({
                     </h4>
                     <span className="text-[10px] text-red-900/60 font-mono tracking-tighter">PROTO_ALPHA_LIVE</span>
                   </div>
-                  <div className="h-64 overflow-y-auto overflow-x-auto p-4 font-mono text-[11px] custom-scrollbar bg-black/60 shadow-inner">
+                  <div className="h-64 overflow-y-auto overflow-x-auto p-4 font-mono text-[11px] custom-scrollbar bg-black/60 shadow-inner overscroll-contain" style={{WebkitOverflowScrolling: 'touch'}}>
                     {loginAlerts.length === 0 ? (
                       <div className="text-red-900/40 animate-pulse py-10 text-center">LOG_STREAM::Analiz ediliyor...</div>
                     ) : (
@@ -676,14 +676,14 @@ export const UnifiedDashboard = ({
                           nickname: stu.nickname || '',
                           email: stu.email || ''
                         })}
-                        className="flex-1 py-2 bg-[#00F0FF]/10 text-[#00F0FF] text-xs font-bold border border-[#00F0FF]/30 hover:bg-[#00F0FF] hover:text-black transition-colors rounded-lg min-h-[44px]"
+                        className="flex-1 py-2 bg-[#00F0FF]/10 text-[#00F0FF] text-xs font-bold border border-[#00F0FF]/30 hover:bg-[#00F0FF] hover:text-black transition-colors rounded-lg min-h-[44px] touch-manipulation"
                       >
                         DÜZENLE
                       </button>
                       {!PROTECTED_IDS.includes(stu.id) && (
                         <button
                           onClick={() => handleRemove(stu.id, stu.name)}
-                          className="flex-1 py-2 bg-[#FF4500]/10 text-[#FF4500] text-xs font-bold border border-[#FF4500]/30 hover:bg-[#FF4500] hover:text-black transition-colors rounded-lg min-h-[44px]"
+                          className="flex-1 py-2 bg-[#FF4500]/10 text-[#FF4500] text-xs font-bold border border-[#FF4500]/30 hover:bg-[#FF4500] hover:text-black transition-colors rounded-lg min-h-[44px] touch-manipulation"
                         >
                           SİL
                         </button>

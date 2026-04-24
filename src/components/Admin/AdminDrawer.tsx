@@ -23,9 +23,9 @@ export const AdminDrawer = () => {
 
       {/* Drawer Pane */}
       <div 
-        className={`fixed top-0 right-0 h-full w-[85vw] max-w-sm bg-gradient-to-b from-[#1a1d2e] to-[#25293c] border-l-2 border-[#ff9f43]/40 shadow-[-10px_0_30px_rgba(0,0,0,0.5)] z-[101] transform transition-transform duration-300 ease-in-out flex flex-col ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
+        className={`fixed top-0 right-0 h-[100dvh] w-[85vw] max-w-sm bg-gradient-to-b from-[#1a1d2e] to-[#25293c] border-l-2 border-[#ff9f43]/40 shadow-[-10px_0_30px_rgba(0,0,0,0.5)] z-[101] transform transition-transform duration-300 ease-in-out flex flex-col ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}
       >
-        <div className="p-6 border-b-2 border-white/10 flex justify-between items-center bg-[#2d3142]/50">
+        <div className="p-6 pt-[max(1.5rem,env(safe-area-inset-top))] border-b-2 border-white/10 flex justify-between items-center bg-[#2d3142]/50">
           <h2 className="text-lg font-black text-white uppercase tracking-widest flex items-center gap-2 drop-shadow-[0_0_5px_rgba(255,159,67,0.5)]">
             <span className="text-2xl text-[#ff9f43]">👑</span> KOMUTA MERKEZİ
           </h2>
@@ -37,7 +37,7 @@ export const AdminDrawer = () => {
           </button>
         </div>
 
-        <div className="flex-1 p-6 overflow-y-auto space-y-6">
+        <div className="flex-1 p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] overflow-y-auto overscroll-contain space-y-6">
           <div className="bg-[#1a1d2e]/80 p-5 rounded-2xl border-2 border-[#00cfe8]/20 hover:border-[#00cfe8]/50 transition-colors group">
             <h3 className="text-[#00cfe8] font-black text-sm uppercase tracking-widest mb-3 flex items-center gap-2">
               <span className="text-lg">📡</span> Bildirim Gönder

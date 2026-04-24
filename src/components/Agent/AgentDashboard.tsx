@@ -165,7 +165,7 @@ export const AgentDashboard = ({
   };
 
   return (
-    <div className="h-[100dvh] w-full bg-[#050505] text-white flex flex-col md:flex-row font-['Rajdhani',sans-serif] overflow-hidden selection:bg-[#00F0FF]/30">
+    <div className="h-[100dvh] w-full bg-[#050505] text-white flex flex-col md:flex-row font-['Rajdhani',sans-serif] overflow-hidden overflow-x-hidden selection:bg-[#00F0FF]/30">
       
       {/* Arka Plan Efektleri */}
       <div className="fixed inset-0 pointer-events-none z-0 opacity-20">
@@ -188,7 +188,7 @@ export const AgentDashboard = ({
 
       {/* Kahoot popup engellendiyse manuel açma banner'ı */}
       {kahootFallback && (
-        <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50 bg-[#F5D32E] text-black rounded-2xl px-6 py-4 shadow-2xl flex items-center gap-4 max-w-sm w-full mx-4">
+        <div className="fixed bottom-20 left-0 right-0 mx-4 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 z-50 bg-[#F5D32E] text-black rounded-2xl px-6 py-4 shadow-2xl flex items-center gap-4 max-w-sm sm:w-full pb-[max(1rem,env(safe-area-inset-bottom))] sm:pb-4">
           <span className="text-2xl">🎮</span>
           <div className="flex-1">
             <p className="font-black text-sm uppercase tracking-wide">Kahoot başladı!</p>
@@ -222,7 +222,7 @@ export const AgentDashboard = ({
           <div className="bg-[#0A1128] border-b border-[#00F0FF]/20 p-4 space-y-2">
             {visibleTabs.map(tab => (
               <button key={tab.id} onClick={() => { setActiveTab(tab.id); setMobileNavOpen(false); }}
-                className={`flex items-center gap-3 w-full p-3 rounded-md transition-all ${
+                className={`flex items-center gap-3 w-full p-3 rounded-md transition-all min-h-[48px] ${
                   activeTab === tab.id ? 'bg-[#00F0FF]/10 text-[#00F0FF]' : 'text-gray-400 hover:bg-white/5'
                 }`}>
                 {tab.icon}
@@ -295,16 +295,16 @@ export const AgentDashboard = ({
               </div>
             )}
             
-            {activeTab === 'levels' && <div className="overflow-y-auto h-full pr-2 custom-scrollbar"><LevelProgress student={student} /></div>}
-            {activeTab === 'archive' && <div className="overflow-y-auto h-full pr-2 custom-scrollbar"><ArchivePage /></div>}
-            {activeTab === 'activity' && <div className="overflow-y-auto h-full pr-2 custom-scrollbar"><ActivityPage student={student} /></div>}
-            {activeTab === 'feedback' && <div className="overflow-y-auto h-full pr-2 custom-scrollbar"><SurveysClient /></div>}
+            {activeTab === 'levels' && <div className="overflow-y-auto h-full pr-2 custom-scrollbar overscroll-contain"><LevelProgress student={student} /></div>}
+            {activeTab === 'archive' && <div className="overflow-y-auto h-full pr-2 custom-scrollbar overscroll-contain"><ArchivePage /></div>}
+            {activeTab === 'activity' && <div className="overflow-y-auto h-full pr-2 custom-scrollbar overscroll-contain"><ActivityPage student={student} /></div>}
+            {activeTab === 'feedback' && <div className="overflow-y-auto h-full pr-2 custom-scrollbar overscroll-contain"><SurveysClient /></div>}
           </div>
         </div>
       </main>
 
       {/* Mobil Alt Bar */}
-      <div className="md:hidden flex-none bg-[#0A1128] border-t border-[#00F0FF]/20 z-20 flex items-center justify-around px-1 py-1 pb-safe overflow-x-auto">
+      <div className="md:hidden flex-none bg-[#0A1128] border-t border-[#00F0FF]/20 z-20 flex items-center justify-around px-1 py-1 pb-[max(0.25rem,env(safe-area-inset-bottom))] overflow-x-auto snap-x-mandatory">
         {[
           { id: 'home' as AgentTab, icon: <Icons.Home />, label: 'LOBİ' },
           { id: 'operation' as AgentTab, icon: <Icons.Target />, label: 'OPE', action: () => setDrawerOpen(true) },
@@ -313,7 +313,7 @@ export const AgentDashboard = ({
         ].map(item => (
           <button key={item.id}
             onClick={item.action || (() => setActiveTab(item.id))}
-            className={`flex flex-col items-center gap-0.5 p-1.5 rounded-lg transition-all min-w-[52px] ${
+            className={`flex flex-col items-center gap-0.5 p-1.5 rounded-lg transition-all min-w-[52px] min-h-[44px] snap-start touch-manipulation ${
               activeTab === item.id && !item.action ? 'text-[#00F0FF]' : item.action ? 'bg-[#6358cc]/20 text-[#8b7fd8]' : 'text-gray-500'
             }`}>
             {item.icon}

@@ -147,7 +147,7 @@ export const AdminDashboard: React.FC = () => {
   );
 
   return (
-    <div className="min-h-screen bg-[#020202] text-white flex overflow-hidden relative">
+    <div className="min-h-[100dvh] bg-[#020202] text-white flex overflow-hidden relative">
       <aside className={`w-64 bg-black/40 border-r border-white/5 flex flex-col backdrop-blur-xl fixed lg:static inset-y-0 left-0 z-[100] transform transition-transform duration-300 ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
         <div className="p-6 flex items-center gap-3 border-b border-white/5">
           <div className="w-10 h-10 bg-[#39FF14]/10 rounded-lg flex items-center justify-center border border-[#39FF14]/30">

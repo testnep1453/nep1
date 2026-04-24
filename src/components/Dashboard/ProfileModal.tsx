@@ -69,7 +69,7 @@ export const ProfileModal = ({ student, isOpen, onClose, theme, onThemeChange }:
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-[#0A1128] border-2 border-[#00F0FF]/30 rounded-3xl p-6 md:p-8 w-full max-w-md animate-fade-in shadow-2xl">
+      <div className="relative bg-[#0A1128] border-2 border-[#00F0FF]/30 rounded-3xl p-6 md:p-8 pb-[max(1.5rem,env(safe-area-inset-bottom))] w-full max-w-md max-h-[90dvh] overflow-y-auto overscroll-contain animate-fade-in shadow-2xl">
         <h2 className="text-[#00F0FF] font-black uppercase tracking-widest text-center mb-6">Ajan Kimlik Ayarları</h2>
         
         <div className="flex flex-col items-center mb-8">

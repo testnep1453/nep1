@@ -41,7 +41,7 @@ export default function AdminResetPassword() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 font-mono">
+    <div className="min-h-[100dvh] bg-slate-950 flex items-center justify-center p-4 font-mono">
       <form onSubmit={handleUpdate} className="w-full max-w-md bg-slate-900 border border-slate-800 p-8 rounded-3xl space-y-6">
         <div className="text-center mb-6">
           <Shield className="text-red-600 mx-auto mb-4" size={48} />

@@ -73,13 +73,13 @@ export const TopBar = ({ student, unreadCount, theme = 'dark', onThemeChange, on
 
   return (
     <>
-      <div className="flex items-center gap-2 sm:gap-3 relative">
+      <div className="flex items-center gap-2 sm:gap-3 relative touch-manipulation">
         
         {!isStandalone && (deferredPrompt || !guideDismissed) && (
           <div className="relative flex items-center">
             <button
               onClick={handleInstallClick}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#39FF14]/10 hover:bg-[#39FF14]/20 text-[#39FF14] border border-[#39FF14]/30 transition-all font-bold text-xs shadow-[0_0_10px_rgba(57,255,20,0.2)] animate-pulse"
+              className="flex items-center gap-1.5 px-3 py-1.5 min-h-[44px] rounded-full bg-[#39FF14]/10 hover:bg-[#39FF14]/20 text-[#39FF14] border border-[#39FF14]/30 transition-all font-bold text-xs shadow-[0_0_10px_rgba(57,255,20,0.2)] animate-pulse touch-manipulation"
               title="Sistemi Cihaza Yükle"
             >
               <InstallIcon />
@@ -87,7 +87,7 @@ export const TopBar = ({ student, unreadCount, theme = 'dark', onThemeChange, on
             </button>
 
             {showManualPrompt && (
-              <div className="fixed bottom-0 left-0 right-0 mx-auto w-full max-w-md bg-[#0A1128] border-t border-[#00F0FF]/40 p-4 pb-safe rounded-t-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.9)] z-[200] sm:absolute sm:bottom-auto sm:top-12 sm:right-0 sm:border sm:rounded-xl sm:max-w-sm sm:pb-4">
+              <div className="fixed bottom-0 left-0 right-0 mx-auto w-full max-w-md bg-[#0A1128] border-t border-[#00F0FF]/40 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] rounded-t-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.9)] z-[200] overscroll-contain sm:absolute sm:bottom-auto sm:top-12 sm:right-0 sm:border sm:rounded-xl sm:max-w-sm sm:pb-4">
                 <p className="text-[#00F0FF] font-bold text-sm mb-2 border-b border-[#00F0FF]/20 pb-1">
                   Kurulum Kılavuzu:
                 </p>
@@ -115,7 +115,7 @@ export const TopBar = ({ student, unreadCount, theme = 'dark', onThemeChange, on
                     localStorage.setItem('pwa_guide_dismissed', 'true');
                     setGuideDismissed(true);
                   }} 
-                  className="mt-4 w-full bg-[#00F0FF]/20 text-[#00F0FF] hover:bg-[#00F0FF]/30 py-2 rounded-lg font-bold transition-colors"
+                  className="mt-4 w-full bg-[#00F0FF]/20 text-[#00F0FF] hover:bg-[#00F0FF]/30 py-3 min-h-[44px] rounded-lg font-bold transition-colors touch-manipulation"
                 >
                   Anladım
                 </button>

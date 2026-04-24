@@ -109,6 +109,7 @@ export const SecurityLogs: React.FC = () => {
           </p>
         </div>
       ) : (
+        <div className="overflow-x-auto custom-scrollbar overscroll-contain" style={{WebkitOverflowScrolling: 'touch' as any}}>
         <div className="grid grid-cols-1 gap-4">
           {logs.map((log) => (
             <div 
@@ -170,6 +171,7 @@ export const SecurityLogs: React.FC = () => {
               </div>
             </div>
           ))}
+        </div>
         </div>
       )}
 

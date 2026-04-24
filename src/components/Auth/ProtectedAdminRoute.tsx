@@ -62,7 +62,7 @@ export const ProtectedAdminRoute: React.FC<ProtectedAdminRouteProps> = ({ childr
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-[#050505] flex items-center justify-center">
+      <div className="min-h-[100dvh] bg-[#050505] flex items-center justify-center">
         <div className="flex flex-col items-center gap-4">
           <Loader2 className="w-12 h-12 text-[#39FF14] animate-spin" />
           <p className="text-gray-400 text-sm font-mono">Güvenlik doğrulaması yapılıyor...</p>
@@ -73,7 +73,7 @@ export const ProtectedAdminRoute: React.FC<ProtectedAdminRouteProps> = ({ childr
 
   if (!isAuthorized) {
     return (
-      <div className="min-h-screen bg-[#050505] flex items-center justify-center p-4">
+      <div className="min-h-[100dvh] bg-[#050505] flex items-center justify-center p-4">
         <div className="bg-white/[0.03] border border-red-500/30 p-8 rounded-2xl max-w-md w-full text-center">
           <ShieldAlert className="w-16 h-16 text-red-500 mx-auto mb-4" />
           <h2 className="text-xl font-bold text-white mb-2">Erişim Reddedildi</h2>

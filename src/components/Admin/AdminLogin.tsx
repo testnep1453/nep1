@@ -92,7 +92,7 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4 font-mono">
+    <div className="min-h-[100dvh] bg-slate-950 flex items-center justify-center p-4 font-mono">
       <div className="w-full max-w-md bg-slate-900 border border-slate-800 rounded-3xl p-8 shadow-2xl">
         <div className="flex justify-center mb-8">
           <Shield size={48} className="text-red-600" />

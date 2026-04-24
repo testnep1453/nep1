@@ -44,7 +44,7 @@ export const NotificationPanel = ({ studentId, isOpen, onClose }: NotificationPa
   return (
     <div
       ref={panelRef}
-      className="absolute right-0 sm:right-0 top-14 w-[calc(100vw-2rem)] sm:w-80 max-h-[70vh] bg-[#0A1128]/95 backdrop-blur-md border border-[#00F0FF]/30 rounded-xl shadow-[0_0_30px_rgba(0,0,0,0.8)] z-[200] flex flex-col overflow-hidden animate-fade-in mx-4 sm:mx-0"
+      className="fixed right-0 left-0 top-[52px] mx-2 sm:absolute sm:left-auto sm:mx-0 sm:right-0 sm:top-14 sm:w-80 w-auto bg-[#0A1128]/95 backdrop-blur-md border border-[#00F0FF]/30 rounded-xl shadow-[0_0_30px_rgba(0,0,0,0.8)] z-[200] flex flex-col overflow-hidden animate-fade-in"
     >
       <div className="p-4 border-b border-[#00F0FF]/20 flex items-center justify-between bg-[#00F0FF]/5">
         <div>
@@ -61,7 +61,7 @@ export const NotificationPanel = ({ studentId, isOpen, onClose }: NotificationPa
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto custom-scrollbar">
+      <div className="flex-1 max-h-[60dvh] overflow-y-auto custom-scrollbar overscroll-contain">
         {notifications.length === 0 ? (
           <div className="p-12 text-center relative overflow-hidden group">
             <div className="absolute inset-0 bg-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
