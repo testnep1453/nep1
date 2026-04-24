@@ -189,7 +189,7 @@ export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps
             <h3 className="text-gray-400 font-bold mb-3 uppercase tracking-widest flex items-center gap-2 text-[10px] md:text-xs border-b border-gray-800 pb-2">
               <Shield className="w-4 h-4 text-[#00F0FF]" /> KİLİDİ AÇILAN TEÇHİZATLAR
             </h3>
-            <div className="grid grid-cols-3 gap-2 md:gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 md:gap-4">
               {INVENTORY_ITEMS.map(item => {
                 const isUnlocked = student.level >= item.reqLevel;
                 return (

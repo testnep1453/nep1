@@ -42,7 +42,6 @@ export const AgentDashboard = ({
 
   const [activeTab, setActiveTab] = useState<AgentTab>('home');
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const [showFeedback, setShowFeedback] = useState(false);
   const [trailer, setTrailerState] = useState<Trailer | null>(null);
   const [hasPendingSurvey, setHasPendingSurvey] = useState(false);
@@ -205,33 +204,12 @@ export const AgentDashboard = ({
       )}
 
       {/* Mobil Üst Bar */}
-      <div className="md:hidden flex-none z-30 bg-[#0A1128] border-b border-[#00F0FF]/20 flex items-center justify-between px-4 py-2">
-        <button onClick={() => setDrawerOpen(true)} className="text-[#00F0FF] p-2 flex items-center justify-center">
-          <Icons.Target />
-        </button>
+      <div className="md:hidden flex-none z-30 bg-[#0A1128] border-b border-[#00F0FF]/20 flex items-center justify-between px-4 py-2 pt-[max(0.5rem,env(safe-area-inset-top))]">
         <img src={`${import.meta.env.BASE_URL || '/'}nep-logo.png`} alt="NEP" className="h-6 brightness-0 invert opacity-70" />
-        <button onClick={() => setMobileNavOpen(!mobileNavOpen)} className="text-white p-2 flex items-center justify-center relative">
-          <Icons.Menu />
-          {unreadCount > 0 && <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#FF4500] rounded-full" />}
-        </button>
-      </div>
-
-      {/* Mobil Menü Modal */}
-      {mobileNavOpen && (
-        <div className="md:hidden fixed inset-0 top-[48px] bg-black/80 z-20" onClick={() => setMobileNavOpen(false)}>
-          <div className="bg-[#0A1128] border-b border-[#00F0FF]/20 p-4 space-y-2">
-            {visibleTabs.map(tab => (
-              <button key={tab.id} onClick={() => { setActiveTab(tab.id); setMobileNavOpen(false); }}
-                className={`flex items-center gap-3 w-full p-3 rounded-md transition-all min-h-[48px] ${
-                  activeTab === tab.id ? 'bg-[#00F0FF]/10 text-[#00F0FF]' : 'text-gray-400 hover:bg-white/5'
-                }`}>
-                {tab.icon}
-                <span className="font-semibold tracking-wide">{tab.label}</span>
-              </button>
-            ))}
-          </div>
+        <div className="flex items-center gap-1">
+          <TopBar student={student} unreadCount={unreadCount} />
         </div>
-      )}
+      </div>
 
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex w-64 bg-[#0A1128] border-r border-[#00F0FF]/20 z-10 flex-col h-full flex-none">
@@ -261,7 +239,7 @@ export const AgentDashboard = ({
       </aside>
 
       {/* ANA EKRAN İÇERİĞİ (TAMAMEN SCROLL'SUZ) */}
-      <main className="flex-1 flex flex-col h-[calc(100dvh-48px)] md:h-[100dvh] z-10 overflow-hidden relative">
+      <main className="flex-1 flex flex-col min-h-0 z-10 overflow-hidden relative">
         
         <header className="flex-none flex items-center justify-between p-4 md:p-6 shrink-0">
           <div>
@@ -272,7 +250,9 @@ export const AgentDashboard = ({
               {tabTitles[activeTab]}
             </h1>
           </div>
-          <TopBar student={student} unreadCount={unreadCount} />
+          <div className="hidden md:block">
+            <TopBar student={student} unreadCount={unreadCount} />
+          </div>
         </header>
 
         {/* PROFIL KARTI MERKEZLEME ALANI */}
@@ -303,21 +283,29 @@ export const AgentDashboard = ({
         </div>
       </main>
 
-      {/* Mobil Alt Bar */}
-      <div className="md:hidden flex-none bg-[#0A1128] border-t border-[#00F0FF]/20 z-20 flex items-center justify-around px-1 py-1 pb-[max(0.25rem,env(safe-area-inset-bottom))] overflow-x-auto snap-x-mandatory">
-        {[
+      {/* Mobil Alt Bar — 5 sekme her zaman görünür */}
+      <div className="md:hidden flex-none bg-[#0A1128] border-t border-[#00F0FF]/20 z-20 flex items-center justify-around px-1 pt-1 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+        {([
           { id: 'home' as AgentTab, icon: <Icons.Home />, label: 'LOBİ' },
           { id: 'operation' as AgentTab, icon: <Icons.Target />, label: 'OPE', action: () => setDrawerOpen(true) },
           { id: 'levels' as AgentTab, icon: <Icons.Trophy />, label: 'LEVEL' },
-          ...(hasPendingSurvey ? [{ id: 'feedback' as AgentTab, icon: <span className="text-xl leading-none">📋</span>, label: 'SORGU' }] : []),
-        ].map(item => (
-          <button key={item.id}
-            onClick={item.action || (() => setActiveTab(item.id))}
-            className={`flex flex-col items-center gap-0.5 p-1.5 rounded-lg transition-all min-w-[52px] min-h-[44px] snap-start touch-manipulation ${
-              activeTab === item.id && !item.action ? 'text-[#00F0FF]' : item.action ? 'bg-[#6358cc]/20 text-[#8b7fd8]' : 'text-gray-500'
-            }`}>
+          { id: 'archive' as AgentTab, icon: <Icons.Film />, label: 'ARŞİV' },
+          { id: 'activity' as AgentTab, icon: <Icons.Calendar />, label: 'ARENA' },
+          ...(hasPendingSurvey ? [{ id: 'feedback' as AgentTab, icon: <span className="text-base leading-none">📋</span>, label: 'SORGU' }] : []),
+        ] as { id: AgentTab; icon: JSX.Element; label: string; action?: () => void }[]).map(item => (
+          <button
+            key={item.id}
+            onClick={item.action ?? (() => setActiveTab(item.id))}
+            className={`flex flex-col items-center gap-0.5 px-1 py-1.5 rounded-lg transition-all min-w-[44px] min-h-[48px] touch-manipulation ${
+              activeTab === item.id && !item.action
+                ? 'text-[#00F0FF]'
+                : item.action
+                  ? 'bg-[#6358cc]/20 text-[#8b7fd8]'
+                  : 'text-gray-500'
+            }`}
+          >
             {item.icon}
-            <span className="text-[8px] font-bold">{item.label}</span>
+            <span className="text-[8px] font-bold leading-none mt-0.5">{item.label}</span>
           </button>
         ))}
       </div>
