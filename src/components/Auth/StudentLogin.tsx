@@ -159,7 +159,7 @@ export const StudentLogin = ({
   };
 
   return (
-    <div className="min-h-[100dvh] w-full bg-[#050505] flex flex-col items-center justify-center p-4 overflow-hidden relative">
+    <div className="min-h-[100dvh] w-full bg-[#050505] flex flex-col items-center justify-center px-4 sm:px-6 overflow-hidden relative">
       <div className="absolute inset-0 pointer-events-none z-0 opacity-20">
         <div className="absolute inset-0 bg-[linear-gradient(rgba(57,255,20,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(57,255,20,0.03)_1px,transparent_1px)] bg-[length:40px_40px]" />
       </div>
@@ -168,7 +168,7 @@ export const StudentLogin = ({
         <img
           src={`${import.meta.env.BASE_URL || '/'}nep-logo.png`}
           alt="NEP Logo"
-          className="h-24 sm:h-28 object-contain mb-8 brightness-0 invert drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]"
+          className="h-16 sm:h-20 md:h-28 object-contain mb-8 brightness-0 invert drop-shadow-[0_0_15px_rgba(255,255,255,0.4)]"
         />
 
         <div className="mb-10 sm:mb-12 inline-block">
@@ -189,11 +189,11 @@ export const StudentLogin = ({
             onKeyDown={handleKeyDown}
             maxLength={4}
             placeholder={loading ? 'BEKLEYİN...' : placeholderId}
-            className={`w-full px-2 py-4 bg-transparent border-b-2 ${
+            className={`w-full max-w-xs sm:max-w-sm min-h-[56px] px-2 py-4 bg-transparent border-b-2 ${
               error
                 ? 'border-[#ff6b6e] text-[#ff6b6e]'
                 : 'border-[#39FF14]/50 text-white focus:border-[#39FF14]'
-            } text-4xl sm:text-5xl font-black tracking-[0.4em] text-center placeholder:text-white/20 focus:outline-none transition-all`}
+            } text-3xl sm:text-5xl font-black tracking-[0.4em] text-center placeholder:text-white/20 focus:outline-none transition-all`}
             disabled={loading || googleLoading}
             autoComplete="username"
             aria-label="Öğrenci numarası"
@@ -216,7 +216,7 @@ export const StudentLogin = ({
           id="googleLoginBtn"
           onClick={handleGoogleLogin}
           disabled={loading || googleLoading}
-          className="w-full flex items-center justify-center gap-3 min-h-[44px] bg-white/5 hover:bg-white/10 text-white border border-white/20 hover:border-white/40 py-3.5 px-6 rounded-lg font-medium text-sm transition-all disabled:opacity-30 disabled:cursor-not-allowed touch-manipulation"
+          className="w-full flex items-center justify-center gap-3 min-h-[48px] bg-white/5 hover:bg-white/10 text-white border border-white/20 hover:border-white/40 py-3.5 px-6 rounded-lg font-medium text-sm transition-all disabled:opacity-30 disabled:cursor-not-allowed touch-manipulation"
         >
           <svg className="w-5 h-5 flex-shrink-0" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" />

@@ -210,8 +210,8 @@ export const AdminAuth: React.FC<Props> = ({ onSuccess, onCancel, adminEmail }) 
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#050505]/95 backdrop-blur-xl overflow-hidden">
-      <div className="bg-white/[0.03] border border-white/10 p-8 rounded-3xl w-full max-w-md shadow-2xl relative overflow-y-auto overflow-x-hidden max-h-[90vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#050505]/95 backdrop-blur-xl overflow-y-auto max-h-[100dvh]">
+      <div className="bg-white/[0.03] border border-white/10 p-6 sm:p-8 rounded-3xl w-full max-w-sm sm:max-w-md mx-auto shadow-2xl relative overflow-x-hidden">
         <div className="absolute top-0 right-0 w-48 h-48 bg-[#39FF14]/10 blur-[80px] rounded-full pointer-events-none" />
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-purple-500/10 blur-[80px] rounded-full pointer-events-none" />
 
@@ -246,21 +246,21 @@ export const AdminAuth: React.FC<Props> = ({ onSuccess, onCancel, adminEmail }) 
                 type="password" value={password}
                 onChange={e => setPassword(e.target.value)}
                 placeholder="••••••••" autoFocus required
-                className="w-full bg-black/40 border border-white/10 rounded-xl pl-12 pr-4 py-3.5 text-white focus:border-[#39FF14]/50 outline-none"
+                className="w-full bg-black/40 border border-white/10 rounded-xl pl-12 pr-4 py-3 text-base text-white focus:border-[#39FF14]/50 outline-none"
               />
             </div>
-            <div className="flex gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row">
               <button type="button" onClick={onCancel}
-                className="flex-1 py-3.5 rounded-xl font-medium text-slate-400 bg-white/5 hover:bg-white/10 flex items-center justify-center gap-2">
+                className="flex-1 min-h-[48px] py-3.5 rounded-xl font-medium text-slate-400 bg-white/5 hover:bg-white/10 flex items-center justify-center gap-2 touch-manipulation">
                 <ArrowLeft className="w-4 h-4" /> İptal
               </button>
               <button type="submit" disabled={loading || cooldown > 0}
-                className="flex-1 py-3.5 rounded-xl font-bold bg-[#39FF14] text-black hover:bg-[#32e011] disabled:opacity-50">
+                className="flex-1 min-h-[48px] py-3.5 rounded-xl font-bold bg-[#39FF14] text-black hover:bg-[#32e011] disabled:opacity-50 touch-manipulation">
                 {loading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : cooldown > 0 ? `${cooldown}s` : 'Giriş'}
               </button>
             </div>
             <button type="button" onClick={() => { setStep('forgot'); setError(''); setInfo(''); }}
-              className="w-full text-xs text-slate-500 hover:text-[#39FF14] flex items-center justify-center gap-1">
+              className="w-full min-h-[48px] text-xs text-slate-500 hover:text-[#39FF14] flex items-center justify-center gap-1 touch-manipulation">
               <HelpCircle className="w-3 h-3" /> Parolamı unuttum
             </button>
           </form>
@@ -276,17 +276,17 @@ export const AdminAuth: React.FC<Props> = ({ onSuccess, onCancel, adminEmail }) 
               type="password" value={newPassword}
               onChange={e => setNewPassword(e.target.value)}
               placeholder="Yeni parola" autoFocus required
-              className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-white focus:border-[#39FF14]/50 outline-none"
+              className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-base text-white focus:border-[#39FF14]/50 outline-none"
             />
             <input
               id="new-password-confirm" name="new-password-confirm" autoComplete="new-password"
               type="password" value={newPasswordConfirm}
               onChange={e => setNewPasswordConfirm(e.target.value)}
               placeholder="Yeni parolayı tekrar yaz" required
-              className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3.5 text-white focus:border-[#39FF14]/50 outline-none"
+              className="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-base text-white focus:border-[#39FF14]/50 outline-none"
             />
             <button type="submit" disabled={loading}
-              className="w-full py-3.5 rounded-xl font-bold bg-[#39FF14] text-black hover:bg-[#32e011] disabled:opacity-50">
+              className="w-full min-h-[48px] py-3.5 rounded-xl font-bold bg-[#39FF14] text-black hover:bg-[#32e011] disabled:opacity-50 touch-manipulation">
               {loading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : 'Parolayı Kaydet ve Devam Et'}
             </button>
           </form>
@@ -294,7 +294,7 @@ export const AdminAuth: React.FC<Props> = ({ onSuccess, onCancel, adminEmail }) 
 
         {step === 'totpSetup' && pendingTotp && (
           <form onSubmit={handleTotpSetup} className="space-y-5">
-            <div className="bg-white p-4 rounded-2xl flex items-center justify-center mx-auto w-fit">
+            <div className="bg-white p-4 rounded-2xl flex items-center justify-center w-full max-w-[200px] mx-auto">
               <QRCodeSVG value={pendingTotp.url} size={180} level="M" />
             </div>
             <div className="text-center space-y-1">
@@ -303,7 +303,7 @@ export const AdminAuth: React.FC<Props> = ({ onSuccess, onCancel, adminEmail }) 
                 QR'ı tara, uygulamadaki 6 haneli kodu aşağıya yaz.
               </p>
               <button type="button" onClick={handleCopySecret}
-                className="mt-2 flex items-center gap-2 mx-auto text-[10px] font-mono text-slate-500 hover:text-[#39FF14] border border-white/10 hover:border-[#39FF14]/30 px-3 py-1.5 rounded-lg transition-all">
+                className="mt-2 w-full min-h-[48px] flex items-center gap-2 mx-auto text-[10px] font-mono text-slate-500 hover:text-[#39FF14] border border-white/10 hover:border-[#39FF14]/30 px-3 py-1.5 rounded-lg transition-all touch-manipulation justify-center">
                 {copied ? <Check className="w-3 h-3 text-[#39FF14]" /> : <Copy className="w-3 h-3" />}
                 {copied ? 'Kopyalandı' : 'Secret\'ı kopyala (manuel giriş için)'}
               </button>
@@ -314,10 +314,10 @@ export const AdminAuth: React.FC<Props> = ({ onSuccess, onCancel, adminEmail }) 
               value={totpCode}
               onChange={e => setTotpCode(e.target.value.replace(/\D/g, ''))}
               placeholder="••••••" autoFocus required
-              className="w-full bg-black/40 border border-white/10 rounded-xl py-4 text-center text-3xl tracking-[0.4em] font-mono text-white focus:border-[#39FF14]/50 outline-none"
+              className="w-full bg-black/40 border border-white/10 rounded-xl py-3 text-center text-2xl sm:text-3xl tracking-[0.3em] font-mono text-white focus:border-[#39FF14]/50 outline-none"
             />
             <button type="submit" disabled={loading || cooldown > 0 || totpCode.length !== 6}
-              className="w-full py-3.5 rounded-xl font-bold bg-[#39FF14] text-black hover:bg-[#32e011] disabled:opacity-50">
+              className="w-full min-h-[48px] py-3.5 rounded-xl font-bold bg-[#39FF14] text-black hover:bg-[#32e011] disabled:opacity-50 touch-manipulation">
               {loading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : cooldown > 0 ? `Kilitli ${cooldown}s` : 'Doğrula ve Aktifleştir'}
             </button>
           </form>
@@ -336,7 +336,7 @@ export const AdminAuth: React.FC<Props> = ({ onSuccess, onCancel, adminEmail }) 
               value={totpCode}
               onChange={e => setTotpCode(e.target.value.replace(/\D/g, ''))}
               placeholder="••••••" autoFocus required
-              className="w-full bg-black/40 border border-white/10 rounded-xl py-4 text-center text-3xl tracking-[0.4em] font-mono text-white focus:border-[#39FF14]/50 outline-none"
+              className="w-full bg-black/40 border border-white/10 rounded-xl py-3 text-center text-2xl sm:text-3xl tracking-[0.3em] font-mono text-white focus:border-[#39FF14]/50 outline-none"
             />
             {cooldown > 0 && (
               <p className="text-center text-xs text-red-400 flex items-center justify-center gap-1">
@@ -344,7 +344,7 @@ export const AdminAuth: React.FC<Props> = ({ onSuccess, onCancel, adminEmail }) 
               </p>
             )}
             <button type="submit" disabled={loading || cooldown > 0 || totpCode.length !== 6}
-              className="w-full py-3.5 rounded-xl font-bold bg-[#39FF14] text-black hover:bg-[#32e011] disabled:opacity-50">
+              className="w-full min-h-[48px] py-3.5 rounded-xl font-bold bg-[#39FF14] text-black hover:bg-[#32e011] disabled:opacity-50 touch-manipulation">
               {loading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : 'Giriş Yap'}
             </button>
           </form>
@@ -356,13 +356,13 @@ export const AdminAuth: React.FC<Props> = ({ onSuccess, onCancel, adminEmail }) 
               E-postanız zaten doğrulanmış. Parolanızı geçici olarak
               "<b>{TEMP_PASSWORD_DISPLAY}</b>" şeklinde sıfırlayabilirsiniz.
             </p>
-            <div className="flex gap-3">
+            <div className="flex flex-col gap-3 sm:flex-row">
               <button type="button" onClick={() => { setStep('password'); setError(''); setInfo(''); }}
-                className="flex-1 py-3.5 rounded-xl font-medium text-slate-400 bg-white/5 hover:bg-white/10 flex items-center justify-center gap-2">
+                className="flex-1 min-h-[48px] py-3.5 rounded-xl font-medium text-slate-400 bg-white/5 hover:bg-white/10 flex items-center justify-center gap-2 touch-manipulation">
                 <ArrowLeft className="w-4 h-4" /> Geri
               </button>
               <button type="button" onClick={handleForgotReset} disabled={loading}
-                className="flex-1 py-3.5 rounded-xl font-bold bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 disabled:opacity-50">
+                className="flex-1 min-h-[48px] py-3.5 rounded-xl font-bold bg-red-500/20 text-red-400 border border-red-500/30 hover:bg-red-500/30 disabled:opacity-50 touch-manipulation">
                 {loading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : 'Sıfırla'}
               </button>
             </div>
