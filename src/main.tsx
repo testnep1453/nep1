@@ -19,7 +19,7 @@ if ('serviceWorker' in navigator) {
         console.log('PWA Modülü Aktif:', registration.scope);
       })
       .catch((err) => {
-        console.log('PWA Hatası:', err);
+        console.warn('SW registration failed:', err);
       });
   });
 }
