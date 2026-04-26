@@ -87,7 +87,7 @@ export const TopBar = ({ student, unreadCount, theme = 'dark', onThemeChange, on
             </button>
 
             {showManualPrompt && (
-              <div className="fixed bottom-0 left-0 right-0 mx-auto w-full max-w-md bg-[#0A1128] border-t border-[#00F0FF]/40 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] rounded-t-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.9)] z-[200] overscroll-contain sm:absolute sm:bottom-auto sm:top-12 sm:right-0 sm:border sm:rounded-xl sm:max-w-sm sm:pb-4">
+              <div className="fixed bottom-0 left-0 right-0 mx-auto w-full max-w-md bg-[#0A1128] border-t border-[#00F0FF]/40 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] rounded-t-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.9)] z-[200] overscroll-contain sm:absolute sm:bottom-auto sm:top-12 sm:right-0 sm:border sm:rounded-xl sm:w-80 sm:pb-4">
                 <p className="text-[#00F0FF] font-bold text-sm mb-2 border-b border-[#00F0FF]/20 pb-1">
                   Kurulum Kılavuzu:
                 </p>
@@ -127,7 +127,7 @@ export const TopBar = ({ student, unreadCount, theme = 'dark', onThemeChange, on
         {isAdmin && onOpenSettings && (
           <button
             onClick={onOpenSettings}
-            className="flex items-center justify-center w-11 h-11 rounded-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-[#39FF14] border border-white/10 transition-all group ml-1 sm:ml-2 shrink-0"
+            className="flex items-center justify-center w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 text-white/70 hover:text-[#39FF14] border border-white/10 transition-all group ml-1 sm:ml-2 shrink-0 touch-manipulation"
             title="Sistem Ayarları"
           >
             <Settings size={18} className="group-hover:rotate-90 transition-transform duration-500" />
@@ -142,7 +142,7 @@ export const TopBar = ({ student, unreadCount, theme = 'dark', onThemeChange, on
                 setShowNotifications(!showNotifications); 
                 setShowManualPrompt(false); 
               }}
-              className="relative w-11 h-11 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-all shrink-0"
+              className="relative w-11 h-11 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center text-gray-400 hover:text-white transition-all shrink-0 touch-manipulation"
             >
               <BellIcon />
               {unreadCount > 0 && (

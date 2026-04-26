@@ -358,18 +358,8 @@ export const UnifiedDashboard = ({
         <FeedbackForm lessonDate={autoZoomState.lessonDate} studentId={student.id} onClose={() => { setShowFeedback(false); sessionStorage.setItem(`feedback_${autoZoomState.lessonDate}`, 'true'); }} />
       )}
 
-      <div className="md:hidden sticky top-0 z-30 bg-[#0A1128] border-b border-[#39FF14]/20 flex items-center justify-between px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
-        <button onClick={() => setDrawerOpen(true)} className="text-[#00F0FF] p-2 min-w-[44px] min-h-[44px] flex items-center justify-center">
-          <Icons.Target />
-        </button>
-        <img src={`${import.meta.env.BASE_URL || '/'}nep-logo.png`} alt="NEP" className="h-7 brightness-0 invert opacity-70" />
-        <button onClick={() => setMobileNavOpen(!mobileNavOpen)} className="text-white p-2 min-w-[44px] min-h-[44px] flex items-center justify-center">
-          <Icons.Menu />
-        </button>
-      </div>
-
       {mobileNavOpen && (
-        <div className="md:hidden fixed inset-0 top-[52px] bg-black/80 z-20" onClick={() => setMobileNavOpen(false)}>
+        <div className="fixed inset-0 bg-black/80 z-20 md:hidden" onClick={() => setMobileNavOpen(false)}>
           <div className="bg-[#0A1128] border-b border-[#39FF14]/20 p-4 space-y-2">
             {tabConfig.map(tab => (
               <button key={tab.id} onClick={() => { setActiveTab(tab.id); setMobileNavOpen(false); }} className={`flex items-center gap-3 w-full p-3 rounded-md transition-all min-h-[48px] ${activeTab === tab.id ? (isAdmin ? 'bg-[#39FF14]/10 text-[#39FF14]' : 'bg-[#00F0FF]/10 text-[#00F0FF]') : 'text-gray-400 hover:bg-white/5'}`}>
@@ -412,7 +402,14 @@ export const UnifiedDashboard = ({
       </aside>
 
       <main className="flex-1 p-3 sm:p-6 md:p-8 z-10 overflow-y-auto pb-20 md:pb-8">
-        <header className="flex flex-row items-center justify-between gap-2 mb-4 sm:mb-6 md:mb-8">
+        <div className="md:hidden sticky top-0 z-30 -mx-3 -mt-3 mb-3 bg-[#0A1128] border-b border-[#39FF14]/20 flex items-center justify-between px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
+          <button onClick={() => setMobileNavOpen(!mobileNavOpen)} className="text-white p-2 min-w-[44px] min-h-[44px] flex items-center justify-center touch-manipulation">
+            <Icons.Menu />
+          </button>
+          <img src={`${import.meta.env.BASE_URL || '/'}nep-logo.png`} alt="NEP" className="h-7 brightness-0 invert opacity-70" />
+          <TopBar student={student} unreadCount={unreadCount} theme={theme} onThemeChange={handleThemeChange} onOpenSettings={() => setIsConfigModalOpen(true)} />
+        </div>
+        <header className="hidden md:flex flex-row items-center justify-between gap-2 mb-4 sm:mb-6 md:mb-8">
           <div>
             <h2 className={`text-xs sm:text-sm tracking-[0.2em] uppercase mb-1 flex items-center gap-2 ${isAdmin ? 'text-[#39FF14]' : 'text-[#00F0FF]'}`}>
               <span className={`inline-block w-2 h-2 animate-pulse rounded-full ${isAdmin ? 'bg-[#39FF14]' : 'bg-[#00F0FF]'}`} /> {isAdmin ? 'Yönetici' : 'Ajan'}
@@ -440,7 +437,7 @@ export const UnifiedDashboard = ({
           {activeTab === 'genel' && (
             <div className="space-y-6 sm:space-y-8 animate-fade-in">
               {isAdmin && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-6 mb-3 sm:mb-8">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-6 mb-3 sm:mb-8">
                   <div className="clip-path-diagonal bg-[#0A1128]/80 border border-[#39FF14]/30 p-3 sm:p-6 relative group overflow-hidden">
                     <div className="absolute top-0 right-0 w-16 h-16 bg-[#39FF14]/5 rounded-bl-full transform origin-top-right group-hover:scale-150 transition-transform duration-500" />
                     <h3 className="text-gray-400 text-[10px] sm:text-xs tracking-widest mb-1 sm:mb-2 font-mono">TOPLAM AKTİF AJAN</h3>
@@ -453,7 +450,7 @@ export const UnifiedDashboard = ({
                     <h3 className="text-gray-400 text-[10px] sm:text-xs tracking-widest mb-1 sm:mb-2 font-mono">SİSTEM DURUMU</h3>
                     <p className="text-xl sm:text-3xl font-bold text-[#FFB000] mt-1 sm:mt-2 tracking-widest">STABİL</p>
                   </div>
-                  <div className="clip-path-diagonal bg-[#0A1128]/80 border border-[#00F0FF]/30 p-3 sm:p-6 relative group overflow-hidden sm:col-span-2 md:col-span-1">
+                  <div className="clip-path-diagonal bg-[#0A1128]/80 border border-[#00F0FF]/30 p-3 sm:p-6 relative group overflow-hidden">
                     <div className="absolute top-0 right-0 w-16 h-16 bg-[#00F0FF]/5 rounded-bl-full transform origin-top-right group-hover:scale-150 transition-transform duration-500" />
                     <h3 className="text-gray-400 text-[10px] sm:text-xs tracking-widest mb-1 sm:mb-2 font-mono">CANLI KULLANICI</h3>
                     <p className="text-2xl sm:text-4xl lg:text-5xl font-bold text-[#00F0FF] drop-shadow-[0_0_15px_rgba(0,240,255,0.5)]">{onlineCount}</p>
@@ -574,20 +571,20 @@ export const UnifiedDashboard = ({
                     <input id="ytInput" name="ytInput" type="text" value={trailerYoutubeUrl}
                       onChange={(e) => setTrailerYoutubeUrl(e.target.value)}
                       placeholder="https://www.youtube.com/watch?v=..."
-                      className="w-full bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#F5D32E] font-mono transition-colors rounded" />
+                      className="w-full bg-[#050505] border border-gray-700 text-white text-base p-3 focus:outline-none focus:border-[#F5D32E] font-mono transition-colors rounded" />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                       <label htmlFor="dtInput" className="text-gray-400 text-sm tracking-widest mb-1 block">Gösterim Tarihi</label>
                       <input id="dtInput" name="trailerDate" type="date" value={trailerShowDate}
                         onChange={(e) => setTrailerShowDate(e.target.value)}
-                        className="w-full bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#F5D32E] transition-colors rounded min-h-[48px]" />
+                        className="w-full bg-[#050505] border border-gray-700 text-white text-base p-3 focus:outline-none focus:border-[#F5D32E] transition-colors rounded min-h-[48px]" />
                     </div>
                     <div>
                       <label htmlFor="tmInput" className="text-gray-400 text-sm tracking-widest mb-1 block">Gösterim Saati</label>
                       <input id="tmInput" name="trailerTime" type="time" value={trailerShowTime}
                         onChange={(e) => setTrailerShowTime(e.target.value)}
-                        className="w-full bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#F5D32E] transition-colors rounded min-h-[48px]" />
+                        className="w-full bg-[#050505] border border-gray-700 text-white text-base p-3 focus:outline-none focus:border-[#F5D32E] transition-colors rounded min-h-[48px]" />
                     </div>
                   </div>
                   <p className="text-gray-600 text-xs">Tarih ve saat boş bırakılırsa fragman hemen yayınlanır.</p>
@@ -638,10 +635,10 @@ export const UnifiedDashboard = ({
                   <span className="text-xl">+</span> Tekil Ajan Kayıt
                 </h3>
                 <form onSubmit={handleAddStudent} className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                  <input id="newStudentId" name="studentId" type="text" aria-label="ID" placeholder="ID (örn: 1005)" required value={newStudent.id} onChange={(e) => setNewStudent({ ...newStudent, id: e.target.value })} className="bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#39FF14] font-mono transition-colors rounded" />
-                  <input id="newStudentName" name="studentName" type="text" aria-label="İsim" placeholder="Gerçek İsim" required value={newStudent.name} onChange={(e) => setNewStudent({ ...newStudent, name: e.target.value })} className="bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#39FF14] transition-colors rounded" />
-                  <input id="newStudentNick" name="studentNick" type="text" aria-label="Takma Ad" placeholder="Kod Adı (opsiyonel)" value={newStudent.nickname} onChange={(e) => setNewStudent({ ...newStudent, nickname: e.target.value })} className="bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#39FF14] transition-colors rounded" />
-                  <input id="newStudentEmail" name="studentEmail" type="email" aria-label="E-posta" placeholder="E-posta (opsiyonel)" value={newStudent.email} onChange={(e) => setNewStudent({ ...newStudent, email: e.target.value })} className="bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#39FF14] transition-colors rounded" />
+                  <input id="newStudentId" name="studentId" type="text" aria-label="ID" placeholder="ID (örn: 1005)" required value={newStudent.id} onChange={(e) => setNewStudent({ ...newStudent, id: e.target.value })} className="bg-[#050505] border border-gray-700 text-white text-base p-3 focus:outline-none focus:border-[#39FF14] font-mono transition-colors rounded" />
+                  <input id="newStudentName" name="studentName" type="text" aria-label="İsim" placeholder="Gerçek İsim" required value={newStudent.name} onChange={(e) => setNewStudent({ ...newStudent, name: e.target.value })} className="bg-[#050505] border border-gray-700 text-white text-base p-3 focus:outline-none focus:border-[#39FF14] transition-colors rounded" />
+                  <input id="newStudentNick" name="studentNick" type="text" aria-label="Takma Ad" placeholder="Kod Adı (opsiyonel)" value={newStudent.nickname} onChange={(e) => setNewStudent({ ...newStudent, nickname: e.target.value })} className="bg-[#050505] border border-gray-700 text-white text-base p-3 focus:outline-none focus:border-[#39FF14] transition-colors rounded" />
+                  <input id="newStudentEmail" name="studentEmail" type="email" aria-label="E-posta" placeholder="E-posta (opsiyonel)" value={newStudent.email} onChange={(e) => setNewStudent({ ...newStudent, email: e.target.value })} className="bg-[#050505] border border-gray-700 text-white text-base p-3 focus:outline-none focus:border-[#39FF14] transition-colors rounded" />
                   <button type="submit" className="col-span-1 sm:col-span-2 bg-[#39FF14]/20 hover:bg-[#39FF14] text-[#39FF14] hover:text-black border border-[#39FF14] px-6 py-3 font-bold transition-all uppercase tracking-widest whitespace-nowrap rounded min-h-[48px]">Ekle</button>
                 </form>
               </div>
@@ -725,26 +722,26 @@ export const UnifiedDashboard = ({
               </div>
 
               {editStudent && (
-                <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center">
+                <div className="fixed inset-0 z-[200] flex items-end sm:items-center">
                   <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setEditStudent(null)} />
-                  <div className="relative bg-[#0A1128] border border-[#00F0FF]/30 rounded-t-2xl sm:rounded-2xl p-4 lg:p-6 w-full max-w-md mx-0 sm:mx-2 z-[201] shadow-2xl pb-[env(safe-area-inset-bottom,1rem)] sm:pb-6">
+                  <div className="relative bg-[#0A1128] border border-[#00F0FF]/30 rounded-t-2xl sm:rounded-2xl p-4 lg:p-6 w-full sm:max-w-md sm:mx-auto z-[201] shadow-2xl pb-[env(safe-area-inset-bottom,1rem)] sm:pb-6">
                     <h3 className="text-[#00F0FF] text-base lg:text-lg font-bold mb-4 lg:mb-6 uppercase tracking-widest flex items-center gap-2"><span>✏️</span> Ajan Düzenle</h3>
                     <div className="space-y-4">
                       <div>
                         <label htmlFor="editId" className="text-gray-400 text-xs font-mono block mb-1">ID (değiştirilemez)</label>
-                        <input id="editId" type="text" disabled value={editStudent.id} className="bg-[#050505]/50 border border-gray-700 text-gray-500 p-3 w-full rounded font-mono cursor-not-allowed" />
+                        <input id="editId" type="text" disabled value={editStudent.id} className="bg-[#050505]/50 border border-gray-700 text-gray-500 text-base p-3 w-full rounded font-mono cursor-not-allowed" />
                       </div>
                       <div>
                         <label htmlFor="editName" className="text-gray-400 text-xs font-mono block mb-1">İsim *</label>
-                        <input id="editName" type="text" required value={editStudent.name} onChange={(e) => setEditStudent({ ...editStudent, name: e.target.value })} className="bg-[#050505] border border-gray-700 text-white p-3 w-full rounded focus:outline-none focus:border-[#00F0FF] transition-colors" />
+                        <input id="editName" type="text" required value={editStudent.name} onChange={(e) => setEditStudent({ ...editStudent, name: e.target.value })} className="bg-[#050505] border border-gray-700 text-white text-base p-3 w-full rounded focus:outline-none focus:border-[#00F0FF] transition-colors" />
                       </div>
                       <div>
                         <label htmlFor="editNick" className="text-gray-400 text-xs font-mono block mb-1">Takma Ad</label>
-                        <input id="editNick" type="text" value={editStudent.nickname} onChange={(e) => setEditStudent({ ...editStudent, nickname: e.target.value })} className="bg-[#050505] border border-gray-700 text-white p-3 w-full rounded focus:outline-none focus:border-[#00F0FF] transition-colors" />
+                        <input id="editNick" type="text" value={editStudent.nickname} onChange={(e) => setEditStudent({ ...editStudent, nickname: e.target.value })} className="bg-[#050505] border border-gray-700 text-white text-base p-3 w-full rounded focus:outline-none focus:border-[#00F0FF] transition-colors" />
                       </div>
                       <div>
                         <label htmlFor="editMail" className="text-gray-400 text-xs font-mono block mb-1">E-posta</label>
-                        <input id="editMail" type="email" value={editStudent.email} onChange={(e) => setEditStudent({ ...editStudent, email: e.target.value })} className="bg-[#050505] border border-gray-700 text-white p-3 w-full rounded focus:outline-none focus:border-[#00F0FF] transition-colors" />
+                        <input id="editMail" type="email" value={editStudent.email} onChange={(e) => setEditStudent({ ...editStudent, email: e.target.value })} className="bg-[#050505] border border-gray-700 text-white text-base p-3 w-full rounded focus:outline-none focus:border-[#00F0FF] transition-colors" />
                       </div>
                     </div>
                     <div className="flex gap-3 mt-6">
@@ -767,9 +764,9 @@ export const UnifiedDashboard = ({
                 <form onSubmit={handleSendMessage}>
                   <div className="mb-4">
                     <label className="block text-gray-400 text-xs font-mono mb-2">HEDEF AJAN ID (İsteğe Bağlı)</label>
-                    <input id="broadcast-target" name="broadcast-target" aria-label="Mesaj hedefi (ajan numarası veya boş)" autoComplete="off" type="text" value={messageTargetId} onChange={(e) => setMessageTargetId(e.target.value)} placeholder="Tüm Ajanlar (Boş Bırakın) veya örn: 1005" className="w-full bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#00F0FF] font-mono text-sm transition-colors rounded" />
+                    <input id="broadcast-target" name="broadcast-target" aria-label="Mesaj hedefi (ajan numarası veya boş)" autoComplete="off" type="text" value={messageTargetId} onChange={(e) => setMessageTargetId(e.target.value)} placeholder="Tüm Ajanlar (Boş Bırakın) veya örn: 1005" className="w-full bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#00F0FF] font-mono text-base transition-colors rounded" />
                   </div>
-                  <textarea id="broadcastMsg" name="broadcastMsg" aria-label="Mesaj Kutusu" value={messageText} onChange={(e) => setMessageText(e.target.value)} placeholder="Mesajınızı yazın... (Mesajda 'ACİL' geçerse kırmızı alarm tetiklenir)" required rows={4} className="w-full bg-[#050505] border border-gray-700 text-white p-4 focus:outline-none focus:border-[#00F0FF] font-mono text-sm mb-4 transition-colors resize-none rounded" />
+                  <textarea id="broadcastMsg" name="broadcastMsg" aria-label="Mesaj Kutusu" value={messageText} onChange={(e) => setMessageText(e.target.value)} placeholder="Mesajınızı yazın... (Mesajda 'ACİL' geçerse kırmızı alarm tetiklenir)" required rows={4} className="w-full bg-[#050505] border border-gray-700 text-white p-4 focus:outline-none focus:border-[#00F0FF] font-mono text-base mb-4 transition-colors resize-none rounded" />
                   <button type="submit" className="w-full bg-[#00F0FF]/20 hover:bg-[#00F0FF] text-[#00F0FF] hover:text-black border border-[#00F0FF] py-3 font-bold transition-all uppercase tracking-widest flex items-center justify-center gap-2 rounded min-h-[48px]"><Icons.Message /> HİBRİT GÖNDERİMİ BAŞLAT</button>
                 </form>
               </div>
