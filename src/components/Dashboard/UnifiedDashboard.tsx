@@ -402,12 +402,20 @@ export const UnifiedDashboard = ({
       </aside>
 
       <main className="flex-1 p-3 sm:p-6 md:p-8 z-10 overflow-y-auto pb-20 md:pb-8">
-        <div className="md:hidden sticky top-0 z-30 -mx-3 -mt-3 mb-3 bg-[#0A1128] border-b border-[#39FF14]/20 flex items-center justify-between px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
-          <button onClick={() => setMobileNavOpen(!mobileNavOpen)} className="text-white p-2 min-w-[44px] min-h-[44px] flex items-center justify-center touch-manipulation">
-            <Icons.Menu />
-          </button>
-          <img src={`${import.meta.env.BASE_URL || '/'}nep-logo.png`} alt="NEP" className="h-7 brightness-0 invert opacity-70" />
-          <TopBar student={student} unreadCount={unreadCount} theme={theme} onThemeChange={handleThemeChange} onOpenSettings={() => setIsConfigModalOpen(true)} />
+        <div className="md:hidden sticky top-0 z-30 -mx-3 -mt-3 mb-3 bg-[#0A1128] border-b border-[#39FF14]/20 grid grid-cols-3 items-center px-4 py-3 pt-[max(0.75rem,env(safe-area-inset-top))]">
+          <div className="flex items-center justify-start">
+            <button onClick={() => setDrawerOpen(true)} className="text-white p-2 min-w-[44px] min-h-[44px] flex items-center justify-center touch-manipulation">
+              <Icons.Target />
+            </button>
+          </div>
+          <div className="flex justify-center">
+            <button onClick={() => setActiveTab('genel')} className="flex items-center">
+              <img src={`${import.meta.env.BASE_URL || '/'}nep-logo.png`} alt="NEP" className="h-7 brightness-0 invert opacity-70 mx-auto" />
+            </button>
+          </div>
+          <div className="flex items-center justify-end">
+            <TopBar student={student} unreadCount={unreadCount} theme={theme} onThemeChange={handleThemeChange} onOpenSettings={() => setIsConfigModalOpen(true)} />
+          </div>
         </div>
         <header className="hidden md:flex flex-row items-center justify-between gap-2 mb-4 sm:mb-6 md:mb-8">
           <div>
