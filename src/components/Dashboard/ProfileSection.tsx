@@ -101,25 +101,25 @@ export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps
   };
 
   return (
-    <div className="bg-gradient-to-br from-[#1a1d2e] to-[#0A1128] rounded-3xl p-5 md:p-10 border border-[#00F0FF]/30 shadow-[0_0_40px_rgba(0,240,255,0.05)] w-full h-full flex flex-col lg:flex-row items-center justify-center gap-6 lg:gap-16 overflow-hidden">
+    <div className="bg-gradient-to-br from-[#1a1d2e] to-[#0A1128] rounded-3xl p-3 sm:p-5 md:p-10 border border-[#00F0FF]/30 shadow-[0_0_40px_rgba(0,240,255,0.05)] w-full h-full flex flex-col lg:flex-row items-center justify-center gap-4 sm:gap-6 lg:gap-16 overflow-hidden">
 
       {/* SOL: KİMLİK */}
-      <div className="flex flex-col items-center text-center w-full lg:w-1/3 shrink-0">
+      <div className="flex flex-col items-center text-center w-full lg:w-1/3 shrink-0 min-w-0">
         <div className="relative mb-2">
-          <div className="bg-[#00F0FF] text-[#0A1128] font-black text-sm md:text-base px-6 py-2 rounded-xl border-2 border-[#0A1128] shadow-lg whitespace-nowrap">
+          <div className="bg-[#00F0FF] text-[#0A1128] font-black text-xs sm:text-sm px-3 sm:px-6 py-1 sm:py-2 rounded-xl border-2 border-[#0A1128] shadow-lg whitespace-nowrap">
             LVL {student.level}
           </div>
         </div>
 
-        <div className="mb-4">
+        <div className="mb-4 w-full min-w-0 px-2">
           <div className="text-[#00F0FF] text-[10px] md:text-xs font-mono tracking-[0.3em] font-black uppercase mb-1">Kimlik_Dosyası</div>
-          <h2 className="text-2xl md:text-4xl font-black text-white uppercase tracking-wider">{student.name}</h2>
-          <div className="text-gray-500 font-mono text-[9px] md:text-[11px] mt-1 tracking-widest bg-black/30 px-3 py-1 rounded inline-block">
+          <h2 className="text-lg sm:text-2xl md:text-4xl font-black text-white uppercase tracking-wider truncate">{student.name}</h2>
+          <div className="text-gray-500 font-mono text-[9px] md:text-[11px] mt-1 tracking-widest bg-black/30 px-3 py-1 rounded inline-block max-w-[200px] truncate">
             {scrambledCode}
           </div>
         </div>
 
-        <div className="text-[10px] md:text-xs text-[#39FF14] font-black tracking-widest uppercase mb-1 bg-[#39FF14]/10 px-3 py-1 rounded border border-[#39FF14]/20">
+        <div className="text-[9px] sm:text-[10px] md:text-xs text-[#39FF14] font-black tracking-widest uppercase mb-1 bg-[#39FF14]/10 px-2 sm:px-3 py-1 rounded border border-[#39FF14]/20">
           Rank: {getRankTitle(student.level)}
         </div>
 
@@ -146,18 +146,18 @@ export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps
             </button>
           </div>
         ) : (
-          <div className="flex items-center justify-center gap-2 mt-2 group">
-            <div className="text-[#00F0FF] font-mono tracking-[0.2em] text-sm md:text-base font-bold bg-white/5 px-4 py-1 rounded-full border border-white/5 group-hover:border-[#00F0FF]/30 transition-all">
+          <div className="flex items-center justify-center gap-2 mt-2 group min-w-0 max-w-full px-2">
+            <div className="text-[#00F0FF] font-mono tracking-[0.2em] text-sm md:text-base font-bold bg-white/5 px-4 py-1 rounded-full border border-white/5 group-hover:border-[#00F0FF]/30 transition-all truncate max-w-full">
               &gt; {student.nickname || 'FIELD_AGENT'} &lt;
             </div>
-            <button onClick={() => setIsEditingNickname(true)} className="opacity-40 group-hover:opacity-100 hover:text-[#00F0FF] transition-all">✏️</button>
+            <button onClick={() => setIsEditingNickname(true)} className="opacity-40 group-hover:opacity-100 hover:text-[#00F0FF] transition-all shrink-0">✏️</button>
           </div>
         )}
 
         {!isAdmin && (
           <div className="flex items-center gap-2 mt-4 bg-white/5 inline-flex px-4 py-2 rounded-lg border border-white/10">
             <Zap className="w-4 h-4 text-[#39FF14]" fill="#39FF14" />
-            <span className="text-gray-300 text-sm font-mono">Veri_Puanı: <span className="text-[#39FF14] font-bold text-lg">{student.xp}</span></span>
+            <span className="text-gray-300 text-sm font-mono">Veri_Puanı: <span className="text-[#39FF14] font-bold text-base sm:text-lg">{student.xp}</span></span>
           </div>
         )}
       </div>
@@ -165,12 +165,12 @@ export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps
       {/* SAĞ: XP BAR VE ENVANTER */}
       {!isAdmin && (
         <div className={`w-full lg:w-2/3 flex flex-col gap-4 md:gap-6 justify-center ${xpChanged ? 'animate-screen-shake' : ''}`}>
-          <div className="bg-black/40 p-4 md:p-5 rounded-2xl border border-gray-800 relative overflow-hidden group">
+          <div className="bg-black/40 p-3 sm:p-4 md:p-5 rounded-2xl border border-gray-800 relative overflow-hidden group">
             <div className="flex justify-between items-end mb-2">
               <span className="text-gray-500 text-[10px] md:text-xs font-mono tracking-widest uppercase">Sonraki Level Hedefi</span>
               <span className="text-[#00F0FF] text-xs md:text-sm font-mono font-bold">{currentXpProgress} / {totalXpInLevel} XP</span>
             </div>
-            <div className={`h-4 md:h-6 bg-[#050505] rounded-full overflow-hidden border border-gray-800 shadow-[inset_0_0_10px_rgba(0,0,0,0.5)] relative ${xpProgress >= 100 ? 'animate-neon-glow-cyan' : ''}`}>
+            <div className={`h-3 sm:h-4 md:h-6 bg-[#050505] rounded-full overflow-hidden border border-gray-800 shadow-[inset_0_0_10px_rgba(0,0,0,0.5)] relative ${xpProgress >= 100 ? 'animate-neon-glow-cyan' : ''}`}>
               <div
                 className="h-full bg-gradient-to-r from-[#00F0FF] via-[#6358cc] to-[#39FF14] rounded-full transition-all duration-1000 relative shadow-[0_0_15px_rgba(0,240,255,0.4)]"
                 style={{ width: `${xpProgress}%` }}
@@ -185,23 +185,23 @@ export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps
             <div className="absolute -inset-1 bg-[#00F0FF]/5 blur-xl opacity-50 pointer-events-none" />
           </div>
 
-          <div>
+          <div className="w-full">
             <h3 className="text-gray-400 font-bold mb-3 uppercase tracking-widest flex items-center gap-2 text-[10px] md:text-xs border-b border-gray-800 pb-2">
               <Shield className="w-4 h-4 text-[#00F0FF]" /> KİLİDİ AÇILAN TEÇHİZATLAR
             </h3>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 md:gap-4">
+            <div className="grid grid-cols-3 gap-1.5 sm:gap-2 md:gap-4">
               {INVENTORY_ITEMS.map(item => {
                 const isUnlocked = student.level >= item.reqLevel;
                 return (
                   <div
                     key={item.id}
-                    className={`relative flex flex-col items-center justify-center p-2 md:p-4 rounded-xl border-2 transition-all h-16 md:h-24 ${
+                    className={`relative flex flex-col items-center justify-center p-1.5 sm:p-2 md:p-4 rounded-xl border-2 transition-all h-14 sm:h-16 md:h-24 ${
                       isUnlocked
                         ? 'bg-[#00F0FF]/10 border-[#00F0FF]/40 shadow-[0_0_15px_rgba(0,240,255,0.15)]'
                         : 'bg-black/50 border-gray-800 opacity-40'
                     }`}
                   >
-                    <div className={`text-2xl md:text-4xl ${!isUnlocked && 'grayscale opacity-50'}`}>{item.icon}</div>
+                    <div className={`text-xl sm:text-2xl md:text-4xl ${!isUnlocked && 'grayscale opacity-50'}`}>{item.icon}</div>
                     {isUnlocked && (
                       <div className="text-[8px] md:text-[10px] text-[#00F0FF] mt-1 font-bold tracking-wider hidden sm:block truncate w-full text-center">
                         {item.name}
