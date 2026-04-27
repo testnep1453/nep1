@@ -204,9 +204,16 @@ export const AgentDashboard = ({
       )}
 
       {/* Mobil Üst Bar */}
-      <div className="md:hidden flex-none z-30 bg-[#0A1128] border-b border-[#00F0FF]/20 flex items-center justify-between px-4 py-2 pt-[max(0.5rem,env(safe-area-inset-top))]">
-        <img src={`${import.meta.env.BASE_URL || '/'}nep-logo.png`} alt="NEP" className="h-6 brightness-0 invert opacity-70" />
-        <div className="flex items-center gap-1">
+      <div className="md:hidden flex-none z-30 bg-[#0A1128] border-b border-[#00F0FF]/20 grid grid-cols-3 items-center px-4 py-2 pt-[max(0.5rem,env(safe-area-inset-top))]">
+        <div className="flex justify-start items-center">
+          <button onClick={() => setDrawerOpen(true)} className="text-[#00F0FF] p-2 min-w-[44px] min-h-[44px] flex items-center justify-center touch-manipulation">
+            <Icons.Target />
+          </button>
+        </div>
+        <div className="flex justify-center items-center">
+          <img src={`${import.meta.env.BASE_URL || '/'}nep-logo.png`} alt="NEP" className="h-6 brightness-0 invert opacity-70" />
+        </div>
+        <div className="flex justify-end items-center">
           <TopBar student={student} unreadCount={unreadCount} />
         </div>
       </div>
