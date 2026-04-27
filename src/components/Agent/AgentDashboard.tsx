@@ -294,7 +294,6 @@ export const AgentDashboard = ({
       <div className="md:hidden flex-none bg-[#0A1128] border-t border-[#00F0FF]/20 z-20 flex items-center justify-around px-1 pt-1 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
         {([
           { id: 'home' as AgentTab, icon: <Icons.Home />, label: 'LOBİ' },
-          { id: 'operation' as AgentTab, icon: <Icons.Target />, label: 'OPE', action: () => setDrawerOpen(true) },
           { id: 'levels' as AgentTab, icon: <Icons.Trophy />, label: 'LEVEL' },
           { id: 'archive' as AgentTab, icon: <Icons.Film />, label: 'ARŞİV' },
           { id: 'activity' as AgentTab, icon: <Icons.Calendar />, label: 'ARENA' },
