@@ -57,8 +57,8 @@ export const JoinClassButton = ({ zoomLink, studentName }: JoinClassButtonProps)
 
   if (showTerminal) {
     return (
-      <div className="w-full max-w-2xl mx-auto">
-        <div className="bg-[#1a1d2e] rounded-2xl p-8 border-2 border-[#00cfe8] shadow-2xl shadow-[#00cfe8]/30">
+      <div className="w-full max-w-md mx-auto px-4">
+        <div className="w-full overflow-x-hidden bg-[#1a1d2e] rounded-2xl p-8 border-2 border-[#00cfe8] shadow-2xl shadow-[#00cfe8]/30">
           <div className="flex items-center gap-2 mb-4">
             <div className="flex gap-1.5">
               <div className="w-3 h-3 rounded-full bg-[#d44d4e]"></div>
@@ -71,7 +71,7 @@ export const JoinClassButton = ({ zoomLink, studentName }: JoinClassButtonProps)
             {terminalLines.map((line, index) => (
               <div
                 key={index}
-                className="text-[#00cfe8] font-mono text-sm md:text-base animate-terminal-line flex items-center gap-2"
+                className="text-[#00cfe8] font-mono text-xs sm:text-sm md:text-base animate-terminal-line flex items-center gap-2 break-words"
               >
                 <span className="text-[#2b9956]">$</span>
                 {line}
@@ -90,10 +90,10 @@ export const JoinClassButton = ({ zoomLink, studentName }: JoinClassButtonProps)
   }
 
   return (
-    <div className="w-full max-w-md mx-auto animate-pulse-glow">
+    <div className="w-full max-w-md mx-auto px-4 animate-pulse-glow">
       <button
         onClick={handleJoinClass}
-        className="w-full bg-gradient-to-r from-[#2b9956] via-[#3dd56d] to-[#2b9956] text-white font-bold py-8 px-8 rounded-2xl uppercase tracking-wider text-2xl md:text-3xl hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-[#2b9956]/50 border-4 border-[#3dd56d] animate-glow-pulse"
+        className="w-full bg-gradient-to-r from-[#2b9956] via-[#3dd56d] to-[#2b9956] text-white font-bold py-4 sm:py-8 px-4 sm:px-8 rounded-2xl uppercase tracking-wider text-lg sm:text-2xl md:text-3xl hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-[#2b9956]/50 border-4 border-[#3dd56d] animate-glow-pulse touch-manipulation"
       >
         🚀 DERSE KATIL
       </button>

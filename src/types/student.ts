@@ -78,6 +78,7 @@ export interface FeedbackEntry {
   comment: string;
   createdAt: number;
   anonymous: boolean;
+  image_url?: string;
 }
 
 export interface AutoMessage {

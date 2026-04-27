@@ -76,6 +76,11 @@ export const FeedbackHistory = ({ studentId }: { studentId: string }) => {
                   </span>
                 </div>
                 {fb.comment && <p className="text-gray-300 text-sm">"{fb.comment}"</p>}
+                {fb.image_url && (
+                  <a href={fb.image_url} target="_blank" rel="noopener noreferrer" className="block mt-2">
+                    <img src={fb.image_url} alt="Geri bildirim görseli" className="max-h-40 rounded-lg object-cover" />
+                  </a>
+                )}
               </div>
             ))}
           </div>

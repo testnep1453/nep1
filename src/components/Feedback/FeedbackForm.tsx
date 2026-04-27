@@ -26,24 +26,39 @@ function getLessonNo(dateStr: string): number | null {
   return FIXED_LESSON_SCHEDULE.find(l => l.date === dateStr)?.lessonNo ?? null;
 }
 
-/** Ders 20:15'ten önce mi? Eğer öyleyse form açılmamalı */
+/** Ders bitti mi ve bir sonraki ders 30 dk'dan uzak mı? */
 export function isFeedbackTime(lessonDate: string): boolean {
   const now = Date.now();
   const [y, m, d] = lessonDate.split('-').map(Number);
-  // Ders sonu 20:00 + 15 dk = 20:15
-  const openAt = new Date(y, m - 1, d, 20, 15, 0).getTime();
-  
-  // Sonraki ders günü (haftaya) 19:00'da kapansın
-  const closeAt = new Date(y, m - 1, d + 7, 19, 0, 0).getTime();
+
+  // Pencere 20:15'te açılır (ders sonu 20:00 + 15 dk)
+  const lessonEnd = new Date(y, m - 1, d, 20, 0, 0).getTime();
+  const openAt = lessonEnd + 15 * 60 * 1000;
+
+  // Bir sonraki dersin başlangıç saati - 30 dk'da kapanır
+  const idx = FIXED_LESSON_SCHEDULE.findIndex(l => l.date === lessonDate);
+  const nextLesson = idx !== -1 ? FIXED_LESSON_SCHEDULE[idx + 1] : null;
+
+  let closeAt: number;
+  if (nextLesson) {
+    const [ny, nm, nd] = nextLesson.date.split('-').map(Number);
+    const nextStart = new Date(ny, nm - 1, nd, 19, 0, 0).getTime();
+    closeAt = nextStart - 30 * 60 * 1000;
+  } else {
+    // Sonraki ders yoksa 7 gün açık kalır
+    closeAt = lessonEnd + 7 * 24 * 60 * 60 * 1000;
+  }
 
   return now >= openAt && now < closeAt;
 }
 
-export const FeedbackForm = ({ lessonDate, studentId: _studentId, onClose }: FeedbackFormProps) => {
+export const FeedbackForm = ({ lessonDate, studentId, onClose }: FeedbackFormProps) => {
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
 
   const lessonNo = getLessonNo(lessonDate);
 
@@ -57,7 +72,24 @@ export const FeedbackForm = ({ lessonDate, studentId: _studentId, onClose }: Fee
     try {
       // Sanitize comment to prevent XSS
       const cleanComment = sanitizeInput(comment);
-      
+
+      let image_url: string | undefined;
+      if (imageFile) {
+        setUploading(true);
+        const ext = imageFile.name.split('.').pop();
+        const path = `${Date.now()}_${studentId}.${ext}`;
+        const { error: uploadError } = await supabase.storage
+          .from('feedback_images')
+          .upload(path, imageFile);
+        if (!uploadError) {
+          const { data: { publicUrl } } = supabase.storage
+            .from('feedback_images')
+            .getPublicUrl(path);
+          image_url = publicUrl;
+        }
+        setUploading(false);
+      }
+
       await supabase.from('feedback').insert([{
         studentId: 'anonymous',
         lessonDate,
@@ -66,6 +98,7 @@ export const FeedbackForm = ({ lessonDate, studentId: _studentId, onClose }: Fee
         comment: cleanComment,
         createdAt: Date.now(),
         anonymous: true,
+        ...(image_url ? { image_url } : {}),
       }]);
       await recordAction('feedbackSubmit');
       setSubmitted(true);
@@ -135,14 +168,34 @@ export const FeedbackForm = ({ lessonDate, studentId: _studentId, onClose }: Fee
             className="w-full bg-[#050505] border border-gray-700 text-white p-3 focus:outline-none focus:border-[#6358cc] rounded-lg transition-colors resize-none text-sm" />
         </div>
 
+        {/* Fotoğraf Yükleme */}
+        <div className="mb-6">
+          <label className="block text-white/50 text-xs mb-2 uppercase tracking-widest">
+            Fotoğraf Ekle (opsiyonel)
+          </label>
+          <input
+            type="file"
+            accept="image/*"
+            capture="environment"
+            onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
+            className="w-full text-xs text-gray-400 bg-[#050505] border border-gray-700 rounded-lg p-2
+              file:mr-3 file:py-1.5 file:px-3 file:rounded file:border file:border-[#6358cc]
+              file:bg-[#6358cc]/20 file:text-[#8b7fd8] file:font-bold file:uppercase file:tracking-widest
+              hover:file:bg-[#6358cc] hover:file:text-white file:transition-all file:cursor-pointer"
+          />
+          {imageFile && (
+            <p className="text-[10px] text-[#8b7fd8] mt-1 font-mono truncate">{imageFile.name}</p>
+          )}
+        </div>
+
         <div className="flex gap-3">
           <button onClick={onClose}
             className="flex-1 bg-white/5 hover:bg-white/10 text-gray-400 border border-gray-700 py-3 font-bold transition-all uppercase tracking-widest rounded-lg text-sm min-h-[48px]">
             Geç
           </button>
-          <button onClick={handleSubmit} disabled={rating === 0 || submitting}
+          <button onClick={handleSubmit} disabled={rating === 0 || submitting || uploading}
             className="flex-1 bg-[#6358cc]/20 hover:bg-[#6358cc] text-[#8b7fd8] hover:text-white border border-[#6358cc] py-3 font-bold transition-all uppercase tracking-widest rounded-lg disabled:opacity-30 text-sm min-h-[48px]">
-            {submitting ? 'Gönderiliyor...' : 'Gönder'}
+            {uploading ? 'Yükleniyor...' : submitting ? 'Gönderiliyor...' : 'Gönder'}
           </button>
         </div>
       </div>
