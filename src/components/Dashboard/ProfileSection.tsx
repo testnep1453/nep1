@@ -101,7 +101,7 @@ export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps
   };
 
   return (
-    <div className="bg-gradient-to-br from-[#1a1d2e] to-[#0A1128] rounded-3xl p-3 sm:p-5 md:p-10 border border-[#00F0FF]/30 shadow-[0_0_40px_rgba(0,240,255,0.05)] w-full h-full flex flex-col lg:flex-row items-center justify-center gap-4 sm:gap-6 lg:gap-16 overflow-hidden">
+    <div className="bg-gradient-to-br from-[#1a1d2e] to-[#0A1128] rounded-3xl p-3 sm:p-5 md:p-10 border border-[#00F0FF]/30 shadow-[0_0_40px_rgba(0,240,255,0.05)] w-full flex flex-col lg:flex-row items-center justify-center gap-4 sm:gap-6 lg:gap-16 overflow-hidden">
 
       {/* SOL: KİMLİK */}
       <div className="flex flex-col items-center text-center w-full lg:w-1/3 shrink-0 min-w-0">
@@ -164,8 +164,8 @@ export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps
 
       {/* SAĞ: XP BAR VE ENVANTER */}
       {!isAdmin && (
-        <div className={`w-full lg:w-2/3 flex flex-col gap-4 md:gap-6 justify-center ${xpChanged ? 'animate-screen-shake' : ''}`}>
-          <div className="bg-black/40 p-3 sm:p-4 md:p-5 rounded-2xl border border-gray-800 relative overflow-hidden group">
+        <div className={`w-full lg:w-2/3 min-w-0 flex flex-col gap-4 md:gap-6 justify-center ${xpChanged ? 'animate-screen-shake' : ''}`}>
+          <div className="w-full bg-black/40 p-3 sm:p-4 md:p-5 rounded-2xl border border-gray-800 relative overflow-hidden group">
             <div className="flex justify-between items-end mb-2">
               <span className="text-gray-500 text-[10px] md:text-xs font-mono tracking-widest uppercase">Sonraki Level Hedefi</span>
               <span className="text-[#00F0FF] text-xs md:text-sm font-mono font-bold">{currentXpProgress} / {totalXpInLevel} XP</span>
@@ -189,7 +189,7 @@ export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps
             <h3 className="text-gray-400 font-bold mb-3 uppercase tracking-widest flex items-center gap-2 text-[10px] md:text-xs border-b border-gray-800 pb-2">
               <Shield className="w-4 h-4 text-[#00F0FF]" /> KİLİDİ AÇILAN TEÇHİZATLAR
             </h3>
-            <div className="grid grid-cols-3 gap-1.5 sm:gap-2 md:gap-4">
+            <div className="grid grid-cols-3 gap-1.5 sm:gap-2 md:gap-4 w-full">
               {INVENTORY_ITEMS.map(item => {
                 const isUnlocked = student.level >= item.reqLevel;
                 return (
