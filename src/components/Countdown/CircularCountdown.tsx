@@ -11,10 +11,9 @@ interface RingProps {
   label: string;
   color: string;
   trackColor: string;
-  size?: number;
 }
 
-const Ring: React.FC<RingProps> = ({ value, max, label, color, trackColor, size = 160 }) => {
+const Ring: React.FC<RingProps> = ({ value, max, label, color, trackColor }) => {
   const circleRef = useRef<SVGCircleElement>(null);
   const r = 42;
   const pct = Math.max(0, Math.min(100, (value / max) * 100));
@@ -26,18 +25,13 @@ const Ring: React.FC<RingProps> = ({ value, max, label, color, trackColor, size 
   }, [pct]);
 
   return (
-    <div
-      style={{ width: size, height: size, position: 'relative' }}
-      className="flex-shrink-0"
-    >
+    <div className="w-full h-full relative flex-shrink-0">
       {/* SVG Ring */}
       <svg
         viewBox="0 0 100 100"
-        style={{
-          width: '100%',
-          height: '100%',
-          transform: 'rotate(-90deg)',
-        }}
+        width="100%"
+        height="100%"
+        style={{ transform: 'rotate(-90deg)' }}
       >
         {/* Track */}
         <circle
@@ -73,26 +67,12 @@ const Ring: React.FC<RingProps> = ({ value, max, label, color, trackColor, size 
           lineHeight: 1,
         }}
       >
-        <div
-          style={{
-            fontWeight: 800,
-            fontSize: size * 0.28,
-            color: '#ffffff',
-            fontVariantNumeric: 'tabular-nums',
-            letterSpacing: '-1px',
-          }}
-        >
+        <div className="font-extrabold text-xl sm:text-3xl md:text-4xl text-white tabular-nums tracking-tight">
           {String(value).padStart(2, '0')}
         </div>
         <div
-          style={{
-            fontWeight: 700,
-            fontSize: size * 0.085,
-            color: color,
-            textTransform: 'uppercase',
-            letterSpacing: '1px',
-            marginTop: 4,
-          }}
+          className="font-bold text-[8px] sm:text-[10px] md:text-xs uppercase tracking-widest mt-1"
+          style={{ color: color }}
         >
           {label}
         </div>
@@ -114,21 +94,6 @@ export const CircularCountdown: React.FC<CircularCountdownProps> = ({ targetDate
     );
   }
 
-  // Responsive size: büyük ekranda 170px, küçükte 100px
-  const getSize = () => {
-    if (typeof window === 'undefined') return 155;
-    if (window.innerWidth >= 1024) return 170;
-    if (window.innerWidth >= 640) return 135;
-    return 105;
-  };
-
-  const [size, setSize] = React.useState(getSize);
-  React.useEffect(() => {
-    const onResize = () => setSize(getSize());
-    window.addEventListener('resize', onResize);
-    return () => window.removeEventListener('resize', onResize);
-  }, []);
-
   // Son 10 saniyede tüm renkler kırmızı ve nabız atıyor mu kontrolü
   const isFinal = days === 0 && hours === 0 && minutes === 0 && seconds <= 10;
 
@@ -145,8 +110,6 @@ export const CircularCountdown: React.FC<CircularCountdownProps> = ({ targetDate
     return true;
   });
 
-  const gap = size >= 155 ? 32 : size >= 120 ? 20 : 12;
-
   return (
     <div
       className="flex flex-col items-center w-full"
@@ -155,25 +118,17 @@ export const CircularCountdown: React.FC<CircularCountdownProps> = ({ targetDate
       }}
     >
       {/* Progress rings */}
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap,
-          flexWrap: 'nowrap',
-        }}
-      >
+      <div className="flex items-center justify-center gap-3 sm:gap-5 md:gap-8 flex-nowrap overflow-x-auto px-2">
         {rings.map((r) => (
-          <Ring
-            key={r.label}
-            value={r.value}
-            max={r.max}
-            label={r.label}
-            color={r.color}
-            trackColor={r.track}
-            size={size}
-          />
+          <div key={r.label} className="flex-shrink-0 w-20 h-20 sm:w-28 sm:h-28 md:w-36 md:h-36 lg:w-40 lg:h-40">
+            <Ring
+              value={r.value}
+              max={r.max}
+              label={r.label}
+              color={r.color}
+              trackColor={r.track}
+            />
+          </div>
         ))}
       </div>
 
