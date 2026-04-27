@@ -150,8 +150,8 @@ const ResultsModal = ({ survey, onClose }: { survey: SurveyEntry; onClose: () =>
       const { data } = await supabase
         .from('survey_results')
         .select('*')
-        .eq('surveyId', survey.id)
-        .order('createdAt', { ascending: false });
+        .eq('survey_id', survey.id)
+        .order('created_at', { ascending: false });
       setResults(data || []);
       setLoading(false);
     };
@@ -205,8 +205,9 @@ const ResultsModal = ({ survey, onClose }: { survey: SurveyEntry; onClose: () =>
 
                   {stats.type === 'multiple_choice' && 'counts' in stats && (
                     <div className="space-y-2 mt-2">
-                      {Object.entries(stats.counts).map(([opt, cnt]) => {
-                        const pct = stats.total > 0 ? Math.round((cnt / stats.total) * 100) : 0;
+                      {Object.entries(stats.counts as Record<string, number>).map(([opt, cnt]) => {
+                        const total = (stats.total as number) ?? 0;
+                        const pct = total > 0 ? Math.round((cnt / total) * 100) : 0;
                         return (
                           <div key={opt} className="flex items-center gap-3">
                             <span className="text-xs text-gray-300 w-28 shrink-0 truncate">{opt}</span>
@@ -222,9 +223,9 @@ const ResultsModal = ({ survey, onClose }: { survey: SurveyEntry; onClose: () =>
 
                   {stats.type === 'open_ended' && 'answers' in stats && (
                     <div className="space-y-2 mt-2 max-h-48 overflow-y-auto terminal-scroll pr-1">
-                      {stats.answers.length === 0 ? (
+                      {(stats.answers as string[]).length === 0 ? (
                         <p className="text-gray-600 text-xs italic">Henüz cevap yok.</p>
-                      ) : stats.answers.map((ans, j) => (
+                      ) : (stats.answers as string[]).map((ans, j) => (
                         <div key={j} className="bg-[#050505] border border-gray-800 rounded-lg px-3 py-2 text-gray-300 text-sm italic">
                           "{ans}"
                         </div>
