@@ -3,6 +3,7 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { MessageSquare } from 'lucide-react';
 import { Lesson, Trailer } from '../../types/student';
 import { CircularCountdown } from '../Countdown/CircularCountdown';
 import { YouTubePlayer } from '../VideoTheater/YouTubePlayer';
@@ -255,7 +256,16 @@ export const OperationDrawer = ({
         </div>
 
         {/* Footer — sadece saat */}
-        <div className="px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] border-t border-white/5 shrink-0 flex justify-end">
+        <div className="px-5 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] border-t border-white/5 shrink-0 flex justify-between items-center">
+          {!isAdmin ? (
+            <button
+              onClick={() => window.dispatchEvent(new CustomEvent('system-navigation', { detail: { target: 'feedback' } }))}
+              className="flex items-center gap-1.5 text-[#6358cc]/70 hover:text-[#8b7fd8] text-xs font-mono uppercase tracking-widest transition-colors"
+            >
+              <MessageSquare size={14} />
+              Geri Bildirim
+            </button>
+          ) : <span />}
           <span className="text-white/20 text-xs font-mono tabular-nums">
             {now.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })}
           </span>

@@ -240,19 +240,17 @@ function ManualTab({
     const newStatus: 'present' | 'absent' = current?.status === 'present' ? 'absent' : 'present';
 
     setSavingId(studentId);
-    try {
-      const { error } = await supabase.from('attendance').upsert(
-        { student_id: studentId, date: selectedDate, status: newStatus },
-        { onConflict: 'student_id,date' }
-      );
-      if (error) throw error;
+    const { error } = await supabase.from('attendance').upsert(
+      { student_id: studentId, date: selectedDate, status: newStatus },
+      { onConflict: 'student_id,date' }
+    );
+    if (error) {
+      onToast(error.message, 'error');
+    } else {
       await fetchDate(selectedDate);
       onToast(`${studentId} → ${newStatus === 'present' ? 'Katıldı' : 'Katılmadı'}`, 'success');
-    } catch (e) {
-      onToast('Kaydetme hatası: ' + (e as Error).message, 'error');
-    } finally {
-      setSavingId(null);
     }
+    setSavingId(null);
   };
 
   const lesson = sortedLessons.find(l => l.date === selectedDate);
@@ -381,26 +379,24 @@ function ExcelTab({ onToast }: { onToast: (msg: string, type: 'success' | 'error
     if (!valid.length) return;
 
     setImporting(true);
-    try {
-      const payload = valid.map(r => ({
-        student_id: r.student_id,
-        date: r.date,
-        status: r.status,
-      }));
+    const payload = valid.map(r => ({
+      student_id: r.student_id,
+      date: r.date,
+      status: r.status,
+    }));
 
-      const { error } = await supabase
-        .from('attendance')
-        .upsert(payload, { onConflict: 'student_id,date' });
+    const { error } = await supabase
+      .from('attendance')
+      .upsert(payload, { onConflict: 'student_id,date' });
 
-      if (error) throw error;
+    if (error) {
+      onToast(error.message, 'error');
+    } else {
       onToast(`${valid.length} kayıt başarıyla aktarıldı.`, 'success');
       setRows([]);
       if (fileRef.current) fileRef.current.value = '';
-    } catch (e) {
-      onToast('Aktarım hatası: ' + (e as Error).message, 'error');
-    } finally {
-      setImporting(false);
     }
+    setImporting(false);
   };
 
   const validCount = rows.filter(r => r.valid).length;
@@ -419,7 +415,7 @@ function ExcelTab({ onToast }: { onToast: (msg: string, type: 'success' | 'error
         <input
           ref={fileRef}
           type="file"
-          accept=".xlsx,.xls"
+          accept=".xlsx,.xls,.csv"
           onChange={handleFile}
           className="hidden"
           id="excel-upload"

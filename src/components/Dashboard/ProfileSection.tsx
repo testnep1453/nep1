@@ -101,7 +101,7 @@ export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps
   };
 
   return (
-    <div className="bg-gradient-to-br from-[#1a1d2e] to-[#0A1128] rounded-3xl border border-[#00F0FF]/30 shadow-[0_0_40px_rgba(0,240,255,0.05)] w-full flex flex-col lg:flex-row items-center lg:items-start gap-4 lg:gap-16 p-4 lg:p-10 overflow-hidden">
+    <div className="bg-gradient-to-br from-[#1a1d2e] to-[#0A1128] rounded-3xl border border-[#00F0FF]/30 shadow-[0_0_40px_rgba(0,240,255,0.05)] w-full flex flex-col lg:flex-row items-center lg:items-start gap-4 lg:gap-16 p-4 lg:p-10">
 
       {/* SOL: KİMLİK */}
       <div className="flex flex-col items-center text-center w-full lg:w-1/3 shrink-0 min-w-0">
@@ -195,7 +195,7 @@ export const ProfileSection = ({ student, isAdmin = false }: ProfileSectionProps
                 return (
                   <div
                     key={item.id}
-                    className={`relative flex flex-col items-center justify-center p-1 lg:p-4 rounded-xl border-2 transition-all h-12 lg:h-24 ${
+                    className={`relative flex flex-col items-center justify-center p-1 lg:p-4 rounded-xl border-2 transition-all min-h-[3rem] lg:min-h-[6rem] h-auto ${
                       isUnlocked
                         ? 'bg-[#00F0FF]/10 border-[#00F0FF]/40 shadow-[0_0_15px_rgba(0,240,255,0.15)]'
                         : 'bg-black/50 border-gray-800 opacity-40'

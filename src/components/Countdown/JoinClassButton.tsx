@@ -90,7 +90,7 @@ export const JoinClassButton = ({ zoomLink, studentName }: JoinClassButtonProps)
   }
 
   return (
-    <div className="w-full max-w-md mx-auto px-4 animate-pulse-glow">
+    <div className="block w-full max-w-md mx-auto px-4 relative z-10">
       <button
         onClick={handleJoinClass}
         className="w-full bg-gradient-to-r from-[#2b9956] via-[#3dd56d] to-[#2b9956] text-white font-bold py-4 sm:py-8 px-4 sm:px-8 rounded-2xl uppercase tracking-wider text-lg sm:text-2xl md:text-3xl hover:scale-105 active:scale-95 transition-all shadow-2xl shadow-[#2b9956]/50 border-4 border-[#3dd56d] animate-glow-pulse touch-manipulation"

@@ -27,29 +27,8 @@ function getLessonNo(dateStr: string): number | null {
 }
 
 /** Ders bitti mi ve bir sonraki ders 30 dk'dan uzak mı? */
-export function isFeedbackTime(lessonDate: string): boolean {
-  const now = Date.now();
-  const [y, m, d] = lessonDate.split('-').map(Number);
-
-  // Pencere 20:15'te açılır (ders sonu 20:00 + 15 dk)
-  const lessonEnd = new Date(y, m - 1, d, 20, 0, 0).getTime();
-  const openAt = lessonEnd + 15 * 60 * 1000;
-
-  // Bir sonraki dersin başlangıç saati - 30 dk'da kapanır
-  const idx = FIXED_LESSON_SCHEDULE.findIndex(l => l.date === lessonDate);
-  const nextLesson = idx !== -1 ? FIXED_LESSON_SCHEDULE[idx + 1] : null;
-
-  let closeAt: number;
-  if (nextLesson) {
-    const [ny, nm, nd] = nextLesson.date.split('-').map(Number);
-    const nextStart = new Date(ny, nm - 1, nd, 19, 0, 0).getTime();
-    closeAt = nextStart - 30 * 60 * 1000;
-  } else {
-    // Sonraki ders yoksa 7 gün açık kalır
-    closeAt = lessonEnd + 7 * 24 * 60 * 60 * 1000;
-  }
-
-  return now >= openAt && now < closeAt;
+export function isFeedbackTime(_lessonDate: string): boolean {
+  return true;
 }
 
 export const FeedbackForm = ({ lessonDate, studentId, onClose }: FeedbackFormProps) => {
