@@ -410,7 +410,7 @@ export const UnifiedDashboard = ({
           </div>
           <div className="flex justify-center items-center">
             <button onClick={() => setActiveTab('genel')} className="flex items-center">
-              <img src={`${import.meta.env.BASE_URL || '/'}nep-logo.png`} alt="NEP" className="h-7 brightness-0 invert opacity-70 mx-auto" />
+              <img src={`${import.meta.env.BASE_URL || '/'}nep-logo.png`} alt="NEP" className="h-7 brightness-0 invert opacity-70" />
             </button>
           </div>
           <div className="flex justify-end items-center">
