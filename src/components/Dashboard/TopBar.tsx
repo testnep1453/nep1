@@ -87,7 +87,7 @@ export const TopBar = ({ student, unreadCount, theme = 'dark', onThemeChange, on
             </button>
 
             {showManualPrompt && (
-              <div className="fixed bottom-0 left-0 right-0 mx-auto w-full max-w-md bg-[#0A1128] border-t border-[#00F0FF]/40 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] rounded-t-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.9)] z-[200] overscroll-contain sm:fixed sm:bottom-auto sm:top-auto sm:left-auto sm:right-4 sm:w-80 sm:max-w-none sm:border sm:border-[#00F0FF]/40 sm:rounded-xl sm:shadow-[0_10px_40px_rgba(0,0,0,0.9)] sm:pb-4 sm:backdrop-blur-md sm:bg-[#0A1128]/95">
+              <div className="fixed bottom-0 left-0 right-0 mx-auto w-full max-w-md bg-[#0A1128] border-t border-[#00F0FF]/40 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] rounded-t-2xl shadow-[0_-10px_40px_rgba(0,0,0,0.9)] z-[200] overscroll-contain sm:bottom-auto sm:top-16 sm:left-auto sm:right-4 sm:w-80 sm:max-w-none sm:border sm:border-[#00F0FF]/40 sm:rounded-xl sm:shadow-[0_10px_40px_rgba(0,0,0,0.9)] sm:pb-4 sm:backdrop-blur-md sm:bg-[#0A1128]/95">
                 <p className="text-[#00F0FF] font-bold text-sm mb-2 border-b border-[#00F0FF]/20 pb-1">
                   Kurulum Kılavuzu:
                 </p>
